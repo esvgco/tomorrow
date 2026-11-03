@@ -19,7 +19,7 @@ Code: [`site/js/`](../site/js/).
 
 ## Decision: one 3D rig for every look
 
-All four rabbits are the same 3D skeleton. Even the "2D" looks (contour, pixel) are rendered
+All four rabbits use the same motion channels. Contour, pixel and PS1 keep the original anatomy; soft geometric uses shorter body segments, a rounder head, thicker paws and curved paddle ears. Even the "2D" looks (contour, pixel) are rendered
 from the 3D body, which is why the contour stays correct when you orbit it and why one
 animation drives every version. Later the same rig can be steered on the site (turn toward
 the cursor, run along a path, dive into the hole) without redrawing anything per look.
@@ -33,19 +33,18 @@ the cursor, run along a path, dive into the hole) without redrawing anything per
 - A pose is a flat set of channels. Body and limb channels are **world angles in the
   sagittal plane** (degrees: 0 forward, 90 up, 180 back, 270 down). Hind thigh lives in
   ~190–345, so the sit and the gallop blend without wrapping round.
-- `solve(pose)` — forward kinematics, returns joint positions.
+- `solve(pose, profile = 'classic')` — forward kinematics, returns joint positions.
 - `SHAPES` — 21 round cones on the joints (radius at each end, a group, a flatten factor
   for the ears). Groups decide what melts into what and where contour lines are drawn.
 
 ### Poses and animation
 
-- `SIT` — sitting, head down, looking into the hole (the client's mark).
-  `idlePose(t)` adds breathing, sniffing and an ear twitch.
+- `SIT` — alert sitting, head lifted. `LOOK_DOWN` keeps the torso angles and lowers the neck/head toward the hole.
+  `idlePose(t, mode)` eases between them over 12 seconds (`auto`), or holds `sit` / `look`, with breathing and an ear twitch.
 - `GALLOP` — six keys over 0.56 s, keyed against ref 05 frame by frame
   (push-off 0.00 · extension 0.25 · fore landing 0.45 · fore stance 0.60 · gather 0.75 ·
-  hind landing 0.88; table in [references.md](references.md)). Cyclic Catmull-Rom between
-  keys. Far legs lag the near ones slightly (`GALLOP.far`). Keys marked `contact` have their
-  height solved so those feet sit on the ground; flight keys float above (`lift`).
+  hind landing 0.88; table in [references.md](references.md)). Cyclic time-aware cubic Hermite interpolation between
+  keys, with continuous velocity at unevenly spaced keys. Far legs lag the near ones slightly (`GALLOP.far`). Keys marked `contact` set the initial height; the solver also checks both sides at every sampled frame and lifts the whole rig when a foot would penetrate the floor. Flight keys float above (`lift`).
   `GALLOP.stride` is the distance covered per cycle when it travels.
 
 ### Renderers
@@ -59,8 +58,9 @@ the cursor, run along a path, dive into the hole) without redrawing anything per
 
 ### Page — `site/index.html`, `site/js/main.js`
 
-Row A: the sitting model with the hole, drag to orbit, `Rig` shows the bones.
+Row A: the sitting model with the hole, drag to orbit, `Rig` shows the bones; Auto / Alert / Inspect controls the pose.
 Row B: the gallop, speed 1× / ½ / ⅕, `Across` (travels through the frame) or `In place`.
+Pause / Play and the Cycle slider let you inspect any frame.
 Version 03 switches between Sky / Gradient · nose / Gradient · view.
 Views only render while on screen. Three.js 0.170 from jsDelivr through an import map, no build.
 
@@ -71,9 +71,30 @@ the reference frames: `lab.html?style=contour|pixel|sky|gradient|ps1&frames=16&r
 
 ## Next steps
 
-- Tune proportions per look (the soft geometric one wants a rounder, chunkier body; the pixel
-  one may want hand-placed eye/ear pixels on top of the render).
+- Review the new soft proportions and the bound in motion with the art director; the pixel
+  one may still want hand-placed eye/ear pixels on top of the render.
 - More clips on the same rig: hop (refs 06/10), sit ↔ run transitions, look-at-cursor,
   dive into the hole, emerge.
 - Pick one look with the client, then decide whether the site keeps the SDF renderer or the
   rabbit gets baked to a skinned mesh (glTF) for a full scene.
+
+## Local refinement — 2026-11-03
+
+The side-view rodent read came from downturned heads, ears disappearing into the
+back, a sharply folded lumbar/thoracic angle in gather, and forelegs hanging down
+in extended flight. The revised keys lift the gaze, keep the ears above the back,
+reach the forelegs forward in flight and reduce the spinal fold. A `stretch` channel
+scales only lumbar/thoracic lengths (keys 0.96–1.12), leaving limb lengths intact.
+
+`site/js/soft.js` supplies a separate shape set (29 primitives): wide, curved ears
+are sampled quadratic curves with six round-cone segments each. Both Sky and
+Gradient use that anatomy. The gradient is matte with restrained directional shade.
+
+Validation: `node tests/rig.mjs` samples 1,001 phases per anatomy, checks finite
+joints, foot clearance, valid SDF cone geometry, loop closure and spline velocity
+continuity. Browser checks cover contour/pixel/sky/gradient/PS1, all palettes, pose
+buttons, pause/scrub and a 390 px viewport. Contact sheets: `/lab.html?style=sky&frames=12&cols=4&rig=0`.
+
+Remaining animation limitation: this is still a keyed FK bound, without world-space
+IK foot locking. Floor clearance is enforced; exact no-slip planted contacts are
+not guaranteed while travelling.

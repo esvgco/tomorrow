@@ -37,6 +37,8 @@ function setupCard(el) {
     speed: 1,
     travel: mode === 'run',
     rig: false,
+    poseMode: 'auto',
+    paused: false,
     visible: false,
     t0: performance.now() / 1000,
     clock: 0,
@@ -47,6 +49,8 @@ function setupCard(el) {
   el.querySelectorAll('[data-action]').forEach((b) => {
     b.addEventListener('click', () => {
       const a = b.dataset.action;
+      if (a === 'pose') { card.poseMode = b.dataset.value; el.querySelectorAll('[data-action=pose]').forEach(x => x.classList.toggle('on', x === b)); }
+      if (a === 'pause') { card.paused = !card.paused; b.classList.toggle('on', card.paused); b.textContent = card.paused ? 'Play' : 'Pause'; }
       if (a === 'rig') { card.rig = !card.rig; b.classList.toggle('on', card.rig); }
       if (a === 'speed') {
         card.speed = parseFloat(b.dataset.value);
@@ -56,6 +60,13 @@ function setupCard(el) {
       if (a === 'reset') { card.yaw = mode === 'model' ? 32 : 0; card.pitch = mode === 'model' ? 9 : 4; }
       if (a === 'palette') setPalette(version, parseInt(b.dataset.value, 10));
     });
+  });
+  const scrub = el.querySelector('[data-phase]');
+  if (scrub) scrub.addEventListener('input', () => {
+    card.clock = +scrub.value * GALLOP.duration;
+    card.paused = true;
+    const pause = el.querySelector('[data-action=pause]');
+    pause.textContent = 'Play'; pause.classList.add('on');
   });
   cards.push(card);
   return card;
@@ -156,14 +167,16 @@ function frame() {
   last = now;
   for (const card of cards) {
     if (!card.visible) continue;
-    card.clock += dt * card.speed;
+    if (!card.paused) card.clock += dt * card.speed;
     card.view.resize();
     let J, hole = null;
     if (card.mode === 'model') {
-      J = solve(idlePose(card.clock));
+      J = solve(idlePose(card.clock, card.poseMode), card.version === 'sky' ? 'soft' : 'classic');
       hole = HOLE;
     } else {
       const phase = card.clock / GALLOP.duration;
+      const scrub = card.el.querySelector('[data-phase]');
+      if (scrub) scrub.value = ((phase % 1) + 1) % 1;
       const pose = gallopPose(phase);
       if (card.travel) {
         // across the frame and in again from the left, never long out of sight
@@ -171,7 +184,7 @@ function frame() {
         const span = 2 * card.dist * Math.tan((cam.fov * Math.PI) / 360) * cam.aspect + 1.1;
         pose.x = ((phase * GALLOP.stride) % span) - span / 2 - 0.2;
       } else pose.x = -0.2;
-      J = solve(pose);
+      J = solve(pose, card.version === 'sky' ? 'soft' : 'classic');
       if (card.version === 'ps1') card.view.setFloorScroll(card.travel ? 0 : (phase * GALLOP.stride * 12) / 8);
     }
     placeCamera(card);

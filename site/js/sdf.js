@@ -8,10 +8,11 @@
 // screen-space pass that finds the edges; sky and gradient shade directly.
 import * as THREE from 'three';
 import { SHAPES } from './rig.js';
+import { SOFT_SHAPES } from './soft.js';
 
 THREE.ColorManagement.enabled = false; // colours here are display values
 
-const NS = SHAPES.length;
+const NS = Math.max(SHAPES.length, SOFT_SHAPES.length);
 
 const COMMON = /* glsl */ `
 #define NS ${NS}
@@ -67,6 +68,7 @@ float mapG(vec3 p, out int gid) {
     vec4 A = uA[i];
     vec4 B = uB[i];
     vec4 C = uC[i];
+    if (C.z < 0.0) continue;
     int g = int(C.x + 0.5);
     float f = C.y;
     vec3 a = A.xyz;
@@ -186,8 +188,8 @@ vec3 shade(vec3 p, vec3 rd) {
   else t = clamp(pow(ndv, 1.4) * 0.95 + n.y * 0.12, 0.0, 1.0);
   vec3 col = ramp(t);
   float sh = clamp(0.5 - 0.5 * ndl, 0.0, 1.0);
-  col = mix(col, vec3(0.23, 0.03, 0.09), sh * sh * 0.55);
-  col += vec3(1.0, 0.9, 0.95) * pow(max(dot(reflect(rd, n), LIGHT), 0.0), 18.0) * 0.25;
+  col = mix(col, vec3(0.23, 0.03, 0.09), sh * sh * 0.20);
+  // Broad matte colour fields: an illustration rather than a glossy toy.
   return col;
 }
 
@@ -296,6 +298,7 @@ export class SdfView {
   constructor(canvas, opts) {
     this.canvas = canvas;
     this.style = opts.style;
+    this.shapes = ['sky', 'gradient'].includes(this.style) ? SOFT_SHAPES : SHAPES;
     this.pixelSize = opts.pixelSize || 5;
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: false, preserveDrawingBuffer: false });
     this.renderer.setClearColor(0xffffff, 1);
@@ -322,7 +325,8 @@ export class SdfView {
       uBg: { value: hex(opts.bg || '#ffffff') },
       uEyeR: { value: opts.style === 'pixel' ? 0.03 : 0.019 },
     };
-    SHAPES.forEach((s, i) => this.uniforms.uC.value[i].set(s.g, s.flat || 1, 0, 0));
+    this.uniforms.uC.value.forEach(v => v.z = -1);
+    this.shapes.forEach((s, i) => this.uniforms.uC.value[i].set(s.g, s.flat || 1, 0, 0));
     this.uniforms.uMode.value = { contour: 0, pixel: 0, sky: 1, gradient: 2 }[this.style];
 
     this.marchMat = new THREE.ShaderMaterial({
@@ -387,7 +391,7 @@ export class SdfView {
   update(J, hole) {
     const u = this.uniforms;
     let cx = 0, cy = 0, cz = 0, n = 0;
-    SHAPES.forEach((s, i) => {
+    this.shapes.forEach((s, i) => {
       const a = J[s.a], b = J[s.b];
       u.uA.value[i].set(a[0], a[1], a[2], s.ra);
       u.uB.value[i].set(b[0], b[1], b[2], s.rb);
@@ -395,7 +399,7 @@ export class SdfView {
     });
     cx /= n; cy /= n; cz /= n;
     let rad = 0;
-    SHAPES.forEach((s) => {
+    this.shapes.forEach((s) => {
       for (const k of [s.a, s.b]) {
         const p = J[k];
         rad = Math.max(rad, Math.hypot(p[0] - cx, p[1] - cy, p[2] - cz) + Math.max(s.ra, s.rb) + 0.05);

@@ -28,13 +28,15 @@
   <canvas id="view"></canvas>
   <script type="module">
     import * as THREE from 'three';
-    import { solve, SIT, gallopPose, BONES } from './js/rig.js';
+    import { solve, SIT, LOOK_DOWN, gallopPose, BONES } from './js/rig.js';
     import { SdfView } from './js/sdf.js';
     import { Ps1View } from './js/ps1.js';
 
     const q = new URLSearchParams(location.search);
     const style = q.get('style') || 'contour';
-    const frames = +(q.get('frames') || 16);
+    const profile = ['sky', 'gradient'].includes(style) ? 'soft' : 'classic';
+    const frames = Math.max(1, Math.min(48, +(q.get('frames') || 16)));
+    document.getElementById('gallop').style.setProperty('--cols', Math.max(1, Math.min(8, +(q.get('cols') || 8))));
     const showRig = q.get('rig') !== '0';
     const canvas = document.getElementById('view');
     const view = style === 'ps1' ? new Ps1View(canvas, { pixelSize: 2 })
@@ -42,7 +44,7 @@
     view.resize();
     const v = new THREE.Vector3();
 
-    function tile(parent, J, label, yaw = +(q.get('yaw') || 0), target = [0.05, 0.3, 0], dist = 2.6, hole = null) {
+    function tile(parent, J, label, yaw = +(q.get('yaw') || 0), target = [0.05, 0.38, 0], dist = 3.1, hole = null) {
       const cam = view.camera;
       const y = yaw * Math.PI / 180, p = 4 * Math.PI / 180;
       cam.position.set(target[0] + Math.sin(y) * Math.cos(p) * dist, target[1] + Math.sin(p) * dist, target[2] + Math.cos(y) * Math.cos(p) * dist);
@@ -76,13 +78,15 @@
     }
 
     const sit = document.getElementById('sit');
-    for (const yaw of [0, 35, 90, -40]) tile(sit, solve(SIT), `sit · yaw ${yaw}`, yaw, [0.25, 0.3, 0], 2.6, [0.66, 0.06, 0.13]);
+    for (const [name, pose] of [['Alert', SIT], ['Inspect', LOOK_DOWN]]) {
+      for (const yaw of [0, 35, 90, -40]) tile(sit, solve(pose, profile), `${name} · yaw ${yaw}`, yaw, [0.25, 0.35, 0], 2.8, [0.66, 0.06, 0.13]);
+    }
     const gallop = document.getElementById('gallop');
     for (let i = 0; i < frames; i++) {
       const t = i / frames;
       const pose = gallopPose(t);
       pose.x = 0;
-      tile(gallop, solve(pose), `t ${t.toFixed(3)}`);
+      tile(gallop, solve(pose, profile), `t ${t.toFixed(3)}`);
     }
     document.body.dataset.ready = '1';
   </script>
