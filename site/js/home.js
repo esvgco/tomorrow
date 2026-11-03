@@ -7,9 +7,9 @@ import * as THREE from 'three';
 import { solve, idlePose, gallopPose, GALLOP, CHANNELS } from './rig.js';
 import { SdfView } from './sdf.js';
 import { clipFrame } from './clips.js';
-import { ProjectView } from './project-view.js';
-import { ProjectJourney } from './home-journey.js';
-import { blend } from './play/motion.js';
+import { ProjectView } from './project-view.js?v=20261103-2';
+import { ProjectJourney } from './home-journey.js?v=20261103-2';
+import { blend } from './play/motion.js?v=20261103-2';
 
 const HOLE = [0.66, 0.06, 0.13]; // x, z, radius — where the sitting rabbit looks
 const v3 = new THREE.Vector3();

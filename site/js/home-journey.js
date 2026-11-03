@@ -1,7 +1,7 @@
 // One continuous visitor, with a latest-hover destination queue.
 import {solve,idlePose,gallopPose,GALLOP} from './rig.js';
 import {clipFrame} from './clips.js';
-import {place,gamePose} from './play/motion.js';
+import {place,gamePose} from './play/motion.js?v=20261103-2';
 const wrap=a=>Math.atan2(Math.sin(a),Math.cos(a));
 export class ProjectJourney {
   constructor(x=0,z=0){Object.assign(this,{x,z,scale:.8,yaw:0,state:'idle',time:0,distance:0,goal:null,hole:null,exitDirection:null});}

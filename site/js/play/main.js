@@ -1,7 +1,7 @@
 import * as THREE from 'three';
-import {makePlayView} from './view.js';
+import {makePlayView} from './view.js?v=20261103-2';
 import {Game,HOLES} from './state.js';
-import {gamePose,blend} from './motion.js';
+import {gamePose,blend} from './motion.js?v=20261103-2';
 let canvas=document.querySelector('#field');
 const loading=document.querySelector('#loading');
 try {
