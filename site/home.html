@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The Tomorrow Company</title>
+  <meta name="description" content="The Tomorrow Company is a technology venture studio. It starts companies, builds products and creates original IP where AI, physical computing and new ways of living meet.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="home.css">
+  <script type="importmap">
+    { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js" } }
+  </script>
+</head>
+<body>
+  <header class="top">
+    <a class="mark" href="#top">The Tomorrow Company</a>
+    <nav class="nav">
+      <a href="#what">What we do</a>
+      <a href="#projects">Projects</a>
+      <a href="mailto:contact@tomorrowcompany.com">Contact</a>
+    </nav>
+  </header>
+
+  <!-- 1 · The field. A very small rabbit by the hole; it notices the cursor. -->
+  <section class="screen hero" id="top">
+    <h1 class="hero-title">We make the things<br>that come next.</h1>
+    <p class="hero-lede">The Tomorrow Company is a technology venture studio. We start companies, build products and create original IP where AI, physical computing and new ways of living meet.</p>
+    <div class="field" data-scene="hero" aria-hidden="true">
+      <canvas class="view"></canvas>
+    </div>
+    <a class="hero-down" href="#what"><span class="idx">01</span><span>Follow it</span></a>
+  </section>
+
+  <!-- 2 · What we do. The rabbit crosses the screen and goes down the hole. -->
+  <section class="screen what" id="what">
+    <div class="screen-head"><span class="idx">02</span><span>What we do</span></div>
+    <h2>One studio. Different kinds of things.</h2>
+    <ul class="kinds">
+      <li><span class="k">Companies</span><span class="d">Started here, then run by their own teams.</span></li>
+      <li><span class="k">Products</span><span class="d">Built in-house, from the first prototype to the first customer.</span></li>
+      <li><span class="k">Original IP</span><span class="d">Technology, entertainment and ideas that don't fit a category yet.</span></li>
+    </ul>
+    <p class="aside">They belong together because they came from here, not because they look the same.</p>
+    <div class="track" data-scene="run" aria-hidden="true">
+      <canvas class="view"></canvas>
+      <button class="again" type="button" hidden>Again</button>
+    </div>
+  </section>
+
+  <!-- 3 · Projects, discovered. Holes on the field; approach one and the rabbit is there. -->
+  <section class="screen projects" id="projects">
+    <div class="screen-head"><span class="idx">03</span><span>Some of what's underway</span></div>
+    <div class="holes" data-scene="holes">
+      <!-- content note: 01 is from the brief; the rest are placeholders until the client names them -->
+      <button class="hole" type="button" style="--x: 18%; --y: 22%" data-n="01">
+        <span class="dot"></span>
+        <span class="label"><b>A recruiting platform for technology companies</b><i>In development · first clients on board</i></span>
+      </button>
+      <button class="hole" type="button" style="--x: 58%; --y: 36%" data-n="02">
+        <span class="dot"></span>
+        <span class="label"><b>Physical computing</b><i>Unannounced</i></span>
+      </button>
+      <button class="hole" type="button" style="--x: 34%; --y: 64%" data-n="03">
+        <span class="dot"></span>
+        <span class="label"><b>Original IP</b><i>Unannounced</i></span>
+      </button>
+      <button class="hole" type="button" style="--x: 66%; --y: 74%" data-n="04">
+        <span class="dot"></span>
+        <span class="label"><b>Something that doesn't fit a category yet</b><i>Not yet</i></span>
+      </button>
+      <div class="peek" aria-hidden="true"><canvas class="view"></canvas></div>
+    </div>
+    <p class="aside projects-hint">Four holes. Move toward one.</p>
+  </section>
+
+  <!-- 4 · Contact. -->
+  <footer class="screen contact" id="contact">
+    <div class="screen-head"><span class="idx">04</span><span>Say hello</span></div>
+    <a class="mail" href="mailto:contact@tomorrowcompany.com">contact@tomorrowcompany.com</a>
+    <div class="foot">
+      <span>The Tomorrow Company · United States</span>
+      <span>Intelligent, optimistic, curious and a little unexpected.</span>
+    </div>
+  </footer>
+
+  <script type="module" src="js/home.js"></script>
+</body>
+</html>

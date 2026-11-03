@@ -12,9 +12,11 @@ Staging: https://tomorrow.esvgco.workers.dev — Cloudflare Workers, auto-deploy
   - [`website-direction.md`](docs/website-direction.md) — the client's direction PDF, transcribed
   - [`references.md`](docs/references.md) — Pinterest board, every pin catalogued, animation breakdown
   - [`rabbit-study.md`](docs/rabbit-study.md) — the rabbit rig and its four looks: how it works
+  - [`homepage.md`](docs/homepage.md) — homepage concept 01: the four screens, what's real and what's placeholder
   - `references/` — local copies of the board and the PDF screenshots
 - `site/` — the static site, served as is (no build)
   - `index.html` — Rabbit study 01: four rabbits, one rig
+  - `home.html` — Homepage concept 01 (`home.css`, `js/home.js`); to be swapped with `index.html` later
   - `lab.html` — rig contact sheet for keying poses
   - `js/rig.js` — skeleton, poses, gallop
   - `js/sdf.js` — ray-marched rabbit (contour, pixel, sky, gradient)
