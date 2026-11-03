@@ -152,3 +152,24 @@ keys, limb motion and palettes are unchanged. Tests check mirrored ear geometry;
 1,001 sampled running frames and idle samples also match the preceding version
 at every non-ear joint. Browser inspection covers front, profile and three-quarter
 views in sitting and running poses.
+
+## Burrow story clips — 2026-11-03
+
+Approved model baseline: `d5153f1`. `site/js/clips.js` adds two joint-level clips
+without changing the saved rig or anatomy:
+
+- **Into the burrow**, 3.6 s: approach using the existing gallop, lift-off,
+  an arcing head-first dive through the opening, then a hidden hold.
+- **A look outside**, 7.6 s: rise to the waist, pause, turn the head one way and
+  then the other, return to centre and descend. The hole stays centred.
+
+Rows C/D show both clips in all four styles with pause, replay, half speed,
+rig overlay, timeline scrubbing and soft palettes. Ground clipping is enabled
+only for these clips: the SDF ray stops at the floor; PS1 rabbit fragments
+below it are discarded. Offscreen views release their WebGL contexts and
+recreate them when visible, avoiding context exhaustion with 16 previews.
+
+Validation: `node tests/rig.mjs` and `node tests/clips.mjs`; finite geometry,
+fully hidden holds, chest-above/waist-below reveal, head entry within the hole,
+and takeoff continuity. Browser review of all eight new previews, both look
+directions, timeline controls and console errors.

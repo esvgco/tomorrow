@@ -34,6 +34,7 @@ uniform int uMode;
 uniform int uPalette;
 uniform vec3 uBg;
 uniform float uEyeR;
+uniform bool uClipGround;
 in vec2 vUv;
 out vec4 fragColor;
 
@@ -139,7 +140,9 @@ float march(vec3 ro, vec3 rd, out float minD, out float minT) {
   h = sqrt(h);
   float t = max(-b - h, 0.0);
   float tEnd = -b + h;
+  if (uClipGround && rd.y < 0.0) tEnd = min(tEnd, -ro.y / rd.y);
   for (int i = 0; i < 110; i++) {
+    if (t > tEnd) break;
     float d = map(ro + rd * t);
     float pr = d / t;
     if (pr < minD) { minD = pr; minT = t; }
@@ -343,6 +346,7 @@ export class SdfView {
       uMode: { value: 0 },
       uPalette: { value: opts.palette || 0 },
       uBg: { value: hex(opts.bg || '#ffffff') },
+      uClipGround: { value: false },
       uEyeR: { value: opts.style === 'pixel' ? 0.03 : 0.019 },
     };
     this.uniforms.uC.value.forEach(v => v.z = -1);
@@ -408,8 +412,9 @@ export class SdfView {
   }
 
   /** @param J joints from rig.solve(); hole: [x, z, r] or null */
-  update(J, hole) {
+  update(J, hole, clipGround = false) {
     const u = this.uniforms;
+    u.uClipGround.value = clipGround;
     let cx = 0, cy = 0, cz = 0, n = 0;
     this.shapes.forEach((s, i) => {
       const a = J[s.a], b = J[s.b];
@@ -452,5 +457,5 @@ export class SdfView {
     }
   }
 
-  dispose() { this.renderer.dispose(); }
+  dispose() { this.renderer.dispose(); this.renderer.forceContextLoss(); }
 }
