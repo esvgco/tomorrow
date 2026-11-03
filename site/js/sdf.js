@@ -7,7 +7,7 @@
 // Contour and pixel go through a G-buffer (depth, part, light, feature) and a
 // screen-space pass that finds the edges; sky and gradient shade directly.
 import * as THREE from 'three';
-import { SHAPES } from './rig.js';
+import { SHAPES, G } from './rig.js';
 
 THREE.ColorManagement.enabled = false; // colours here are display values
 
@@ -392,10 +392,12 @@ export class SdfView {
   update(J, hole) {
     const u = this.uniforms;
     let cx = 0, cy = 0, cz = 0, n = 0;
+    const bs = J.bodyScale || 1; // the torso thins as it stretches
     this.shapes.forEach((s, i) => {
       const a = J[s.a], b = J[s.b];
-      u.uA.value[i].set(a[0], a[1], a[2], s.ra);
-      u.uB.value[i].set(b[0], b[1], b[2], s.rb);
+      const rs = s.g === G.BODY ? bs : 1;
+      u.uA.value[i].set(a[0], a[1], a[2], s.ra * rs);
+      u.uB.value[i].set(b[0], b[1], b[2], s.rb * rs);
       cx += a[0] + b[0]; cy += a[1] + b[1]; cz += a[2] + b[2]; n += 2;
     });
     cx /= n; cy /= n; cz /= n;

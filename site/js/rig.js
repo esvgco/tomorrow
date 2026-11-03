@@ -22,26 +22,39 @@ export const DIM = {
 };
 
 export const CHANNELS = [
-  'x', 'y', 'lumbar', 'thoracic', 'neck', 'head',
+  'x', 'y', 'lumbar', 'thoracic', 'neck', 'head', 'headYaw', 'stretch',
   'ear1', 'ear2', 'earSplay', 'tail',
   'f1', 'f2', 'f3', 'h1', 'h2', 'h3',
 ];
+/** Channels a key may leave out, and what they are then. `headYaw` turns the
+ * head toward the viewer (degrees); `stretch` lengthens the torso (1 = rest)
+ * and thins it by the same amount, the squash-and-stretch of the body. */
+const DEFAULTS = { headYaw: 0, stretch: 1 };
 
 const D2R = Math.PI / 180;
 const dir = (a) => [Math.cos(a * D2R), Math.sin(a * D2R)];
 const add = (p, d, k, z = 0) => [p[0] + d[0] * k, p[1] + d[1] * k, p[2] + z];
 
-/** Sitting, looking down into the hole in front of it (the client's mark).
- * The resting rabbit is a hunched C: the rump rises steeply over the hips and
- * from there the back runs in one straight slope down to the head, no bump at
- * the shoulders. It only straightens out when it runs. Forelegs: elbow tucked
- * back, forearm nearly vertical, a short toe angled forward (no "boot").
+/** Sitting, nose down to the hole in front of it (the client's mark).
+ * One smooth arc from the rump to the back of the head: the rump rises steeply
+ * over the hips, the back runs almost level, the neck continues the arc down
+ * and the face tilts to the hole — no bump at the shoulders. Forelegs: elbow
+ * tucked back, forearm nearly vertical, a short toe angled forward (no "boot").
  * Limb angles live in the same ranges as the gallop (hind thigh ~190–345,
  * forearm ~200–335), so a blend between the two never wraps round. */
 export const SIT = {
-  x: 0, y: 0.175, lumbar: 44, thoracic: 6, neck: -8, head: -36,
+  x: 0, y: 0.175, lumbar: 52, thoracic: 8, neck: -6, head: -22,
   ear1: 96, ear2: 102, earSplay: 0.16, tail: 150,
-  f1: 220, f2: 286, f3: 318,
+  f1: 230, f2: 282, f3: 318,
+  h1: 345, h2: 215, h3: 360,
+};
+
+/** Sitting up, head raised, looking around: the resting pose between sniffs.
+ * Same rump, the back rises more and the neck carries the head level. */
+export const UP = {
+  x: 0, y: 0.175, lumbar: 44, thoracic: 26, neck: 50, head: 4,
+  ear1: 92, ear2: 98, earSplay: 0.14, tail: 150,
+  f1: 268, f2: 272, f3: 318,
   h1: 345, h2: 215, h3: 360,
 };
 
@@ -66,37 +79,37 @@ export const GALLOP = {
     // hind plant: back at its roundest, head forward; hind feet reach ahead of the body
     // (thigh forward, shin folded back under it, foot out to the toes); forelegs folded
     // up under the chest
-    { t: 0.0, contact: 'hind', lumbar: 56, thoracic: -12, neck: 2, head: -10, ear1: 140, ear2: 152, earSplay: 0.16, tail: 120,
+    { t: 0.0, contact: 'hind', stretch: 0.9, lumbar: 56, thoracic: -12, neck: 2, head: -10, ear1: 140, ear2: 152, earSplay: 0.16, tail: 120,
       f1: 292, f2: 198, f3: 245, h1: 332, h2: 238, h3: 322 },
     // hind stance: the body passes over the feet and sinks on them, the back opens;
     // forelegs stay pressed to the chest (elbows bent, paws hanging)
-    { t: 0.09, contact: 'hind', lumbar: 36, thoracic: 0, neck: 8, head: -8, ear1: 148, ear2: 160, earSplay: 0.14, tail: 136,
+    { t: 0.09, contact: 'hind', stretch: 0.94, lumbar: 36, thoracic: 0, neck: 8, head: -8, ear1: 148, ear2: 160, earSplay: 0.14, tail: 136,
       f1: 300, f2: 205, f3: 250, h1: 288, h2: 214, h3: 346 },
     // launch: the legs straighten under the body, hocks and toes flat on the ground
-    { t: 0.18, contact: 'hind', lumbar: 16, thoracic: 8, neck: 14, head: -6, ear1: 154, ear2: 166, earSplay: 0.13, tail: 148,
+    { t: 0.18, contact: 'hind', stretch: 1.02, lumbar: 16, thoracic: 8, neck: 14, head: -6, ear1: 154, ear2: 166, earSplay: 0.13, tail: 148,
       f1: 305, f2: 212, f3: 255, h1: 262, h2: 232, h3: 338 },
     // toe-off: hind legs a straight line down-back to the toes, spine and legs almost one
     // line, nose up; forelegs still tucked, just starting to open
-    { t: 0.27, contact: 'hind', lumbar: 0, thoracic: 8, neck: 18, head: -4, ear1: 160, ear2: 172, earSplay: 0.12, tail: 158,
+    { t: 0.27, contact: 'hind', stretch: 1.09, lumbar: 0, thoracic: 8, neck: 18, head: -4, ear1: 160, ear2: 172, earSplay: 0.12, tail: 158,
       f1: 310, f2: 225, f3: 262, h1: 236, h2: 228, h3: 246 },
     // flight: longest silhouette, back slightly hollow, ears flat, highest point
-    { t: 0.42, lift: 0.06, lumbar: -12, thoracic: 4, neck: 20, head: -8, ear1: 166, ear2: 178, earSplay: 0.10, tail: 166,
+    { t: 0.42, lift: 0.06, stretch: 1.14, lumbar: -14, thoracic: 4, neck: 20, head: -8, ear1: 166, ear2: 178, earSplay: 0.10, tail: 166,
       f1: 338, f2: 332, f3: 318, h1: 200, h2: 188, h3: 184 },
     // fore reach: forelegs reach down ahead to land; hind legs begin to fold at the knee,
     // hocks dropping, feet tucking under
-    { t: 0.54, lift: 0.03, lumbar: -8, thoracic: 0, neck: 14, head: -14, ear1: 160, ear2: 172, earSplay: 0.12, tail: 160,
+    { t: 0.54, lift: 0.03, stretch: 1.1, lumbar: -8, thoracic: 0, neck: 14, head: -14, ear1: 160, ear2: 172, earSplay: 0.12, tail: 160,
       f1: 320, f2: 300, f3: 330, h1: 250, h2: 180, h3: 300 },
     // fore plant: forelegs down under the chest, toes angled; hind legs folded
     // into a Z, feet tucked up under the belly, rolling forward
-    { t: 0.64, contact: 'fore', lumbar: 2, thoracic: -6, neck: 10, head: -16, ear1: 152, ear2: 164, earSplay: 0.14, tail: 150,
+    { t: 0.64, contact: 'fore', stretch: 1.02, lumbar: 2, thoracic: -6, neck: 10, head: -16, ear1: 152, ear2: 164, earSplay: 0.14, tail: 150,
       f1: 295, f2: 282, f3: 325, h1: 272, h2: 192, h3: 370 },
     // fore stance (brief: the body vaults over the forelegs, the weight is on the hinds):
     // forelegs push back, back rounds; hind legs still folded, feet skimming forward
-    { t: 0.76, contact: 'fore', lumbar: 26, thoracic: -14, neck: 4, head: -14, ear1: 146, ear2: 158, earSplay: 0.16, tail: 136,
+    { t: 0.76, contact: 'fore', stretch: 0.95, lumbar: 26, thoracic: -14, neck: 4, head: -14, ear1: 146, ear2: 158, earSplay: 0.16, tail: 136,
       f1: 262, f2: 250, f3: 300, h1: 292, h2: 200, h3: 358 },
     // gather (all feet off the ground): head forward, forelegs back, hind legs
     // forward and unfolding toward the ground
-    { t: 0.88, lift: 0.015, lumbar: 48, thoracic: -14, neck: 0, head: -12, ear1: 140, ear2: 152, earSplay: 0.16, tail: 124,
+    { t: 0.88, lift: 0.015, stretch: 0.9, lumbar: 48, thoracic: -14, neck: 0, head: -12, ear1: 140, ear2: 152, earSplay: 0.16, tail: 124,
       f1: 240, f2: 222, f3: 238, h1: 322, h2: 220, h3: 342 },
   ],
 };
@@ -117,7 +130,8 @@ export function sampleCycle(track, t) {
   const u = (tt - t1) / (t2 - t1);
   const out = {};
   for (const c of CHANNELS) {
-    const p0 = k0[c], p1 = k1[c], p2 = k2[c], p3 = k3[c];
+    const d = DEFAULTS[c];
+    const p0 = k0[c] ?? d, p1 = k1[c] ?? d, p2 = k2[c] ?? d, p3 = k3[c] ?? d;
     out[c] = 0.5 * ((2 * p1) + (-p0 + p2) * u + (2 * p0 - 5 * p1 + 4 * p2 - p3) * u * u + (-p0 + 3 * p1 - 3 * p2 + p3) * u * u * u);
   }
   return out;
@@ -161,21 +175,34 @@ export function gallopPose(phase) {
   return pose;
 }
 
-/** Sitting, alive: breathing, a sniff now and then, an ear that turns. */
+const smooth = (x) => (x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x));
+const ramp = (x, a, b) => smooth((x - a) / (b - a));
+
+/** Sitting, alive. A loop of IDLE.period seconds: sitting up and looking
+ * around (head turning left and right), then settling down to the hole to
+ * sniff, then up again. Breathing, a sniff now and then, an ear that turns. */
+export const IDLE = { period: 11, down: [3.8, 4.7], up: [9.0, 9.9] };
 export function idlePose(time) {
+  const t = ((time % IDLE.period) + IDLE.period) % IDLE.period;
+  const k = ramp(t, ...IDLE.down) * (1 - ramp(t, ...IDLE.up)); // 0 = up, 1 = sniffing
   const b = Math.sin(time * 2.4);
   const sniff = Math.max(0, Math.sin(time * 0.9)) ** 12 * Math.sin(time * 38);
   const twitch = Math.max(0, Math.sin(time * 0.55 + 1)) ** 30;
-  return {
-    ...SIT,
-    y: SIT.y + b * 0.003,
-    lumbar: SIT.lumbar + b * 0.8,
-    thoracic: SIT.thoracic + b * 1.2,
-    head: SIT.head + sniff * 1.6 + Math.sin(time * 0.7) * 2,
-    ear1: SIT.ear1 + twitch * 14,
-    ear2: SIT.ear2 + twitch * 18,
-    far: { ...pick(SIT), ear1: SIT.ear1 + 4 + Math.sin(time * 0.8) * 2, ear2: SIT.ear2 + 6 },
-  };
+  const look = 24 * Math.sin(time * 0.62 + 3.3) + 10 * Math.sin(time * 1.7 + 1); // where it looks when up
+  const pose = {};
+  for (const c of CHANNELS) {
+    const a = UP[c] ?? DEFAULTS[c], z = SIT[c] ?? DEFAULTS[c];
+    pose[c] = a + (z - a) * k;
+  }
+  pose.y += b * 0.003;
+  pose.lumbar += b * 0.8;
+  pose.thoracic += b * 1.2;
+  pose.head += sniff * 1.6 * k + Math.sin(time * 0.7) * 2 + (1 - k) * 3 * Math.sin(time * 1.1 + 2);
+  pose.headYaw = look * (1 - k) + 5 * Math.sin(time * 1.3) * k;
+  pose.ear1 += twitch * 14;
+  pose.ear2 += twitch * 18;
+  pose.far = { ...pick(pose), ear1: pose.ear1 - twitch * 14 + 4 + Math.sin(time * 0.8) * 2, ear2: pose.ear2 - twitch * 18 + 6 };
+  return pose;
 }
 
 function pick(p) {
@@ -185,26 +212,37 @@ function pick(p) {
 /** Forward kinematics: joint positions for a pose. */
 export function solve(pose) {
   const far = pose.far || pick(pose);
+  const st = pose.stretch ?? 1;
   const z0 = 0;
   const pelvis = [pose.x, pose.y, z0];
-  const mid = add(pelvis, dir(pose.lumbar), DIM.lumbar);
-  const chest = add(mid, dir(pose.thoracic), DIM.thoracic);
-  const headBase = add(chest, dir(pose.neck), DIM.neck);
-  const hf = dir(pose.head);
-  const hu = dir(pose.head + 90);
-  const snout = add(headBase, hf, DIM.head);
+  const mid = add(pelvis, dir(pose.lumbar), DIM.lumbar * st);
+  const chest = add(mid, dir(pose.thoracic), DIM.thoracic * st);
+  const headBase = add(chest, dir(pose.neck), DIM.neck * (1 + (st - 1) * 0.5));
   const at = (o, f, u, a, b, z) => [o[0] + f[0] * a + u[0] * b, o[1] + f[1] * a + u[1] * b, o[2] + z];
 
-  const J = { pelvis, mid, chest, headBase, snout };
-  J.headBack = at(headBase, hf, hu, -0.015, 0.012, 0);
-  J.nose = at(headBase, hf, hu, DIM.head + 0.038, -0.012, 0);
-  J.eyeN = at(headBase, hf, hu, 0.09, 0.03, DIM.eyeZ);
-  J.eyeF = at(headBase, hf, hu, 0.09, 0.03, -DIM.eyeZ);
+  // the head's frame: pitched by `head` in the sagittal plane, then turned by
+  // `headYaw` toward the viewer (+z). F forward, U up, S toward the near side.
+  const hp = pose.head * D2R, yw = (pose.headYaw ?? 0) * D2R;
+  const ch = Math.cos(hp), sh = Math.sin(hp), cy = Math.cos(yw), sy = Math.sin(yw);
+  const F = [ch * cy, sh, ch * sy], U = [-sh * cy, ch, -sh * sy], S = [-sy, 0, cy];
+  const at3 = (o, a, b, c) => [
+    o[0] + F[0] * a + U[0] * b + S[0] * c, o[1] + F[1] * a + U[1] * b + S[1] * c, o[2] + F[2] * a + U[2] * b + S[2] * c];
+  const snout = at3(headBase, DIM.head, 0, 0);
 
+  const J = { pelvis, mid, chest, headBase, snout };
+  J.bodyScale = 1 / Math.sqrt(st); // what the torso's radii shrink by as it stretches
+  J.headBack = at3(headBase, -0.015, 0.012, 0);
+  J.nose = at3(headBase, DIM.head + 0.038, -0.012, 0);
+  J.eyeN = at3(headBase, 0.09, 0.03, DIM.eyeZ);
+  J.eyeF = at3(headBase, 0.09, 0.03, -DIM.eyeZ);
+
+  // ear angles are world angles in the sagittal plane; they turn with the head
+  const earDir = (a) => { const r = a * D2R - hp; return [Math.cos(r), Math.sin(r)]; };
   const ear = (side, a1, a2) => {
-    const base = at(headBase, hf, hu, 0.02, 0.07, side * DIM.earZ);
-    const m = add(base, dir(a1), DIM.ear1, side * pose.earSplay * DIM.ear1);
-    const tip = add(m, dir(a2), DIM.ear2, side * pose.earSplay * DIM.ear2 * 1.3);
+    const base = at3(headBase, 0.02, 0.07, side * DIM.earZ);
+    const d1 = earDir(a1), d2 = earDir(a2);
+    const m = at3(base, d1[0] * DIM.ear1, d1[1] * DIM.ear1, side * pose.earSplay * DIM.ear1);
+    const tip = at3(m, d2[0] * DIM.ear2, d2[1] * DIM.ear2, side * pose.earSplay * DIM.ear2 * 1.3);
     return [base, m, tip];
   };
   [J.earN0, J.earN1, J.earN2] = ear(1, pose.ear1, pose.ear2);

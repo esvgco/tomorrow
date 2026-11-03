@@ -32,19 +32,26 @@ the cursor, run along a path, dive into the hole) without redrawing anything per
 - Space: x forward (the rabbit faces +x), y up, z toward the viewer; "near" side is +z.
 - A pose is a flat set of channels. Body and limb channels are **world angles in the
   sagittal plane** (degrees: 0 forward, 90 up, 180 back, 270 down). Hind thigh lives in
-  ~190–345, so the sit and the gallop blend without wrapping round.
+  ~190–345, so the sit and the gallop blend without wrapping round. Two extra channels:
+  `headYaw` turns the head (and ears) toward the viewer, `stretch` lengthens the torso and
+  thins it by the same amount (the body's squash and stretch; `solve` returns
+  `J.bodyScale` for the renderers to scale the torso radii).
 - `solve(pose)` — forward kinematics, returns joint positions.
 - `SHAPES` — 21 round cones on the joints (radius at each end, a group, a flatten factor
   for the ears). Groups decide what melts into what and where contour lines are drawn.
 
 ### Poses and animation
 
-- `SIT` — sitting, head down, looking into the hole (the client's mark). The rump rises
-  steeply over the hips (lumbar 44°) and from there the back runs in one straight slope down
-  to the head (thoracic 6°, neck −8°, head −36°), no bump at the shoulders. Forelegs: elbow
-  tucked back, forearm nearly vertical, a short toe angled forward rather than a flat "boot"
-  (the paw segment is 0.05 and sits at ~318°). The rabbit only straightens out when it runs.
-  `idlePose(t)` adds breathing, sniffing and an ear twitch.
+- `SIT` — sitting, nose down to the hole (the client's mark). One smooth arc from the rump
+  to the back of the head: lumbar 52°, thoracic 8°, neck −6°, head −22° — the rump rises
+  steeply, the back runs almost level, the neck continues the arc down and the face tilts
+  to the hole; no bump at the shoulders. Forelegs: elbow tucked back, forearm nearly
+  vertical, a short toe angled forward rather than a flat "boot" (paw segment 0.05 at ~318°).
+- `UP` — sitting up, head raised and level, looking around (lumbar 44°, thoracic 26°,
+  neck 50°, head 4°; forelegs straight).
+- `idlePose(t)` — the resting loop, `IDLE.period` = 11 s: up and looking around (head yaw
+  swinging ±30°), settles down over ~1 s to the sniffing pose, sniffs for ~4 s, rises
+  again. Breathing, a sniff now and then and an ear twitch on top.
 - `GALLOP` — the half-bound, nine keys over 0.56 s (timing from ref 05, poses from real
   rabbits; table in [references.md](references.md)):
   hind plant 0.00 · crouch 0.09 · launch 0.18 · toe-off 0.27 · flight 0.42 · fore reach 0.54 ·
@@ -59,8 +66,10 @@ the cursor, run along a path, dive into the hole) without redrawing anything per
   - The back is the main spring and moves a lot: a C leaning forward at hind plant (lumbar
     56°, thoracic −12°, neck 2°: rump high, head low and forward), it opens through the push
     until body and hind legs are almost one line at toe-off, and becomes a hollow arc in
-    flight (lumbar −12°, thoracic +4°, neck +20°: rump and head up, belly down). It rounds
+    flight (lumbar −14°, thoracic +4°, neck +20°: rump and head up, belly down). It rounds
     again as the forelegs push back and the hind legs come forward.
+  - The torso also stretches and squashes (`stretch`): 0.90 at hind plant and gather, 1.14
+    in flight — longer and thinner in the air, shorter and fatter on landing.
   - The hind legs push as a pair and fold like a spring on the way back: after toe-off they
     trail straight behind, then the knee and ankle fold (hock up, foot tucked) so the leg
     travels forward *along the belly*, not sweeping down through the vertical like a broom,

@@ -21,14 +21,18 @@
 </head>
 <body>
   <p>Rig lab · <code>?style=contour|pixel|sky|gradient&amp;frames=16&amp;rig=1&amp;yaw=0</code></p>
-  <h2>Sit</h2>
+  <h2>Sit · sniffing</h2>
   <div class="sheet" id="sit" style="--cols:4"></div>
+  <h2>Sit · up, looking around</h2>
+  <div class="sheet" id="up" style="--cols:4"></div>
+  <h2>Idle loop</h2>
+  <div class="sheet" id="idle"></div>
   <h2>Gallop</h2>
   <div class="sheet" id="gallop"></div>
   <canvas id="view"></canvas>
   <script type="module">
     import * as THREE from 'three';
-    import { solve, SIT, gallopPose, BONES, SHAPES_SOFT } from './js/rig.js';
+    import { solve, SIT, UP, idlePose, IDLE, gallopPose, BONES, SHAPES_SOFT } from './js/rig.js';
     import { SdfView } from './js/sdf.js';
     import { Ps1View } from './js/ps1.js';
 
@@ -78,6 +82,14 @@
 
     const sit = document.getElementById('sit');
     for (const yaw of [0, 35, 90, -40]) tile(sit, solve(SIT), `sit · yaw ${yaw}`, yaw, [0.25, 0.3, 0], 2.6, [0.66, 0.06, 0.13]);
+    const upEl = document.getElementById('up');
+    for (const yaw of [0, 35, 90, -40]) tile(upEl, solve(UP), `up · yaw ${yaw}`, yaw, [0.25, 0.3, 0], 2.6, [0.66, 0.06, 0.13]);
+    const idle = document.getElementById('idle');
+    const idleFrames = +(q.get('idle') || 8);
+    for (let i = 0; i < idleFrames; i++) {
+      const tt = (i / idleFrames) * IDLE.period;
+      tile(idle, solve(idlePose(tt)), `idle · ${tt.toFixed(1)} s`, 20, [0.25, 0.3, 0], 2.6, [0.66, 0.06, 0.13]);
+    }
     const gallop = document.getElementById('gallop');
     for (let i = 0; i < frames; i++) {
       const t = i / frames;

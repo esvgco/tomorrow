@@ -211,13 +211,15 @@ export class Ps1View {
   update(J, hole) {
     const up = new THREE.Vector3(0, 1, 0);
     const d = new THREE.Vector3();
+    const bs = J.bodyScale || 1; // the torso thins as it stretches
     for (const p of this.parts) {
       const a = J[p.s.a], b = J[p.s.b];
       d.set(b[0] - a[0], b[1] - a[1], b[2] - a[2]);
       const l = d.length();
+      const rs = p.s.g === 0 ? bs : 1;
       p.m.position.set(a[0], a[1], a[2]);
       p.m.quaternion.setFromUnitVectors(up, d.normalize());
-      p.m.scale.set(1, l / p.len, 1 / p.flat);
+      p.m.scale.set(rs, l / p.len, rs / p.flat);
       const inner = p.m.userData.inner;
       if (inner) inner.position.z = inner.userData.side * p.s.ra * 0.55 * p.flat;
     }
