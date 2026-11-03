@@ -253,27 +253,20 @@ export function solve(pose, profile = 'classic', ground = true) {
   J.tail0 = at(pelvis, lf, lu, -0.14, 0.035, 0);
   J.tail1 = add(J.tail0, dir(pose.tail), dim.tail);
   if (soft) {
-    // Two independent broad arches, designed in silhouette rather than derived
-    // from the anatomical two-bone ear. Their roots merge into the head, while
-    // the outer halves keep a generous gap, including during full extension.
+    // Matched 3D tubes: the same curve on either side of the head. Any
+    // difference in silhouette comes from perspective, not unequal anatomy.
+    const running = pose.motion === 'gallop';
+    const lean = running ? 136 + (pose.ear1 - 140)*0.45 : 110 + (pose.ear1 - 104)*0.3;
+    const bend = running ? 20 : 10;
     for (const side of ['N', 'F']) {
-      const upper = side === 'F';
-      const angle = ((pose.ear1 - 166) * 0.25) * D2R;
-      const cs = Math.cos(angle), sn = Math.sin(angle);
-      const points = upper
-        ? [[0.015, 0.125], [-0.16, 0.59], [-0.49, 0.42]]
-        : [[-0.055, 0.065], [-0.25, 0.37], [-0.48, 0.20]];
-      const curve = (t) => {
-        const x = (1-t)**2*points[0][0] + 2*(1-t)*t*points[1][0] + t*t*points[2][0];
-        const y = (1-t)**2*points[0][1] + 2*(1-t)*t*points[1][1] + t*t*points[2][1];
-        return [headBase[0] + x*cs-y*sn, headBase[1] + x*sn+y*cs,
-          (upper ? -1 : 1) * (0.055 + t*0.055)];
-      };
-      for (let i = 0; i <= 8; i++) J[`softEar${side}${i}`] = curve(i/8);
-      // Keep the rig overlay attached to the actual visible ear.
-      J[`ear${side}0`] = curve(0);
-      J[`ear${side}1`] = curve(.5);
-      J[`ear${side}2`] = curve(1);
+      const sign = side === 'N' ? 1 : -1;
+      const base = [headBase[0]-0.025, headBase[1]+0.105, sign*0.085];
+      const control = add(base, dir(lean), 0.235, sign*0.015);
+      const tip = add(base, dir(lean+bend), 0.43, sign*0.035);
+      J[`ear${side}0`] = base;
+      J[`softEar${side}Control`] = control;
+      J[`ear${side}1`] = base.map((v,k) => .25*v+.5*control[k]+.25*tip[k]);
+      J[`ear${side}2`] = tip;
     }
   }
   if (ground && pose.motion === 'gallop' && pose.contact) {

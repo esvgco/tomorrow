@@ -1,4 +1,4 @@
-// A distinct illustrated anatomy on the shared rig. Rounded paddles rather
+// A distinct illustrated anatomy on the shared rig. Curved tubes rather
 // than pointed anatomical ears; short muzzle, full head and pill-shaped feet.
 import { SHAPES, G } from './rig.js';
 
@@ -17,10 +17,9 @@ export const SOFT_SHAPES = SHAPES.filter(s => s.g !== G.EAR_N && s.g !== G.EAR_F
   return { ...s, ra, rb };
 });
 
-const widths = [0.046, 0.053, 0.060, 0.064, 0.067, 0.067, 0.065, 0.060, 0.052];
-for (const side of ['N', 'F']) {
-  for (let i = 0; i < 8; i++) SOFT_SHAPES.push({
-    a: `softEar${side}${i}`, b: `softEar${side}${i+1}`,
-    ra: widths[i], rb: widths[i+1], g: side === 'N' ? G.EAR_N : G.EAR_F, flat: 1.7,
-  });
-}
+// Each ear is one continuous quadratic tube, slightly fuller at its round tip.
+// No overlapping bead primitives and no flattening across depth.
+for (const side of ['N', 'F']) SOFT_SHAPES.push({
+  a: `ear${side}0`, b: `ear${side}2`, control: `softEar${side}Control`,
+  ra: 0.048, rb: 0.061, g: side === 'N' ? G.EAR_N : G.EAR_F,
+});

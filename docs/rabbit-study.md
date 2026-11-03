@@ -88,8 +88,8 @@ in extended flight. The revised keys lift the gaze, keep the ears above the back
 reach the forelegs forward in flight and reduce the spinal fold. A `stretch` channel
 scales only lumbar/thoracic lengths (keys 0.96–1.12), leaving limb lengths intact.
 
-`site/js/soft.js` supplies a separate shape set (29 primitives): wide, curved ears
-are sampled quadratic curves with six round-cone segments each. Both Sky and
+`site/js/soft.js` supplies a separate shape set (33 primitives): wide, curved ears
+are sampled quadratic curves with eight round-cone segments each. Both Sky and
 Gradient use that anatomy. The gradient is matte with restrained directional shade.
 
 Validation: `node tests/rig.mjs` samples 1,001 phases per anatomy, checks finite
@@ -117,3 +117,38 @@ Validation: 1,001 sampled phases match the earlier classic torso and leg joint
 trajectories to floating-point precision. Both profiles' sitting/inspection loops
 match the pre-restoration version exactly. Rig tests check authored support
 contacts, finite geometry, cycle closure and positional continuity.
+
+## Soft ear arches and running posture — 2026-11-03
+
+Soft ears now use two separately authored quadratic arches, each sampled into
+8 broad round-cone segments with rounded tips. The outer halves remain separated
+in side silhouette throughout the cycle; ear motion is restrained so they do not
+collapse onto the back in flight. The rig overlay follows the new curves. Soft
+camera framing includes the larger silhouette in the main page and contact lab.
+
+Running body keys reduce the lumbar/thoracic fold (the maximum keyed difference
+is now 38 degrees instead of 68), raise the neck and bring the gaze forward.
+The restored nine-phase timing, stride, limb angles and near/far offsets are
+unchanged. Sitting pose channels and palettes are unchanged. This supersedes the
+exact torso-trajectory match recorded in the earlier restoration note.
+
+Validation: rig tests pass; 1,001 phases confirm unchanged near/far limb channels
+and separated outer ear arches. Browser review covers the contact sheet's sitting
+angles and running phases, plus the main page at half speed.
+
+## Matched tubular ears — 2026-11-03
+
+Supersedes the separate silhouette arches above. Soft ears are now a mirrored
+pair of equal 0.43-unit quadratic tubes, rooted at the same x/y on each side of
+the head. Radius increases gently from 0.048 to 0.061, with round end caps and
+no depth flattening. Idle ears lean slightly back with restrained curvature;
+running ears sweep farther back using the existing ear channel. Exact side views
+naturally overlap; the anatomy is no longer distorted to force two visible arcs.
+
+The SDF evaluates each tube as a single continuous curve (five closest-point
+Newton iterations on these shallow quadratics), replacing the smooth-unioned
+segment chain that caused repeated bulges. Body anatomy, sitting poses, running
+keys, limb motion and palettes are unchanged. Tests check mirrored ear geometry;
+1,001 sampled running frames and idle samples also match the preceding version
+at every non-ear joint. Browser inspection covers front, profile and three-quarter
+views in sitting and running poses.

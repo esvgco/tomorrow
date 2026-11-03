@@ -19,6 +19,7 @@ const COMMON = /* glsl */ `
 uniform vec4 uA[NS];
 uniform vec4 uB[NS];
 uniform vec4 uC[NS];
+uniform vec3 uControl[NS];
 uniform vec3 uCamPos;
 uniform mat4 uCamWorld;
 uniform mat4 uProjInv;
@@ -61,6 +62,22 @@ float sdRoundCone(vec3 p, vec3 a, vec3 b, float r1, float r2) {
   return (sqrt(x2 * a2 * il2) + y * rr) * il2 - r1;
 }
 
+// Closest point on a gently curved quadratic centreline. A single distance
+// field avoids the repeated bulges from smooth-unioning overlapping segments.
+float sdEarTube(vec3 p, vec3 a, vec3 c, vec3 b, float r0, float r1) {
+  vec3 ab = b-a;
+  float t = clamp(dot(p-a, ab)/dot(ab, ab), 0.0, 1.0);
+  vec3 acc = 2.0*(a-2.0*c+b);
+  for (int i=0; i<5; i++) {
+    vec3 q = mix(mix(a,c,t), mix(c,b,t), t);
+    vec3 v = 2.0*mix(c-a,b-c,t);
+    float denom = dot(v,v)+dot(q-p,acc);
+    t = clamp(t-dot(q-p,v)/max(denom,0.0001),0.0,1.0);
+  }
+  vec3 q = mix(mix(a,c,t), mix(c,b,t), t);
+  return (length(p-q)-mix(r0,r1,t))/1.04;
+}
+
 float mapG(vec3 p, out int gid) {
   float dg[8];
   for (int i = 0; i < 8; i++) dg[i] = 1e5;
@@ -76,7 +93,9 @@ float mapG(vec3 p, out int gid) {
     vec3 q = p;
     q.z = a.z + (p.z - a.z) * f;
     b.z = a.z + (b.z - a.z) * f;
-    float d = sdRoundCone(q, a, b, A.w, B.w) / f;
+    float d = C.z > 0.5
+      ? sdEarTube(p, A.xyz, uControl[i], B.xyz, A.w, B.w)
+      : sdRoundCone(q, a, b, A.w, B.w) / f;
     dg[g] = smin(dg[g], d, 0.022);
   }
   float best = dg[0];
@@ -310,6 +329,7 @@ export class SdfView {
     const zeros = () => Array.from({ length: NS }, () => new THREE.Vector4());
     this.uniforms = {
       uA: { value: zeros() }, uB: { value: zeros() }, uC: { value: zeros() },
+      uControl: { value: Array.from({ length: NS }, () => new THREE.Vector3()) },
       uCamPos: { value: new THREE.Vector3() },
       uCamWorld: { value: new THREE.Matrix4() },
       uProjInv: { value: new THREE.Matrix4() },
@@ -326,7 +346,7 @@ export class SdfView {
       uEyeR: { value: opts.style === 'pixel' ? 0.03 : 0.019 },
     };
     this.uniforms.uC.value.forEach(v => v.z = -1);
-    this.shapes.forEach((s, i) => this.uniforms.uC.value[i].set(s.g, s.flat || 1, 0, 0));
+    this.shapes.forEach((s, i) => this.uniforms.uC.value[i].set(s.g, s.flat || 1, s.control ? 1 : 0, 0));
     this.uniforms.uMode.value = { contour: 0, pixel: 0, sky: 1, gradient: 2 }[this.style];
 
     this.marchMat = new THREE.ShaderMaterial({
@@ -393,6 +413,7 @@ export class SdfView {
     let cx = 0, cy = 0, cz = 0, n = 0;
     this.shapes.forEach((s, i) => {
       const a = J[s.a], b = J[s.b];
+      if (s.control) u.uControl.value[i].set(...J[s.control]);
       u.uA.value[i].set(a[0], a[1], a[2], s.ra);
       u.uB.value[i].set(b[0], b[1], b[2], s.rb);
       cx += a[0] + b[0]; cy += a[1] + b[1]; cz += a[2] + b[2]; n += 2;

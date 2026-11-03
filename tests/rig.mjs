@@ -15,6 +15,11 @@ for (const profile of ['classic', 'soft']) {
       assert(Math.min(...clearances) >= -1e-9, `${profile}: support foot through floor`);
       assert(Math.abs(Math.min(...clearances)) < 1e-9, `${profile}: support lost contact`);
     }
+    if (profile === 'soft') for (const name of ['earN0', 'earN1', 'earN2', 'softEarNControl']) {
+      const a = J[name], b = J[name.replace('N', 'F')];
+      assert(Math.abs(a[0]-b[0]) < 1e-12 && Math.abs(a[1]-b[1]) < 1e-12
+        && Math.abs(a[2]+b[2]) < 1e-12, 'Soft ears must be a mirrored equal pair');
+    }
     if (profile === 'soft') for (const s of SOFT_SHAPES) {
       assert(J[s.a] && J[s.b], 'Every primitive must have joints');
       assert(distance(J[s.a], J[s.b]) > Math.abs(s.ra-s.rb), 'Round cone must have a real tangent');
