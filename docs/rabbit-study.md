@@ -39,14 +39,32 @@ the cursor, run along a path, dive into the hole) without redrawing anything per
 
 ### Poses and animation
 
-- `SIT` — sitting, head down, looking into the hole (the client's mark).
+- `SIT` — sitting, head down, looking into the hole (the client's mark). A hunched C: the
+  rump rises steeply (lumbar 48°), the back flattens over the shoulders (thoracic 18°), the
+  head drops. The rabbit only straightens out when it runs.
   `idlePose(t)` adds breathing, sniffing and an ear twitch.
-- `GALLOP` — six keys over 0.56 s, keyed against ref 05 frame by frame
-  (push-off 0.00 · extension 0.25 · fore landing 0.45 · fore stance 0.60 · gather 0.75 ·
-  hind landing 0.88; table in [references.md](references.md)). Cyclic Catmull-Rom between
-  keys. Far legs lag the near ones slightly (`GALLOP.far`). Keys marked `contact` have their
-  height solved so those feet sit on the ground; flight keys float above (`lift`).
-  `GALLOP.stride` is the distance covered per cycle when it travels.
+- `GALLOP` — the half-bound, nine keys over 0.56 s (timing from ref 05, poses from real
+  rabbits; table in [references.md](references.md)):
+  hind plant 0.00 · crouch 0.10 · launch 0.18 · toe-off 0.26 · flight 0.40 · fore reach 0.47 ·
+  fore plant 0.56 · fore stance 0.68 · gather 0.80. Cyclic Catmull-Rom between keys.
+  Far legs lag the near ones slightly (`GALLOP.far`). Keys marked `contact` have their
+  height solved so those feet sit on the ground, and while feet are planted the height is
+  solved every frame (`gallopPose`), so the body rides on its legs between keys too; flight
+  keys float `lift` above the line between the contact keys either side.
+  `GALLOP.stride` is the distance covered per cycle when it travels (≈1.9 body units, so
+  the planted feet don't skate).
+- What the half-bound does, and why the legs are keyed the way they are:
+  - The back is a spring: fully rounded at hind plant (lumbar 44°, thoracic −8°), it opens
+    through the push until body and hind legs are almost one line at toe-off, and goes
+    slightly hollow in flight (lumbar −4°, thoracic +4°). It rounds again as the forelegs
+    push back and the hind legs come forward.
+  - The hind legs push as a pair and fold like a spring on the way back: after toe-off they
+    trail straight behind, then the knee and ankle fold (hock up, foot tucked) so the leg
+    travels forward *along the belly*, not sweeping down through the vertical like a broom,
+    and only unfolds forward-down at the end to plant ahead of where the forepaws were.
+  - The forelegs are pressed to the chest during the hind push, shoot forward in flight,
+    reach down to land, push back under the chest, and fold up again on the way forward.
+  - Head stays forward and roughly level; ears flatten in flight and come up in the gather.
 
 ### Renderers
 
@@ -72,7 +90,11 @@ the reference frames: `lab.html?style=contour|pixel|sky|gradient|ps1&frames=16&r
 ## Next steps
 
 - Tune proportions per look (the soft geometric one wants a rounder, chunkier body; the pixel
-  one may want hand-placed eye/ear pixels on top of the render).
+  one may want hand-placed eye/ear pixels on top of the render). The rump and haunches were
+  already made bigger (pelvis radius 0.172, thigh 0.115, hips wider).
+- The body height during the push is dictated by leg geometry (feet stay on the ground), so
+  there is a small bob just before toe-off; if it shows, ease it with a short custom height
+  curve over the stance instead of the per-frame solve.
 - More clips on the same rig: hop (refs 06/10), sit ↔ run transitions, look-at-cursor,
   dive into the hole, emerge.
 - Pick one look with the client, then decide whether the site keeps the SDF renderer or the
