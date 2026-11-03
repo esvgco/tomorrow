@@ -25,6 +25,7 @@ uniform mat4 uCamWorld;
 uniform mat4 uProjInv;
 uniform vec4 uBound;
 uniform vec4 uHole;
+uniform float uGround; // 1: the ground plane y=0 hides what is below it (the rabbit can go down the hole); 2: also a hairline along z=0
 uniform vec3 uNose;
 uniform vec3 uEyeN;
 uniform vec3 uEyeF;
@@ -153,6 +154,15 @@ float march(vec3 ro, vec3 rd, out float minD, out float minT) {
   return -1.0;
 }
 
+// the ground plane outside the hole, when it is switched on: paper, and it hides what is under it
+float groundHit(vec3 ro, vec3 rd) {
+  if (uGround < 0.5 || rd.y >= 0.0 || ro.y <= 0.0) return -1.0;
+  float t = -ro.y / rd.y;
+  vec3 p = ro + rd * t;
+  if (uHole.w > 0.5 && length(p.xz - uHole.xy) < uHole.z) return -1.0;
+  return t;
+}
+
 float holeHit(vec3 ro, vec3 rd) {
   if (uHole.w < 0.5 || rd.y >= 0.0) return -1.0;
   float t = -ro.y / rd.y;
@@ -221,8 +231,16 @@ void main() {
   float minD, minT;
   float t = march(ro, rd, minD, minT);
   float th = holeHit(ro, rd);
+  float tg = groundHit(ro, rd);
+  if (tg > 0.0 && (t < 0.0 || tg < t)) { t = -1.0; th = -1.0; }
   if (uMode == 0) {
-    // G-buffer: t, part, light, feature
+    // G-buffer: t, part, light, feature (part 9 = hole, 10 = ground plane)
+    if (tg > 0.0 && t < 0.0 && th < 0.0) {
+      // the ground: paper, or ink where the hairline runs along z = 0 (about one pixel wide)
+      // one pixel on screen covers more ground the flatter the ray hits it
+      bool line = uGround > 1.5 && abs(ro.z + rd.z * tg) < uPixAngle * tg * 1.2 / max(abs(rd.y), 0.02);
+      fragColor = vec4(tg, line ? 9.0 : 10.0, 0.0, 0.0); return;
+    }
     if (th > 0.0 && (t < 0.0 || th < t)) { fragColor = vec4(th, 9.0, 0.0, 0.0); return; }
     if (t < 0.0) { fragColor = vec4(-1.0, -1.0, 0.0, 0.0); return; }
     vec3 p = ro + rd * t;
@@ -256,9 +274,10 @@ in vec2 vUv;
 out vec4 fragColor;
 
 bool edge(vec4 c, vec4 n) {
-  bool ch = c.x > 0.0, nh = n.x > 0.0;
+  bool ch = c.x > 0.0 && c.y < 9.5, nh = n.x > 0.0 && n.y < 9.5; // the ground plane counts as nothing
   if (ch != nh) return true;
   if (!ch) return false;
+  if (c.y > 9.5 && n.y > 9.5) return false; // ground against ground: no line
   if (c.y > 8.5 || n.y > 8.5) return abs(c.y - n.y) > 0.5;
   float dd = abs(c.x - n.x);
   if (dd > 0.05) return true;
@@ -270,6 +289,7 @@ void main() {
   ivec2 px = ivec2(gl_FragCoord.xy);
   ivec2 sz = textureSize(uG, 0);
   vec4 c = texelFetch(uG, px, 0);
+  if (c.y > 9.5) { fragColor = vec4(uPaper, 1.0); return; } // ground plane: paper, no edges drawn on it
   if (c.y > 8.5 || c.w > 0.5) { fragColor = vec4(uInk, 1.0); return; }
   float ink = 0.0;
   for (int r = 1; r <= 2; r++) {
@@ -297,6 +317,7 @@ void main() {
   ivec2 sz = textureSize(uG, 0);
   vec4 c = texelFetch(uG, px, 0);
   if (c.x < 0.0) { fragColor = vec4(uPaper, 1.0); return; }
+  if (c.y > 9.5) { fragColor = vec4(uPaper, 1.0); return; }
   if (c.y > 8.5) { fragColor = vec4(uInk, 1.0); return; }
   if (c.w > 0.5 && c.w < 1.5) { fragColor = vec4(uPaper, 1.0); return; }
   ivec2 nb[4] = ivec2[4](ivec2(1, 0), ivec2(-1, 0), ivec2(0, 1), ivec2(0, -1));
@@ -322,6 +343,7 @@ export class SdfView {
     this.style = opts.style;
     this.shapes = ['sky', 'gradient'].includes(this.style) ? SOFT_SHAPES : SHAPES;
     this.pixelSize = opts.pixelSize || 5;
+    this.maxDpr = opts.maxDpr; // cap for big canvases: every pixel is a ray
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: false, preserveDrawingBuffer: false });
     this.renderer.setClearColor(0xffffff, 1);
     this.renderer.outputColorSpace = THREE.LinearSRGBColorSpace; // colours below are display values
@@ -338,6 +360,7 @@ export class SdfView {
       uProjInv: { value: new THREE.Matrix4() },
       uBound: { value: new THREE.Vector4(0, 0.3, 0, 1) },
       uHole: { value: new THREE.Vector4(0, 0, 0, 0) },
+      uGround: { value: opts.ground ? 1 : 0 },
       uNose: { value: new THREE.Vector3() },
       uEyeN: { value: new THREE.Vector3() },
       uEyeF: { value: new THREE.Vector3() },
@@ -399,7 +422,7 @@ export class SdfView {
       this.target.setSize(pw, ph);
       this.uniforms.uRes.value.set(pw, ph);
     } else {
-      const dpr = Math.min(window.devicePixelRatio || 1, this.style === 'contour' ? 2 : 1.5);
+      const dpr = Math.min(window.devicePixelRatio || 1, this.maxDpr || (this.style === 'contour' ? 2 : 1.5));
       this.renderer.setPixelRatio(dpr);
       this.renderer.setSize(w, h, false);
       const bw = Math.round(w * dpr), bh = Math.round(h * dpr);
