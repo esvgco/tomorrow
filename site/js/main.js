@@ -32,8 +32,9 @@ function setupCard(el) {
     view: def.make(canvas),
     yaw: mode === 'model' ? 32 : 0,
     pitch: mode === 'model' ? 9 : 4,
-    dist: mode === 'model' ? 3.2 : 3.6,
-    target: mode === 'model' ? [0.3, 0.33, 0] : [0, 0.33, 0],
+    dist: version === 'sky' ? 3.8 : mode === 'model' ? 3.2 : 3.6,
+    target: mode === 'model' ? [0.3, version === 'sky' ? 0.48 : 0.33, 0]
+      : [0, version === 'sky' ? 0.48 : 0.33, 0],
     speed: 1,
     travel: mode === 'run',
     rig: false,

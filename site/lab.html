@@ -45,6 +45,7 @@
     const v = new THREE.Vector3();
 
     function tile(parent, J, label, yaw = +(q.get('yaw') || 0), target = [0.05, 0.38, 0], dist = 3.1, hole = null) {
+      if (profile === 'soft') { target = [target[0], 0.48, target[2]]; dist = 3.6; }
       const cam = view.camera;
       const y = yaw * Math.PI / 180, p = 4 * Math.PI / 180;
       cam.position.set(target[0] + Math.sin(y) * Math.cos(p) * dist, target[1] + Math.sin(p) * dist, target[2] + Math.cos(y) * Math.cos(p) * dist);
