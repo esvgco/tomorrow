@@ -28,7 +28,7 @@
   <canvas id="view"></canvas>
   <script type="module">
     import * as THREE from 'three';
-    import { solve, SIT, gallopPose, BONES } from './js/rig.js';
+    import { solve, SIT, gallopPose, BONES, SHAPES_SOFT } from './js/rig.js';
     import { SdfView } from './js/sdf.js';
     import { Ps1View } from './js/ps1.js';
 
@@ -38,7 +38,8 @@
     const showRig = q.get('rig') !== '0';
     const canvas = document.getElementById('view');
     const view = style === 'ps1' ? new Ps1View(canvas, { pixelSize: 2 })
-      : new SdfView(canvas, { style, bg: style === 'sky' ? '#14a3e4' : '#ffffff', palette: +(q.get('palette') || 0) });
+      : new SdfView(canvas, { style, bg: style === 'sky' ? '#14a3e4' : '#ffffff', palette: +(q.get('palette') || 0),
+        ...(style === 'sky' || style === 'gradient' ? { shapes: SHAPES_SOFT, blend: 1.6 } : {}) });
     view.resize();
     const v = new THREE.Vector3();
 

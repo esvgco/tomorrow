@@ -34,15 +34,15 @@ poses below follow a real rabbit instead, and the 9-frame run breakdown the team
 
 | t | Ref 05 fr. | Key | Pose |
 |---|---|---|---|
-| 0.00 | 14–16 | **Hind plant** | Back at its roundest, head forward, tail tucked. Hind feet reach ahead of the body (thigh forward, shin folded back under it, foot out to the toes) and plant together. Forelegs folded up under the chest. |
-| 0.10 | 1 | **Crouch** | The body passes over the planted feet and sinks on them (lowest point); the back begins to open. Forelegs still pressed to the chest. |
+| 0.00 | 14–16 | **Hind plant** | Back at its roundest (a C leaning forward: rump high, head low), tail tucked. Hind feet reach ahead of the body (thigh forward, shin folded back under it, foot out to the toes) and plant together. Forelegs folded up under the chest. |
+| 0.09 | 1 | **Crouch** | The body passes over the planted feet and sinks on them (lowest point); the back begins to open. Forelegs still pressed to the chest. |
 | 0.18 | 2 | **Launch** | Hind legs straightening under the body, hocks and toes flat on the ground; the back nearly straight, nose up. |
-| 0.26 | 3 | **Toe-off** | Hind legs one straight line down-back to the toes; spine and legs almost one line. Forelegs still tucked, just starting to open. |
-| 0.40 | 5–6 | **Flight** | Longest silhouette, highest point. Back slightly hollow, ears flat. Hind legs trail straight back; forelegs shoot forward. |
-| 0.47 | 7 | **Fore reach** | Forelegs reach down ahead to land. Hind knees fold, hocks drop, feet begin to tuck. |
-| 0.56 | 8–9 | **Fore plant** | Forelegs straight down under the chest, paws flat. Hind legs folded into a Z, feet tucked up under the belly, rolling forward close to the body. |
-| 0.68 | 10–11 | **Fore stance** | Forelegs push back under the chest; back starts to round. Hind legs still folded, feet skimming forward past the forepaws. |
-| 0.80 | 12–13 | **Gather** | All feet off the ground. Head forward, forelegs back, hind legs forward and unfolding toward the ground. The back rounds into the next plant. |
+| 0.27 | 3 | **Toe-off** | Hind legs one straight line down-back to the toes; spine and legs almost one line. Forelegs still tucked, just starting to open. |
+| 0.42 | 5–6 | **Flight** | Longest silhouette, highest point. Back a hollow arc (rump and head up), ears flat. Hind legs trail straight back; forelegs shoot forward. |
+| 0.54 | 7 | **Fore reach** | Forelegs reach down ahead to land. Hind knees fold, hocks drop, feet begin to tuck. |
+| 0.64 | 8–9 | **Fore plant** | Forelegs down under the chest, toes angled. Hind legs folded into a Z, feet tucked up under the belly, rolling forward close to the body. |
+| 0.76 | 10–11 | **Fore stance** | Brief: the body vaults over the forelegs, they push back; back starts to round. Hind legs still folded, feet skimming forward past the forepaws. |
+| 0.88 | 12–13 | **Gather** | All feet off the ground. Head forward and low, forelegs back, hind legs forward and unfolding toward the ground. The back rounds into a C leaning forward for the next plant. |
 
 Left/right legs are almost in phase (hind legs as a pair, forelegs slightly staggered) — a
 rabbit "half-bound" rather than a horse gallop. While feet are planted the body's height is

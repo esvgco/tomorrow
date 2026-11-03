@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { solve, idlePose, gallopPose, GALLOP, BONES } from './rig.js';
+import { solve, idlePose, gallopPose, GALLOP, BONES, SHAPES_SOFT } from './rig.js';
 import { SdfView } from './sdf.js';
 import { Ps1View } from './ps1.js';
 
@@ -7,7 +7,7 @@ const VERSIONS = {
   contour: { make: (c) => new SdfView(c, { style: 'contour' }) },
   pixel: { make: (c) => new SdfView(c, { style: 'pixel', pixelSize: 5 }) },
   sky: {
-    make: (c) => new SdfView(c, { style: 'sky', bg: '#14a3e4' }),
+    make: (c) => new SdfView(c, { style: 'sky', bg: '#14a3e4', ...SOFT }),
     palettes: [
       { label: 'Sky', style: 'sky', bg: '#14a3e4' },
       { label: 'Gradient · nose', style: 'gradient', bg: '#ffffff', palette: 0 },
@@ -17,6 +17,8 @@ const VERSIONS = {
   ps1: { make: (c) => new Ps1View(c, { pixelSize: 2.5 }) },
 };
 
+/** Version 03 wears the soft set of primitives, melted together more. */
+const SOFT = { shapes: SHAPES_SOFT, blend: 1.6 };
 const HOLE = [0.66, 0.06, 0.13];
 const cards = [];
 const v3 = new THREE.Vector3();
@@ -71,7 +73,7 @@ function setPalette(version, i) {
       const fresh = c.canvas.cloneNode(false);
       c.canvas.replaceWith(fresh);
       c.canvas = fresh;
-      c.view = new SdfView(fresh, { style: p.style, bg: p.bg, palette: p.palette || 0 });
+      c.view = new SdfView(fresh, { style: p.style, bg: p.bg, palette: p.palette || 0, ...SOFT });
     }
     c.view.setBg(p.bg);
     if (p.palette !== undefined) c.view.setPalette(p.palette);

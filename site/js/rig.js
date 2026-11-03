@@ -15,7 +15,7 @@
 export const DIM = {
   lumbar: 0.17, thoracic: 0.165, neck: 0.075, head: 0.18,
   ear1: 0.13, ear2: 0.13,
-  upperArm: 0.12, forearm: 0.12, paw: 0.065,
+  upperArm: 0.12, forearm: 0.12, paw: 0.05,
   thigh: 0.16, shin: 0.16, foot: 0.15,
   tail: 0.03,
   hipZ: 0.082, shoulderZ: 0.06, earZ: 0.032, eyeZ: 0.06,
@@ -32,15 +32,17 @@ const dir = (a) => [Math.cos(a * D2R), Math.sin(a * D2R)];
 const add = (p, d, k, z = 0) => [p[0] + d[0] * k, p[1] + d[1] * k, p[2] + z];
 
 /** Sitting, looking down into the hole in front of it (the client's mark).
- * The resting rabbit is a hunched C: the rump rises steeply, the back flattens
- * over the shoulders, the head drops. It only straightens out when it runs.
+ * The resting rabbit is a hunched C: the rump rises steeply over the hips and
+ * from there the back runs in one straight slope down to the head, no bump at
+ * the shoulders. It only straightens out when it runs. Forelegs: elbow tucked
+ * back, forearm nearly vertical, a short toe angled forward (no "boot").
  * Limb angles live in the same ranges as the gallop (hind thigh ~190–345,
  * forearm ~200–335), so a blend between the two never wraps round. */
 export const SIT = {
-  x: 0, y: 0.158, lumbar: 48, thoracic: 18, neck: 24, head: -34,
+  x: 0, y: 0.175, lumbar: 44, thoracic: 6, neck: -8, head: -36,
   ear1: 96, ear2: 102, earSplay: 0.16, tail: 150,
-  f1: 265, f2: 268, f3: 360,
-  h1: 345, h2: 208, h3: 360,
+  f1: 220, f2: 286, f3: 318,
+  h1: 345, h2: 215, h3: 360,
 };
 
 /** The half-bound: hind feet push as a pair, forefeet land one just after the
@@ -64,38 +66,38 @@ export const GALLOP = {
     // hind plant: back at its roundest, head forward; hind feet reach ahead of the body
     // (thigh forward, shin folded back under it, foot out to the toes); forelegs folded
     // up under the chest
-    { t: 0.0, contact: 'hind', lumbar: 44, thoracic: -8, neck: 14, head: -10, ear1: 140, ear2: 152, earSplay: 0.16, tail: 120,
+    { t: 0.0, contact: 'hind', lumbar: 56, thoracic: -12, neck: 2, head: -10, ear1: 140, ear2: 152, earSplay: 0.16, tail: 120,
       f1: 292, f2: 198, f3: 245, h1: 332, h2: 238, h3: 322 },
     // hind stance: the body passes over the feet and sinks on them, the back opens;
     // forelegs stay pressed to the chest (elbows bent, paws hanging)
-    { t: 0.10, contact: 'hind', lumbar: 28, thoracic: 2, neck: 14, head: -8, ear1: 148, ear2: 160, earSplay: 0.14, tail: 136,
+    { t: 0.09, contact: 'hind', lumbar: 36, thoracic: 0, neck: 8, head: -8, ear1: 148, ear2: 160, earSplay: 0.14, tail: 136,
       f1: 300, f2: 205, f3: 250, h1: 288, h2: 214, h3: 346 },
     // launch: the legs straighten under the body, hocks and toes flat on the ground
-    { t: 0.18, contact: 'hind', lumbar: 14, thoracic: 5, neck: 15, head: -7, ear1: 154, ear2: 166, earSplay: 0.13, tail: 148,
+    { t: 0.18, contact: 'hind', lumbar: 16, thoracic: 8, neck: 14, head: -6, ear1: 154, ear2: 166, earSplay: 0.13, tail: 148,
       f1: 305, f2: 212, f3: 255, h1: 262, h2: 232, h3: 338 },
     // toe-off: hind legs a straight line down-back to the toes, spine and legs almost one
     // line, nose up; forelegs still tucked, just starting to open
-    { t: 0.26, contact: 'hind', lumbar: 2, thoracic: 6, neck: 16, head: -6, ear1: 160, ear2: 172, earSplay: 0.12, tail: 158,
+    { t: 0.27, contact: 'hind', lumbar: 0, thoracic: 8, neck: 18, head: -4, ear1: 160, ear2: 172, earSplay: 0.12, tail: 158,
       f1: 310, f2: 225, f3: 262, h1: 236, h2: 228, h3: 246 },
     // flight: longest silhouette, back slightly hollow, ears flat, highest point
-    { t: 0.40, lift: 0.06, lumbar: -4, thoracic: 4, neck: 16, head: -10, ear1: 166, ear2: 178, earSplay: 0.10, tail: 166,
+    { t: 0.42, lift: 0.06, lumbar: -12, thoracic: 4, neck: 20, head: -8, ear1: 166, ear2: 178, earSplay: 0.10, tail: 166,
       f1: 338, f2: 332, f3: 318, h1: 200, h2: 188, h3: 184 },
     // fore reach: forelegs reach down ahead to land; hind legs begin to fold at the knee,
     // hocks dropping, feet tucking under
-    { t: 0.47, lift: 0.03, lumbar: -2, thoracic: 0, neck: 14, head: -14, ear1: 160, ear2: 172, earSplay: 0.12, tail: 160,
+    { t: 0.54, lift: 0.03, lumbar: -8, thoracic: 0, neck: 14, head: -14, ear1: 160, ear2: 172, earSplay: 0.12, tail: 160,
       f1: 320, f2: 300, f3: 330, h1: 250, h2: 180, h3: 300 },
-    // fore plant: forelegs straight down under the chest, paws flat; hind legs folded
+    // fore plant: forelegs down under the chest, toes angled; hind legs folded
     // into a Z, feet tucked up under the belly, rolling forward
-    { t: 0.56, contact: 'fore', lumbar: 4, thoracic: -4, neck: 14, head: -16, ear1: 152, ear2: 164, earSplay: 0.14, tail: 150,
-      f1: 288, f2: 278, f3: 352, h1: 272, h2: 192, h3: 370 },
-    // fore stance: forelegs push back under the chest, back starts to round;
-    // hind legs still folded, feet skimming forward past the forepaws
-    { t: 0.68, contact: 'fore', lumbar: 18, thoracic: -10, neck: 16, head: -14, ear1: 146, ear2: 158, earSplay: 0.16, tail: 136,
-      f1: 248, f2: 240, f3: 300, h1: 288, h2: 198, h3: 358 },
+    { t: 0.64, contact: 'fore', lumbar: 2, thoracic: -6, neck: 10, head: -16, ear1: 152, ear2: 164, earSplay: 0.14, tail: 150,
+      f1: 295, f2: 282, f3: 325, h1: 272, h2: 192, h3: 370 },
+    // fore stance (brief: the body vaults over the forelegs, the weight is on the hinds):
+    // forelegs push back, back rounds; hind legs still folded, feet skimming forward
+    { t: 0.76, contact: 'fore', lumbar: 26, thoracic: -14, neck: 4, head: -14, ear1: 146, ear2: 158, earSplay: 0.16, tail: 136,
+      f1: 262, f2: 250, f3: 300, h1: 292, h2: 200, h3: 358 },
     // gather (all feet off the ground): head forward, forelegs back, hind legs
     // forward and unfolding toward the ground
-    { t: 0.80, lift: 0.015, lumbar: 34, thoracic: -10, neck: 14, head: -12, ear1: 140, ear2: 152, earSplay: 0.16, tail: 124,
-      f1: 232, f2: 218, f3: 236, h1: 316, h2: 212, h3: 350 },
+    { t: 0.88, lift: 0.015, lumbar: 48, thoracic: -14, neck: 0, head: -12, ear1: 140, ear2: 152, earSplay: 0.16, tail: 124,
+      f1: 240, f2: 222, f3: 238, h1: 322, h2: 220, h3: 342 },
   ],
 };
 /** Cyclic Catmull-Rom through the keys of a track, at phase t ∈ [0,1). */
@@ -276,6 +278,33 @@ export const SHAPES = [
   { a: 'hipF', b: 'knF', ra: 0.115, rb: 0.058, g: G.HIND_F },
   { a: 'knF', b: 'hoF', ra: 0.045, rb: 0.026, g: G.HIND_F },
   { a: 'hoF', b: 'toeF', ra: 0.028, rb: 0.024, g: G.HIND_F },
+];
+
+/** The same skeleton dressed for the soft geometric look (ref 01): fewer ideas,
+ * fatter forms. Ears are two plain sausages, the face is one sausage from the
+ * back of the head to the nose, legs are thick sausages, the rump a ball. */
+export const SHAPES_SOFT = [
+  { a: 'pelvis', b: 'mid', ra: 0.19, rb: 0.16, g: G.BODY },
+  { a: 'mid', b: 'chest', ra: 0.16, rb: 0.13, g: G.BODY },
+  { a: 'tail0', b: 'tail1', ra: 0.06, rb: 0.055, g: G.BODY },
+  { a: 'chest', b: 'headBase', ra: 0.1, rb: 0.085, g: G.HEAD },
+  { a: 'headBack', b: 'snout', ra: 0.082, rb: 0.064, g: G.HEAD },
+  { a: 'earN0', b: 'earN1', ra: 0.042, rb: 0.042, g: G.EAR_N },
+  { a: 'earN1', b: 'earN2', ra: 0.042, rb: 0.034, g: G.EAR_N },
+  { a: 'earF0', b: 'earF1', ra: 0.042, rb: 0.042, g: G.EAR_F },
+  { a: 'earF1', b: 'earF2', ra: 0.042, rb: 0.034, g: G.EAR_F },
+  { a: 'shN', b: 'elN', ra: 0.055, rb: 0.042, g: G.FORE_N },
+  { a: 'elN', b: 'wrN', ra: 0.042, rb: 0.036, g: G.FORE_N },
+  { a: 'wrN', b: 'pawN', ra: 0.036, rb: 0.03, g: G.FORE_N },
+  { a: 'shF', b: 'elF', ra: 0.055, rb: 0.042, g: G.FORE_F },
+  { a: 'elF', b: 'wrF', ra: 0.042, rb: 0.036, g: G.FORE_F },
+  { a: 'wrF', b: 'pawF', ra: 0.036, rb: 0.03, g: G.FORE_F },
+  { a: 'hipN', b: 'knN', ra: 0.125, rb: 0.065, g: G.HIND_N },
+  { a: 'knN', b: 'hoN', ra: 0.05, rb: 0.038, g: G.HIND_N },
+  { a: 'hoN', b: 'toeN', ra: 0.038, rb: 0.032, g: G.HIND_N },
+  { a: 'hipF', b: 'knF', ra: 0.125, rb: 0.065, g: G.HIND_F },
+  { a: 'knF', b: 'hoF', ra: 0.05, rb: 0.038, g: G.HIND_F },
+  { a: 'hoF', b: 'toeF', ra: 0.038, rb: 0.032, g: G.HIND_F },
 ];
 
 // Put the feet down: a contact key's height is whatever sets those feet on

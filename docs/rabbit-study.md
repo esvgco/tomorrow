@@ -39,14 +39,16 @@ the cursor, run along a path, dive into the hole) without redrawing anything per
 
 ### Poses and animation
 
-- `SIT` — sitting, head down, looking into the hole (the client's mark). A hunched C: the
-  rump rises steeply (lumbar 48°), the back flattens over the shoulders (thoracic 18°), the
-  head drops. The rabbit only straightens out when it runs.
+- `SIT` — sitting, head down, looking into the hole (the client's mark). The rump rises
+  steeply over the hips (lumbar 44°) and from there the back runs in one straight slope down
+  to the head (thoracic 6°, neck −8°, head −36°), no bump at the shoulders. Forelegs: elbow
+  tucked back, forearm nearly vertical, a short toe angled forward rather than a flat "boot"
+  (the paw segment is 0.05 and sits at ~318°). The rabbit only straightens out when it runs.
   `idlePose(t)` adds breathing, sniffing and an ear twitch.
 - `GALLOP` — the half-bound, nine keys over 0.56 s (timing from ref 05, poses from real
   rabbits; table in [references.md](references.md)):
-  hind plant 0.00 · crouch 0.10 · launch 0.18 · toe-off 0.26 · flight 0.40 · fore reach 0.47 ·
-  fore plant 0.56 · fore stance 0.68 · gather 0.80. Cyclic Catmull-Rom between keys.
+  hind plant 0.00 · crouch 0.09 · launch 0.18 · toe-off 0.27 · flight 0.42 · fore reach 0.54 ·
+  fore plant 0.64 · fore stance 0.76 · gather 0.88. Cyclic Catmull-Rom between keys.
   Far legs lag the near ones slightly (`GALLOP.far`). Keys marked `contact` have their
   height solved so those feet sit on the ground, and while feet are planted the height is
   solved every frame (`gallopPose`), so the body rides on its legs between keys too; flight
@@ -54,16 +56,19 @@ the cursor, run along a path, dive into the hole) without redrawing anything per
   `GALLOP.stride` is the distance covered per cycle when it travels (≈1.9 body units, so
   the planted feet don't skate).
 - What the half-bound does, and why the legs are keyed the way they are:
-  - The back is a spring: fully rounded at hind plant (lumbar 44°, thoracic −8°), it opens
-    through the push until body and hind legs are almost one line at toe-off, and goes
-    slightly hollow in flight (lumbar −4°, thoracic +4°). It rounds again as the forelegs
-    push back and the hind legs come forward.
+  - The back is the main spring and moves a lot: a C leaning forward at hind plant (lumbar
+    56°, thoracic −12°, neck 2°: rump high, head low and forward), it opens through the push
+    until body and hind legs are almost one line at toe-off, and becomes a hollow arc in
+    flight (lumbar −12°, thoracic +4°, neck +20°: rump and head up, belly down). It rounds
+    again as the forelegs push back and the hind legs come forward.
   - The hind legs push as a pair and fold like a spring on the way back: after toe-off they
     trail straight behind, then the knee and ankle fold (hock up, foot tucked) so the leg
     travels forward *along the belly*, not sweeping down through the vertical like a broom,
     and only unfolds forward-down at the end to plant ahead of where the forepaws were.
   - The forelegs are pressed to the chest during the hind push, shoot forward in flight,
     reach down to land, push back under the chest, and fold up again on the way forward.
+    Their stance is brief (0.64–0.76): the body vaults over them, the weight stays on the
+    hinds.
   - Head stays forward and roughly level; ears flatten in flight and come up in the gather.
 
 ### Renderers
@@ -72,7 +77,7 @@ the cursor, run along a path, dive into the hole) without redrawing anything per
 |---|---|---|
 | 01 Contour | `sdf.js` (`style: 'contour'`) | Ray-marched signed distance field of the round cones, blended with a smooth minimum. Pass 1 writes a G-buffer (depth, part, light, eye/nose); pass 2 draws ink where the silhouette, a depth jump, or a part change with a depth step happens. |
 | 02 Pixel | `sdf.js` (`style: 'pixel'`) | Same G-buffer at ~1/5 resolution, 1-bit: black body, white 1-px seam on the far side of every occluding edge, white eye; scaled up with `image-rendering: pixelated`. |
-| 03 Sky / Gradient | `sdf.js` (`style: 'sky' \| 'gradient'`) | Same SDF shaded directly. Sky: white fading into the field colour by fresnel, blue eye, red nose. Gradient: ramp orange-red → coral → pink → white by distance from the nose (`palette 0`) or by how the surface faces the camera (`palette 1`), burgundy in the shadows. |
+| 03 Sky / Gradient | `sdf.js` (`style: 'sky' \| 'gradient'`, `shapes: SHAPES_SOFT`, `blend: 1.6`) | Same SDF, but dressed with `rig.SHAPES_SOFT` — fewer ideas, fatter forms: ears two plain sausages (round, not flattened), the face one sausage from the back of the head to the nose, thick sausage legs, a ball of a rump — melted together 1.6× more. Shaded directly. Sky: white fading into the field colour by fresnel, blue eye, red nose. Gradient: ramp orange-red → coral → pink → white by distance from the nose (`palette 0`) or by how the surface faces the camera (`palette 1`), burgundy in the shadows. |
 | 04 PS1 | `ps1.js` | Each round cone becomes a rigid 5–7-sided segment, flat faces, 32 px fur texture with nearest filtering, vertex snapping, affine texture mapping, 15-bit colour with 4×4 Bayer dither, blob shadow, low-res render scaled up. |
 
 ### Page — `site/index.html`, `site/js/main.js`
