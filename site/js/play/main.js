@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import {makePlayView} from './view.js?v=20261103-2';
+import {makePlayView} from './view.js?v=20261103-3';
 import {Game,HOLES} from './state.js';
 import {gamePose,blend} from './motion.js?v=20261103-2';
 let canvas=document.querySelector('#field');
@@ -11,7 +11,7 @@ world.add(new THREE.HemisphereLight('#ffffff','#527568',2));
 const sun=new THREE.DirectionalLight('#fff9e8',2.2);sun.position.set(-5,9,4);world.add(sun);
 const material=(color)=>new THREE.MeshStandardMaterial({color,roughness:1,metalness:0});
 const fieldMat=material('#91b2a1');
-const outline=new THREE.Shape();outline.moveTo(-12,-12);outline.lineTo(12,-12);outline.lineTo(12,12);outline.lineTo(-12,12);outline.closePath();
+const outline=new THREE.Shape();outline.moveTo(-200,-200);outline.lineTo(200,-200);outline.lineTo(200,200);outline.lineTo(-200,200);outline.closePath();
 for(const h of HOLES){const path=new THREE.Path();path.absarc(h.x,-h.z,.46,0,Math.PI*2,true);outline.holes.push(path);}
 const ground=new THREE.Mesh(new THREE.ShapeGeometry(outline,48),fieldMat);ground.rotation.x=-Math.PI/2;world.add(ground);
 const base=new THREE.Mesh(new THREE.BoxGeometry(24,.3,24),material('#739b89'));base.position.y=-.18;world.add(base);
@@ -39,6 +39,35 @@ shadowContext.fillStyle=radial;shadowContext.fillRect(0,0,64,64);
 const shadow=new THREE.Mesh(new THREE.PlaneGeometry(.95,.65),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(shadowCanvas),transparent:true,depthWrite:false}));
 shadow.rotation.x=-Math.PI/2;world.add(shadow);
 const targetMark=new THREE.Mesh(new THREE.RingGeometry(.11,.15,32),new THREE.MeshBasicMaterial({color:'#fff7ce',side:THREE.DoubleSide}));targetMark.rotation.x=-Math.PI/2;targetMark.position.y=.02;targetMark.visible=false;world.add(targetMark);
+// Keep geometry and gameplay shared; each direction owns its world materials.
+const styledMeshes=[];
+world.traverse(o=>{if(o.isMesh && o!==shadow){
+ const original=o.material;
+ const dark=original.color && original.color.getHex()===0x102d2d;
+ const mono=new THREE.MeshBasicMaterial({color:dark?0x111111:0xffffff,side:original.side});
+ styledMeshes.push({o,original,mono});
+ if(o!==ground && o!==base){
+ const edges=new THREE.LineSegments(new THREE.EdgesGeometry(o.geometry,25),new THREE.LineBasicMaterial({color:0x111111}));
+ edges.userData.styleEdge=true;o.add(edges);
+ }
+}});
+const gridCanvas=document.createElement('canvas');gridCanvas.width=gridCanvas.height=32;
+const gc=gridCanvas.getContext('2d');gc.fillStyle='#ffffff';gc.fillRect(0,0,32,32);
+gc.fillStyle='#f2f2f2';gc.fillRect(0,0,16,16);gc.fillRect(16,16,16,16);
+gc.fillStyle='#e0e0e0';gc.fillRect(0,0,32,1);gc.fillRect(0,0,1,32);
+const gridTexture=new THREE.CanvasTexture(gridCanvas);gridTexture.wrapS=gridTexture.wrapT=THREE.RepeatWrapping;
+gridTexture.magFilter=THREE.NearestFilter;gridTexture.minFilter=THREE.NearestFilter;
+const gridFloor=new THREE.MeshBasicMaterial({map:gridTexture});
+function styleWorld(){
+ const mono=style==='contour'||style==='pixel';
+ view.world.background=new THREE.Color(mono||style==='ps1'?'#ffffff':'#dce7e8');
+ view.world.fog=new THREE.Fog(mono||style==='ps1'?'#ffffff':'#dce7e8',15,55);
+ for(const {o,original,mono:ink} of styledMeshes){o.material=mono?ink:original;}
+ ground.material=style==='ps1'?gridFloor:mono?styledMeshes.find(x=>x.o===ground).mono:fieldMat;
+ base.visible=false;shadow.visible=!mono;
+ world.traverse(o=>{if(o.userData.styleEdge)o.visible=mono;if(o.isPoints)o.visible=style==='sky';});
+}
+styleWorld();
 const keys=new Set(),touch=new Set();let started=false,paused=false,last=performance.now(),lastState='free',previousJ=null,transitionFrom=null,transitionTime=1;
 const intro=document.querySelector('#intro'),score=document.querySelector('#score'),noticeTitle=document.querySelector('#notice-title'),noticeDetail=document.querySelector('#notice-detail');
 const help=document.querySelector('#help-panel');
@@ -69,7 +98,7 @@ for(const button of document.querySelectorAll('[data-style]'))button.onclick=()=
  const next=button.dataset.style;if(next===style)return;
  const old=view,position=old.camera.position.clone(),quaternion=old.camera.quaternion.clone();
  const fresh=canvas.cloneNode(false);canvas.replaceWith(fresh);canvas=fresh;
- style=next;view=makePlayView(canvas,style);view.world.add(world);old.dispose();
+ style=next;view=makePlayView(canvas,style);view.world.add(world);old.dispose();styleWorld();
  view.camera.position.copy(position);view.camera.quaternion.copy(quaternion);
  canvas.classList.toggle('pixelated',style==='pixel'||style==='ps1');
  canvas.addEventListener('pointerdown',onFieldPointer);
