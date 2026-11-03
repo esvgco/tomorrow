@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { solve, idlePose, gallopPose, GALLOP, BONES, SHAPES_SOFT } from './rig.js';
+import { solve, idlePose, gallopPose, GALLOP, BONES, SHAPES_SOFT, softEars } from './rig.js';
 import { SdfView } from './sdf.js';
 import { Ps1View } from './ps1.js';
 
@@ -161,12 +161,14 @@ function frame() {
     card.clock += dt * card.speed;
     card.view.resize();
     let J, hole = null;
+    const soft = card.version === 'sky';
     if (card.mode === 'model') {
-      J = solve(idlePose(card.clock));
+      const pose = idlePose(card.clock);
+      J = solve(soft ? softEars(pose) : pose);
       hole = HOLE;
     } else {
       const phase = card.clock / GALLOP.duration;
-      const pose = gallopPose(phase);
+      const pose = soft ? softEars(gallopPose(phase)) : gallopPose(phase);
       if (card.travel) {
         // across the frame and in again from the left, never long out of sight
         const cam = card.view.camera;

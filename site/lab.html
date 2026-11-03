@@ -20,7 +20,7 @@
   </script>
 </head>
 <body>
-  <p>Rig lab · <code>?style=contour|pixel|sky|gradient&amp;frames=16&amp;rig=1&amp;yaw=0</code></p>
+  <p>Rig lab · <code>?style=contour|pixel|sky|gradient|ps1&amp;frames=16&amp;idle=8&amp;rig=1&amp;yaw=0&amp;pitch=4</code> (pitch 85 = from above)</p>
   <h2>Sit · sniffing</h2>
   <div class="sheet" id="sit" style="--cols:4"></div>
   <h2>Sit · up, looking around</h2>
@@ -32,7 +32,7 @@
   <canvas id="view"></canvas>
   <script type="module">
     import * as THREE from 'three';
-    import { solve, SIT, UP, idlePose, IDLE, gallopPose, BONES, SHAPES_SOFT } from './js/rig.js';
+    import { solve, SIT, UP, idlePose, IDLE, gallopPose, BONES, SHAPES_SOFT, softEars } from './js/rig.js';
     import { SdfView } from './js/sdf.js';
     import { Ps1View } from './js/ps1.js';
 
@@ -46,10 +46,12 @@
         ...(style === 'sky' || style === 'gradient' ? { shapes: SHAPES_SOFT, blend: 1.6 } : {}) });
     view.resize();
     const v = new THREE.Vector3();
+    const soft = style === 'sky' || style === 'gradient';
+    const dress = (pose) => (soft ? softEars(pose) : pose);
 
     function tile(parent, J, label, yaw = +(q.get('yaw') || 0), target = [0.05, 0.3, 0], dist = 2.6, hole = null) {
       const cam = view.camera;
-      const y = yaw * Math.PI / 180, p = 4 * Math.PI / 180;
+      const y = yaw * Math.PI / 180, p = +(q.get('pitch') || 4) * Math.PI / 180;
       cam.position.set(target[0] + Math.sin(y) * Math.cos(p) * dist, target[1] + Math.sin(p) * dist, target[2] + Math.cos(y) * Math.cos(p) * dist);
       cam.lookAt(...target);
       cam.updateMatrixWorld();
@@ -81,19 +83,19 @@
     }
 
     const sit = document.getElementById('sit');
-    for (const yaw of [0, 35, 90, -40]) tile(sit, solve(SIT), `sit · yaw ${yaw}`, yaw, [0.25, 0.3, 0], 2.6, [0.66, 0.06, 0.13]);
+    for (const yaw of [0, 35, 90, -40]) tile(sit, solve(dress(SIT)), `sit · yaw ${yaw}`, yaw, [0.25, 0.3, 0], 2.6, [0.66, 0.06, 0.13]);
     const upEl = document.getElementById('up');
-    for (const yaw of [0, 35, 90, -40]) tile(upEl, solve(UP), `up · yaw ${yaw}`, yaw, [0.25, 0.3, 0], 2.6, [0.66, 0.06, 0.13]);
+    for (const yaw of [0, 35, 90, -40]) tile(upEl, solve(dress(UP)), `up · yaw ${yaw}`, yaw, [0.25, 0.3, 0], 2.6, [0.66, 0.06, 0.13]);
     const idle = document.getElementById('idle');
     const idleFrames = +(q.get('idle') || 8);
     for (let i = 0; i < idleFrames; i++) {
       const tt = (i / idleFrames) * IDLE.period;
-      tile(idle, solve(idlePose(tt)), `idle · ${tt.toFixed(1)} s`, 20, [0.25, 0.3, 0], 2.6, [0.66, 0.06, 0.13]);
+      tile(idle, solve(dress(idlePose(tt))), `idle · ${tt.toFixed(1)} s`, 20, [0.25, 0.3, 0], 2.6, [0.66, 0.06, 0.13]);
     }
     const gallop = document.getElementById('gallop');
     for (let i = 0; i < frames; i++) {
       const t = i / frames;
-      const pose = gallopPose(t);
+      const pose = dress(gallopPose(t));
       pose.x = 0;
       tile(gallop, solve(pose), `t ${t.toFixed(3)}`);
     }

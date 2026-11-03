@@ -86,7 +86,7 @@ the cursor, run along a path, dive into the hole) without redrawing anything per
 |---|---|---|
 | 01 Contour | `sdf.js` (`style: 'contour'`) | Ray-marched signed distance field of the round cones, blended with a smooth minimum. Pass 1 writes a G-buffer (depth, part, light, eye/nose); pass 2 draws ink where the silhouette, a depth jump, or a part change with a depth step happens. |
 | 02 Pixel | `sdf.js` (`style: 'pixel'`) | Same G-buffer at ~1/5 resolution, 1-bit: black body, white 1-px seam on the far side of every occluding edge, white eye; scaled up with `image-rendering: pixelated`. |
-| 03 Sky / Gradient | `sdf.js` (`style: 'sky' \| 'gradient'`, `shapes: SHAPES_SOFT`, `blend: 1.6`) | Same SDF, but dressed with `rig.SHAPES_SOFT` — fewer ideas, fatter forms: ears two plain sausages (round, not flattened), the face one sausage from the back of the head to the nose, thick sausage legs, a ball of a rump — melted together 1.6× more. Shaded directly. Sky: white fading into the field colour by fresnel, blue eye, red nose. Gradient: ramp orange-red → coral → pink → white by distance from the nose (`palette 0`) or by how the surface faces the camera (`palette 1`), burgundy in the shadows. |
+| 03 Sky / Gradient | `sdf.js` (`style: 'sky' \| 'gradient'`, `shapes: SHAPES_SOFT`, `blend: 1.6`) | Same SDF, but dressed with `rig.SHAPES_SOFT` — fewer ideas, fatter forms. From above the body is one long triangle from the hips to the nose: wide rump, narrower chest, thin neck, then the head a ball bigger than the neck with a short snout. Ears are two plain sausages, as thick at the tip as at the root, a quarter longer than the ear bones (`ext` on a shape runs it past its end joint) and swept back (`rig.softEars(pose)`, a pose tweak that bends the tips back the more upright they are). Thick sausage legs. Melted together 1.6× more. Shaded directly. Sky: white fading into the field colour by fresnel, blue eye, red nose. Gradient: ramp orange-red → coral → pink → white by distance from the nose (`palette 0`) or by how the surface faces the camera (`palette 1`), burgundy in the shadows. |
 | 04 PS1 | `ps1.js` | Each round cone becomes a rigid 5–7-sided segment, flat faces, 32 px fur texture with nearest filtering, vertex snapping, affine texture mapping, 15-bit colour with 4×4 Bayer dither, blob shadow, low-res render scaled up. |
 
 ### Page — `site/index.html`, `site/js/main.js`
@@ -98,8 +98,10 @@ Views only render while on screen. Three.js 0.170 from jsDelivr through an impor
 
 ### Lab — `site/lab.html`
 
-Contact sheet of the sit (4 angles) and N frames of the gallop with bones, for keying against
-the reference frames: `lab.html?style=contour|pixel|sky|gradient|ps1&frames=16&rig=1&yaw=0&palette=0`.
+Contact sheet of the two sits (4 angles each), the idle loop and N frames of the gallop with
+bones, for keying against the reference frames:
+`lab.html?style=contour|pixel|sky|gradient|ps1&frames=16&idle=8&rig=1&yaw=0&pitch=4&palette=0`
+(`pitch=85` looks down from above — useful for the plan-view proportions).
 
 ## Next steps
 

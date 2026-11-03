@@ -319,18 +319,21 @@ export const SHAPES = [
 ];
 
 /** The same skeleton dressed for the soft geometric look (ref 01): fewer ideas,
- * fatter forms. Ears are two plain sausages, the face is one sausage from the
- * back of the head to the nose, legs are thick sausages, the rump a ball. */
+ * fatter forms. Seen from above the body is one long triangle from the hips to
+ * the nose: wide rump, the chest already narrower, a thin neck, then the head a
+ * ball bigger than the neck with a short snout. Ears are two plain sausages,
+ * as thick at the tip as at the root and a quarter longer than the bones
+ * (`ext` stretches a segment past its end joint); legs are thick sausages. */
 export const SHAPES_SOFT = [
-  { a: 'pelvis', b: 'mid', ra: 0.19, rb: 0.16, g: G.BODY },
-  { a: 'mid', b: 'chest', ra: 0.16, rb: 0.13, g: G.BODY },
+  { a: 'pelvis', b: 'mid', ra: 0.19, rb: 0.165, g: G.BODY },
+  { a: 'mid', b: 'chest', ra: 0.165, rb: 0.12, g: G.BODY },
   { a: 'tail0', b: 'tail1', ra: 0.06, rb: 0.055, g: G.BODY },
-  { a: 'chest', b: 'headBase', ra: 0.1, rb: 0.085, g: G.HEAD },
-  { a: 'headBack', b: 'snout', ra: 0.082, rb: 0.064, g: G.HEAD },
-  { a: 'earN0', b: 'earN1', ra: 0.042, rb: 0.042, g: G.EAR_N },
-  { a: 'earN1', b: 'earN2', ra: 0.042, rb: 0.034, g: G.EAR_N },
-  { a: 'earF0', b: 'earF1', ra: 0.042, rb: 0.042, g: G.EAR_F },
-  { a: 'earF1', b: 'earF2', ra: 0.042, rb: 0.034, g: G.EAR_F },
+  { a: 'chest', b: 'headBase', ra: 0.08, rb: 0.068, g: G.HEAD },
+  { a: 'headBack', b: 'snout', ra: 0.1, rb: 0.068, g: G.HEAD },
+  { a: 'earN0', b: 'earN1', ra: 0.04, rb: 0.042, g: G.EAR_N },
+  { a: 'earN1', b: 'earN2', ra: 0.042, rb: 0.046, g: G.EAR_N, ext: 1.25 },
+  { a: 'earF0', b: 'earF1', ra: 0.04, rb: 0.042, g: G.EAR_F },
+  { a: 'earF1', b: 'earF2', ra: 0.042, rb: 0.046, g: G.EAR_F, ext: 1.25 },
   { a: 'shN', b: 'elN', ra: 0.055, rb: 0.042, g: G.FORE_N },
   { a: 'elN', b: 'wrN', ra: 0.042, rb: 0.036, g: G.FORE_N },
   { a: 'wrN', b: 'pawN', ra: 0.036, rb: 0.03, g: G.FORE_N },
@@ -344,6 +347,17 @@ export const SHAPES_SOFT = [
   { a: 'knF', b: 'hoF', ra: 0.05, rb: 0.038, g: G.HIND_F },
   { a: 'hoF', b: 'toeF', ra: 0.038, rb: 0.032, g: G.HIND_F },
 ];
+
+/** The soft look also carries its ears swept back: the more upright they are,
+ * the more the tips bend back (a pose tweak, so the bones stay shared). */
+export function softEars(pose) {
+  const bend = (p) => {
+    const k = Math.max(0, Math.min(1, (160 - p.ear1) / 50));
+    return { ear1: p.ear1 + 6 * k, ear2: p.ear2 + 22 * k };
+  };
+  const far = pose.far || pick(pose);
+  return { ...pose, ...bend(pose), far: { ...far, ...bend(far) } };
+}
 
 // Put the feet down: a contact key's height is whatever sets those feet on
 // the ground; a flight key floats `lift` above the line between the contact

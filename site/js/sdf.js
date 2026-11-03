@@ -393,8 +393,13 @@ export class SdfView {
     const u = this.uniforms;
     let cx = 0, cy = 0, cz = 0, n = 0;
     const bs = J.bodyScale || 1; // the torso thins as it stretches
+    const ends = this.shapes.map((s) => {
+      const a = J[s.a], b0 = J[s.b];
+      const e = s.ext || 1; // a segment may run past its end joint
+      return [a, e === 1 ? b0 : [a[0] + (b0[0] - a[0]) * e, a[1] + (b0[1] - a[1]) * e, a[2] + (b0[2] - a[2]) * e]];
+    });
     this.shapes.forEach((s, i) => {
-      const a = J[s.a], b = J[s.b];
+      const [a, b] = ends[i];
       const rs = s.g === G.BODY ? bs : 1;
       u.uA.value[i].set(a[0], a[1], a[2], s.ra * rs);
       u.uB.value[i].set(b[0], b[1], b[2], s.rb * rs);
@@ -402,9 +407,8 @@ export class SdfView {
     });
     cx /= n; cy /= n; cz /= n;
     let rad = 0;
-    this.shapes.forEach((s) => {
-      for (const k of [s.a, s.b]) {
-        const p = J[k];
+    this.shapes.forEach((s, i) => {
+      for (const p of ends[i]) {
         rad = Math.max(rad, Math.hypot(p[0] - cx, p[1] - cy, p[2] - cz) + Math.max(s.ra, s.rb) + 0.05);
       }
     });
