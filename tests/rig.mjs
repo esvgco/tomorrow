@@ -6,9 +6,15 @@ const distance = (a, b) => Math.hypot(...a.map((v, i) => v - b[i]));
 for (const profile of ['classic', 'soft']) {
   const radii = profile === 'soft' ? {wr:.043, paw:.043, ho:.047, toe:.044} : {wr:.025, paw:.022, ho:.028, toe:.024};
   for (let i = 0; i <= 1000; i++) {
-    const J = solve(gallopPose(i / 1000), profile);
+    const pose = gallopPose(i / 1000);
+    const J = solve(pose, profile);
     assert(Object.values(J).flat().every(Number.isFinite), 'All joints must be finite');
-    for (const side of ['N', 'F']) for (const [k, r] of Object.entries(radii)) assert(J[k+side][1] >= r - 1e-9, `${profile}: foot through floor`);
+    if (pose.contact) {
+      const feet = pose.contact === 'hind' ? ['ho', 'toe'] : ['wr', 'paw'];
+      const clearances = feet.flatMap(k => ['N', 'F'].map(side => J[k+side][1] - radii[k]));
+      assert(Math.min(...clearances) >= -1e-9, `${profile}: support foot through floor`);
+      assert(Math.abs(Math.min(...clearances)) < 1e-9, `${profile}: support lost contact`);
+    }
     if (profile === 'soft') for (const s of SOFT_SHAPES) {
       assert(J[s.a] && J[s.b], 'Every primitive must have joints');
       assert(distance(J[s.a], J[s.b]) > Math.abs(s.ra-s.rb), 'Round cone must have a real tangent');
@@ -18,13 +24,13 @@ for (const profile of ['classic', 'soft']) {
   for (const k of Object.keys(a)) assert(distance(a[k], b[k]) < 1e-9, 'Cycle must close');
   for (const mode of ['auto','sit','look']) for(let t=0;t<=12;t+=.1) assert(Object.values(solve(idlePose(t,mode),profile)).flat().every(Number.isFinite));
 }
-// Unevenly timed spline keys must still have matching incoming/outgoing velocity.
+// Restored uniform Catmull-Rom preserves the old timing. Positions must be
+// continuous; unequal key intervals do not promise continuous velocity.
 for (const k of GALLOP.keys) for (const c of CHANNELS) {
-  const e = 1e-6, p = sampleCycle(GALLOP,k.t)[c];
-  const left = (p-sampleCycle(GALLOP,k.t-e)[c])/e;
-  const right = (sampleCycle(GALLOP,k.t+e)[c]-p)/e;
-  assert(Math.abs(left-right)<.1, `${c}: discontinuous velocity`);
+  const e = 1e-8, p = sampleCycle(GALLOP,k.t)[c];
+  assert(Math.abs(p-sampleCycle(GALLOP,k.t-e)[c])<1e-4, `${c}: discontinuous pose`);
+  assert(Math.abs(sampleCycle(GALLOP,k.t+e)[c]-p)<1e-4, `${c}: discontinuous pose`);
 }
 assert.equal(SIT.lumbar, LOOK_DOWN.lumbar, 'Inspection keeps torso posture');
 assert.equal(SIT.thoracic, LOOK_DOWN.thoracic, 'Inspection keeps chest posture');
-console.log('Passed: finite joints, both profiles, floor clearance, valid SDF cones, cyclic seam, velocity continuity, idle states.');
+console.log('Passed: finite joints, both profiles, authored support contacts, valid SDF cones, cyclic seam, pose continuity, idle states.');

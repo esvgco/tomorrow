@@ -41,11 +41,13 @@ the cursor, run along a path, dive into the hole) without redrawing anything per
 
 - `SIT` — alert sitting, head lifted. `LOOK_DOWN` keeps the torso angles and lowers the neck/head toward the hole.
   `idlePose(t, mode)` eases between them over 12 seconds (`auto`), or holds `sit` / `look`, with breathing and an ear twitch.
-- `GALLOP` — six keys over 0.56 s, keyed against ref 05 frame by frame
-  (push-off 0.00 · extension 0.25 · fore landing 0.45 · fore stance 0.60 · gather 0.75 ·
-  hind landing 0.88; table in [references.md](references.md)). Cyclic time-aware cubic Hermite interpolation between
-  keys, with continuous velocity at unevenly spaced keys. Far legs lag the near ones slightly (`GALLOP.far`). Keys marked `contact` set the initial height; the solver also checks both sides at every sampled frame and lifts the whole rig when a foot would penetrate the floor. Flight keys float above (`lift`).
-  `GALLOP.stride` is the distance covered per cycle when it travels.
+- `GALLOP` — restored nine-key half-bound over 0.56 s from `009c361`: hind plant,
+  crouch, launch, toe-off, flight, fore reach, fore plant, fore stance, gather.
+  Uniform cyclic Catmull-Rom preserves the earlier timing. Far legs lag the near
+  pair. Adjacent keys with the same `contact` determine the support phase; its
+  feet set the body height. Flight heights interpolate between contact keys.
+  `GALLOP.stride` is 1.9. See the restoration note below for validation and limits.
+
 
 ### Renderers
 
@@ -98,3 +100,20 @@ buttons, pause/scrub and a 390 px viewport. Contact sheets: `/lab.html?style=sky
 Remaining animation limitation: this is still a keyed FK bound, without world-space
 IK foot locking. Floor clearance is enforced; exact no-slip planted contacts are
 not guaranteed while travelling.
+
+## Run restoration — 2026-11-03
+
+The merge `53ead12` replaced the nine-phase main-branch run with a six-phase
+revision. Restored the run from `009c361`: all nine keys, uniform Catmull-Rom
+sampling, fore/hind offsets, 1.9 stride, flight heights and contact-driven root
+height. Classic running paw length and hip spacing also match that revision.
+The latest SIT, LOOK_DOWN and idle motion, soft anatomy, and palettes are retained.
+Soft contact heights are fitted to its current proportions. Swing feet no longer
+raise the whole running body; as in the earlier run, this is keyed FK without
+IK locking or a guarantee of clearance for every swing foot. Unevenly spaced
+uniform spline keys retain the earlier velocity discontinuities.
+
+Validation: 1,001 sampled phases match the earlier classic torso and leg joint
+trajectories to floating-point precision. Both profiles' sitting/inspection loops
+match the pre-restoration version exactly. Rig tests check authored support
+contacts, finite geometry, cycle closure and positional continuity.

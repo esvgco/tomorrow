@@ -48,31 +48,59 @@ export const LOOK_DOWN = {
   ear1: 94, ear2: 108, f1: 264, f2: 272,
 };
 
-/** A bound: drive → long flight → fore catch → brief gather → hind drive.
- * Stretch is subtle (−4…+12%); the silhouette and timing do most of the work. */
+/** The half-bound: hind feet push as a pair, forefeet land one just after the
+ * other. Timing from ref 05 (green hare, 16 frames ≈ 0.53 s); the poses from
+ * real rabbits rather than the hare (see docs/references.md, "Animation breakdown").
+ *
+ * The cycle in one line: hind feet plant far forward under a rounded back,
+ * forelegs folded to the chest → the back opens as the hinds push, body and
+ * legs one line, forelegs still tucked → flight, longest silhouette, forelegs
+ * shoot forward → they reach down and plant → they push back while the hind
+ * legs, folded like a spring, roll forward along the belly → head forward,
+ * forelegs back, hind feet reaching ahead → forelegs fold up, hind feet plant.
+ *
+ * Limb channels are world angles (0 forward, 90 up, 180 back, 270 down).
+ * Keys marked `contact` get their height solved so those feet sit on the ground. */
 export const GALLOP = {
   duration: 0.56,
-  stride: 0.95,
-  far: { fore: -0.035, hind: -0.018 },
+  stride: 1.9, // ground covered per cycle, so the feet don't skate when it travels
+  far: { fore: -0.07, hind: -0.02 }, // far legs lag the near ones by this much phase
   keys: [
-    { t: 0, contact: 'hind', stretch: 1.04, lumbar: 8, thoracic: 10, neck: 32, head: 0,
-      ear1: 132, ear2: 146, earSplay: 0.16, tail: 150,
-      f1: 325, f2: 220, f3: 285, h1: 238, h2: 226, h3: 236 },
-    { t: 0.24, lift: 0.08, stretch: 1.12, lumbar: 3, thoracic: 5, neck: 28, head: 3,
-      ear1: 140, ear2: 151, earSplay: 0.16, tail: 164,
-      f1: 350, f2: 355, f3: 350, h1: 196, h2: 188, h3: 182 },
-    { t: 0.48, contact: 'fore', stretch: 1.06, lumbar: 0, thoracic: -6, neck: 30, head: -5,
-      ear1: 130, ear2: 144, earSplay: 0.18, tail: 154,
-      f1: 280, f2: 273, f3: 355, h1: 212, h2: 192, h3: 200 },
-    { t: 0.62, contact: 'fore', stretch: 1, lumbar: 10, thoracic: 0, neck: 35, head: -3,
-      ear1: 120, ear2: 135, earSplay: 0.18, tail: 144,
-      f1: 250, f2: 246, f3: 310, h1: 270, h2: 220, h3: 290 },
-    { t: 0.78, lift: 0.025, stretch: 0.96, lumbar: 22, thoracic: 5, neck: 34, head: 0,
-      ear1: 117, ear2: 132, earSplay: 0.18, tail: 135,
-      f1: 238, f2: 222, f3: 260, h1: 316, h2: 252, h3: 338 },
-    { t: 0.9, contact: 'hind', stretch: 0.98, lumbar: 16, thoracic: 8, neck: 34, head: 0,
-      ear1: 123, ear2: 138, earSplay: 0.17, tail: 143,
-      f1: 282, f2: 210, f3: 255, h1: 304, h2: 252, h3: 344 },
+    // hind plant: back at its roundest, head forward; hind feet reach ahead of the body
+    // (thigh forward, shin folded back under it, foot out to the toes); forelegs folded
+    // up under the chest
+    { t: 0.0, contact: 'hind', stretch: 0.9, lumbar: 38, thoracic: 0, neck: 24, head: -2, ear1: 140, ear2: 152, earSplay: 0.16, tail: 120,
+      f1: 292, f2: 198, f3: 245, h1: 332, h2: 238, h3: 322 },
+    // hind stance: the body passes over the feet and sinks on them, the back opens;
+    // forelegs stay pressed to the chest (elbows bent, paws hanging)
+    { t: 0.09, contact: 'hind', stretch: 0.94, lumbar: 28, thoracic: 5, neck: 26, head: 0, ear1: 148, ear2: 160, earSplay: 0.14, tail: 136,
+      f1: 300, f2: 205, f3: 250, h1: 288, h2: 214, h3: 346 },
+    // launch: the legs straighten under the body, hocks and toes flat on the ground
+    { t: 0.18, contact: 'hind', stretch: 1.02, lumbar: 14, thoracic: 8, neck: 26, head: 1, ear1: 154, ear2: 166, earSplay: 0.13, tail: 148,
+      f1: 305, f2: 212, f3: 255, h1: 262, h2: 232, h3: 338 },
+    // toe-off: hind legs a straight line down-back to the toes, spine and legs almost one
+    // line, nose up; forelegs still tucked, just starting to open
+    { t: 0.27, contact: 'hind', stretch: 1.09, lumbar: 0, thoracic: 8, neck: 28, head: 2, ear1: 160, ear2: 172, earSplay: 0.12, tail: 158,
+      f1: 310, f2: 225, f3: 262, h1: 236, h2: 228, h3: 246 },
+    // flight: longest silhouette, back slightly hollow, ears flat, highest point
+    { t: 0.42, lift: 0.06, stretch: 1.14, lumbar: -10, thoracic: 4, neck: 28, head: 0, ear1: 166, ear2: 178, earSplay: 0.10, tail: 166,
+      f1: 338, f2: 332, f3: 318, h1: 200, h2: 188, h3: 184 },
+    // fore reach: forelegs reach down ahead to land; hind legs begin to fold at the knee,
+    // hocks dropping, feet tucking under
+    { t: 0.54, lift: 0.03, stretch: 1.1, lumbar: -6, thoracic: 2, neck: 24, head: -4, ear1: 160, ear2: 172, earSplay: 0.12, tail: 160,
+      f1: 320, f2: 300, f3: 330, h1: 250, h2: 180, h3: 300 },
+    // fore plant: forelegs down under the chest, toes angled; hind legs folded
+    // into a Z, feet tucked up under the belly, rolling forward
+    { t: 0.64, contact: 'fore', stretch: 1.02, lumbar: 2, thoracic: -2, neck: 22, head: -6, ear1: 152, ear2: 164, earSplay: 0.14, tail: 150,
+      f1: 295, f2: 282, f3: 325, h1: 272, h2: 192, h3: 370 },
+    // fore stance (brief: the body vaults over the forelegs, the weight is on the hinds):
+    // forelegs push back, back rounds; hind legs still folded, feet skimming forward
+    { t: 0.76, contact: 'fore', stretch: 0.95, lumbar: 22, thoracic: -4, neck: 22, head: -5, ear1: 146, ear2: 158, earSplay: 0.16, tail: 136,
+      f1: 262, f2: 250, f3: 300, h1: 292, h2: 200, h3: 358 },
+    // gather (all feet off the ground): head forward, forelegs back, hind legs
+    // forward and unfolding toward the ground
+    { t: 0.88, lift: 0.015, stretch: 0.9, lumbar: 34, thoracic: -2, neck: 22, head: -3, ear1: 140, ear2: 152, earSplay: 0.16, tail: 124,
+      f1: 240, f2: 222, f3: 238, h1: 322, h2: 220, h3: 342 },
   ],
 };
 /** Cyclic Catmull-Rom through the keys of a track, at phase t ∈ [0,1). */
@@ -89,32 +117,53 @@ export function sampleCycle(track, t) {
   const t1 = k1.t;
   let t2 = k2.t; if (t2 <= t1) t2 += 1;
   let tt = t; if (tt < t1) tt += 1;
-  const span = t2 - t1;
-  const u = (tt - t1) / span;
-  let t0 = k0.t; while (t0 >= t1) t0 -= 1;
-  let t3 = k3.t; while (t3 <= t2) t3 += 1;
+  const u = (tt - t1) / (t2 - t1);
   const out = {};
   for (const c of CHANNELS) {
-    const p0 = k0[c], p1 = k1[c], p2 = k2[c], p3 = k3[c];
-    // Derivatives use actual key times: unequal intervals must not cause a
-    // velocity jump at every key (uniform Catmull-Rom did).
-    const m1 = (p2 - p0) / (t2 - t0) * span;
-    const m2 = (p3 - p1) / (t3 - t1) * span;
-    out[c] = (2*u**3 - 3*u*u + 1)*p1 + (u**3 - 2*u*u + u)*m1
-      + (-2*u**3 + 3*u*u)*p2 + (u**3 - u*u)*m2;
+    const d = c === 'stretch' ? 1 : 0;
+    const p0 = k0[c] ?? d, p1 = k1[c] ?? d, p2 = k2[c] ?? d, p3 = k3[c] ?? d;
+    out[c] = 0.5 * ((2 * p1) + (-p0 + p2) * u + (2 * p0 - 5 * p1 + 4 * p2 - p3) * u * u + (-p0 + 3 * p1 - 3 * p2 + p3) * u * u * u);
   }
   return out;
 }
 
-/** A full pose for both sides: body channels, and near/far limb channels. */
+/** Which feet are on the ground at phase t: the contact two neighbouring keys share. */
+function contactAt(track, t) {
+  const keys = track.keys, n = keys.length;
+  t = ((t % 1) + 1) % 1;
+  let i = n - 1;
+  for (let k = 0; k < n; k++) if (keys[k].t <= t) i = k;
+  const a = keys[i], b = keys[(i + 1) % n];
+  return a.contact && a.contact === b.contact ? a.contact : null;
+}
+
+/** The joints (and their radii) that touch the ground in each contact. */
+const FEET = {
+  hind: [['toeN', 0.024], ['hoN', 0.028], ['toeF', 0.024], ['hoF', 0.028]],
+  fore: [['pawN', 0.022], ['wrN', 0.025], ['pawF', 0.022], ['wrF', 0.025]],
+};
+
+/** The height that sets a pose's `contact` feet on the ground. */
+function groundHeight(pose, contact) {
+  const J = solve({ ...pose, y: 0, motion: 'gallop' }, 'classic', false);
+  return Math.max(...FEET[contact].map(([j, r]) => r - J[j][1]));
+}
+
+/** A full pose for both sides: body channels, and near/far limb channels.
+ * While feet are planted the body rides on them: its height is solved every
+ * frame so the planted feet stay on the ground between keys. */
 export function gallopPose(phase) {
   const p = sampleCycle(GALLOP, phase);
   const ff = sampleCycle(GALLOP, phase + GALLOP.far.fore);
   const hf = sampleCycle(GALLOP, phase + GALLOP.far.hind);
-  return {
-    ...p,
+  const pose = {
+    ...p, motion: 'gallop',
     far: { f1: ff.f1, f2: ff.f2, f3: ff.f3, h1: hf.h1, h2: hf.h2, h3: hf.h3, ear1: p.ear1 + 6, ear2: p.ear2 + 6 },
   };
+  const c = contactAt(GALLOP, phase);
+  pose.contact = c;
+  if (c) pose.y = groundHeight(pose, c);
+  return pose;
 }
 
 /** An alert sit and a deliberate inspection, with an eased hold on each.
@@ -145,13 +194,15 @@ export function solve(pose, profile = 'classic', ground = true) {
   const dim = soft ? { ...DIM, lumbar: 0.145, thoracic: 0.14, head: 0.065, neck: 0.09,
     upperArm: 0.105, forearm: 0.105, paw: 0.075,
     thigh: 0.15, shin: 0.145, foot: 0.16, eyeZ: 0.125,
-    ear1: 0.16, ear2: 0.16, earZ: 0.047 } : DIM;
+    ear1: 0.16, ear2: 0.16, earZ: 0.047 }
+    : pose.motion === 'gallop' ? { ...DIM, paw: 0.05, hipZ: 0.082 } : DIM;
   const far = pose.far || pick(pose);
   const z0 = 0;
   const pelvis = [pose.x, pose.y, z0];
   const mid = add(pelvis, dir(pose.lumbar), dim.lumbar * (pose.stretch ?? 1));
   const chest = add(mid, dir(pose.thoracic), dim.thoracic * (pose.stretch ?? 1));
-  const headBase = add(chest, dir(pose.neck), dim.neck);
+  const headBase = add(chest, dir(pose.neck), dim.neck *
+    (pose.motion === 'gallop' ? 1 + ((pose.stretch ?? 1) - 1) * 0.5 : 1));
   const hf = dir(pose.head);
   const hu = dir(pose.head + 90);
   const snout = add(headBase, hf, dim.head);
@@ -202,17 +253,41 @@ export function solve(pose, profile = 'classic', ground = true) {
   J.tail0 = at(pelvis, lf, lu, -0.14, 0.035, 0);
   J.tail1 = add(J.tail0, dir(pose.tail), dim.tail);
   if (soft) {
+    // Two independent broad arches, designed in silhouette rather than derived
+    // from the anatomical two-bone ear. Their roots merge into the head, while
+    // the outer halves keep a generous gap, including during full extension.
     for (const side of ['N', 'F']) {
-      const a = J[`ear${side}0`], m = J[`ear${side}1`], b = J[`ear${side}2`];
-      // Quadratic through the mid joint, sampled into round-cone segments.
-      const c = m.map((v, i) => 2 * v - (a[i] + b[i]) / 2);
-      for (let i = 0; i <= 6; i++) {
-        const t = i / 6;
-        J[`softEar${side}${i}`] = a.map((v, k) => (1-t)**2*v + 2*(1-t)*t*c[k] + t*t*b[k]);
-      }
+      const upper = side === 'F';
+      const angle = ((pose.ear1 - 166) * 0.25) * D2R;
+      const cs = Math.cos(angle), sn = Math.sin(angle);
+      const points = upper
+        ? [[0.015, 0.125], [-0.16, 0.59], [-0.49, 0.42]]
+        : [[-0.055, 0.065], [-0.25, 0.37], [-0.48, 0.20]];
+      const curve = (t) => {
+        const x = (1-t)**2*points[0][0] + 2*(1-t)*t*points[1][0] + t*t*points[2][0];
+        const y = (1-t)**2*points[0][1] + 2*(1-t)*t*points[1][1] + t*t*points[2][1];
+        return [headBase[0] + x*cs-y*sn, headBase[1] + x*sn+y*cs,
+          (upper ? -1 : 1) * (0.055 + t*0.055)];
+      };
+      for (let i = 0; i <= 8; i++) J[`softEar${side}${i}`] = curve(i/8);
+      // Keep the rig overlay attached to the actual visible ear.
+      J[`ear${side}0`] = curve(0);
+      J[`ear${side}1`] = curve(.5);
+      J[`ear${side}2`] = curve(1);
     }
   }
-  if (ground) {
+  if (ground && pose.motion === 'gallop' && pose.contact) {
+    // Preserve the authored support phase. Swing legs must not lift the body.
+    // Refit the contact height to the soft model's own proportions.
+    const radii = soft ? { wr: .043, paw: .043, ho: .047, toe: .044 }
+      : { wr: .025, paw: .022, ho: .028, toe: .024 };
+    const names = pose.contact === 'hind' ? ['ho', 'toe'] : ['wr', 'paw'];
+    let shift = -Infinity;
+    for (const side of ['N', 'F']) for (const name of names)
+      shift = Math.max(shift, radii[name] - J[name + side][1]);
+    for (const p of Object.values(J)) p[1] += shift;
+  }
+  if (ground && pose.motion !== 'gallop') {
     // Check both sides at every sampled frame, not just a near-side contact key.
     // Larger soft feet need their own clearance. Translation preserves bones.
     const radii = soft ? { wr: .043, paw: .043, ho: .047, toe: .044 }
@@ -268,19 +343,22 @@ export const SHAPES = [
 ];
 
 // Put the feet down: a contact key's height is whatever sets those feet on
-// the ground; a flight key floats `lift` above its neighbours' average.
+// the ground; a flight key floats `lift` above the line between the contact
+// keys either side of it.
 (function settle(track) {
-  const feet = { hind: [['toeN', 0.024], ['hoN', 0.028]], fore: [['pawN', 0.022], ['wrN', 0.025]] };
-  for (const k of track.keys) {
+  const keys = track.keys;
+  const n = keys.length;
+  for (const k of keys) {
     k.x = 0;
-    if (!k.contact) continue;
-    const J = solve({ ...k, y: 0 }, 'classic', false);
-    k.y = Math.max(...feet[k.contact].map(([j, r]) => r - J[j][1]));
+    if (k.contact) k.y = groundHeight(k, k.contact);
   }
-  const n = track.keys.length;
-  track.keys.forEach((k, i) => {
+  keys.forEach((k, i) => {
     if (k.contact) return;
-    const a = track.keys[(i - 1 + n) % n], b = track.keys[(i + 1) % n];
-    k.y = (a.y + b.y) / 2 + (k.lift || 0);
+    let a = i, b = i;
+    while (!keys[(a - 1 + n) % n].contact) a--;
+    while (!keys[(b + 1) % n].contact) b++;
+    const ka = keys[(a - 1 + n) % n], kb = keys[(b + 1) % n];
+    const ta = ka.t, tb = kb.t > ta ? kb.t : kb.t + 1, t = k.t >= ta ? k.t : k.t + 1;
+    k.y = ka.y + (kb.y - ka.y) * ((t - ta) / (tb - ta)) + (k.lift || 0);
   });
 })(GALLOP);

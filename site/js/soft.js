@@ -17,9 +17,9 @@ export const SOFT_SHAPES = SHAPES.filter(s => s.g !== G.EAR_N && s.g !== G.EAR_F
   return { ...s, ra, rb };
 });
 
-const widths = [0.035, 0.047, 0.055, 0.058, 0.055, 0.046, 0.034];
+const widths = [0.046, 0.053, 0.060, 0.064, 0.067, 0.067, 0.065, 0.060, 0.052];
 for (const side of ['N', 'F']) {
-  for (let i = 0; i < 6; i++) SOFT_SHAPES.push({
+  for (let i = 0; i < 8; i++) SOFT_SHAPES.push({
     a: `softEar${side}${i}`, b: `softEar${side}${i+1}`,
     ra: widths[i], rb: widths[i+1], g: side === 'N' ? G.EAR_N : G.EAR_F, flat: 1.7,
   });
