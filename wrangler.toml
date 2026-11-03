@@ -1,0 +1,7 @@
+# Static site on Cloudflare Workers (auto-deployed from GitHub).
+# No build step: everything in ./site is served as is.
+name = "tomorrow"
+compatibility_date = "2025-01-01"
+
+[assets]
+directory = "./site"

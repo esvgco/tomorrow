@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rabbit Study 01 — The Tomorrow Company</title>
+  <meta name="description" content="Four rabbits on one rig: contour, pixel, soft geometric and PS1 low-poly, each sitting by the hole and running a gallop cycle.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script type="importmap">
+    { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js" } }
+  </script>
+</head>
+<body>
+  <header class="top">
+    <div class="mark">The Tomorrow Company</div>
+    <div class="meta">Rabbit study 01 · one rig, four rabbits</div>
+  </header>
+
+  <section class="intro">
+    <h1>Four rabbits, one&nbsp;skeleton.</h1>
+    <p>Every rabbit below is the same rig — 28 bones, 21 primitives — drawn four different ways. The top row sits by the hole: drag to turn it around, switch on the rig to see the bones. The bottom row runs the gallop cycle keyed from the reference footage.</p>
+  </section>
+
+  <section class="row" aria-label="Models">
+    <div class="row-head"><span class="idx">A</span><span>Model · sitting by the hole</span><span class="hint">drag to orbit</span></div>
+    <div class="grid">
+      <article class="card" data-version="contour" data-mode="model">
+        <div class="stage"><canvas class="view"></canvas><canvas class="overlay"></canvas></div>
+        <div class="caption"><span class="num">01</span><span class="name">Contour</span><span class="tools"><button data-action="rig">Rig</button><button data-action="reset">Reset</button></span></div>
+        <p class="note">Ink line on white, as the client's mark. Silhouette and occlusion contours come from the 3D body, so the line stays right from any angle.</p>
+      </article>
+      <article class="card" data-version="pixel" data-mode="model">
+        <div class="stage pixelated"><canvas class="view"></canvas><canvas class="overlay"></canvas></div>
+        <div class="caption"><span class="num">02</span><span class="name">Pixel</span><span class="tools"><button data-action="rig">Rig</button><button data-action="reset">Reset</button></span></div>
+        <p class="note">1-bit, about 20 px tall. White pixel seams where one part passes in front of another — the eye, ear, haunch and legs.</p>
+      </article>
+      <article class="card" data-version="sky" data-mode="model" data-palette="sky">
+        <div class="stage"><canvas class="view"></canvas><canvas class="overlay"></canvas></div>
+        <div class="caption"><span class="num">03</span><span class="name">Soft geometric</span><span class="tools"><button data-action="rig">Rig</button><button data-action="reset">Reset</button></span></div>
+        <div class="palettes"><button data-action="palette" data-value="0" class="on">Sky</button><button data-action="palette" data-value="1">Gradient · nose</button><button data-action="palette" data-value="2">Gradient · view</button></div>
+        <p class="note">Primitives melted together like metaballs. Sky: white volumes dissolving into blue, blue eye, red nose. Gradient: orange-red → pink → white, from the nose back or by how each surface faces the camera.</p>
+      </article>
+      <article class="card" data-version="ps1" data-mode="model">
+        <div class="stage pixelated"><canvas class="view"></canvas><canvas class="overlay"></canvas></div>
+        <div class="caption"><span class="num">04</span><span class="name">PS1 low-poly</span><span class="tools"><button data-action="rig">Rig</button><button data-action="reset">Reset</button></span></div>
+        <p class="note">Rigid segments, few flat faces, 32 px textures, snapped vertices, affine texture warp, 15-bit dither — as in Unity 8.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="row" aria-label="Animation">
+    <div class="row-head"><span class="idx">B</span><span>Animation · gallop cycle, 0.56 s</span><span class="hint">ref 05, 16 frames</span></div>
+    <div class="grid">
+      <article class="card" data-version="contour" data-mode="run">
+        <div class="stage"><canvas class="view"></canvas><canvas class="overlay"></canvas></div>
+        <div class="caption"><span class="num">01</span><span class="name">Contour</span><span class="tools speed"><button data-action="speed" data-value="1" class="on">1×</button><button data-action="speed" data-value="0.5">½</button><button data-action="speed" data-value="0.2">⅕</button><button data-action="travel" class="on">Across</button><button data-action="rig">Rig</button></span></div>
+      </article>
+      <article class="card" data-version="pixel" data-mode="run">
+        <div class="stage pixelated"><canvas class="view"></canvas><canvas class="overlay"></canvas></div>
+        <div class="caption"><span class="num">02</span><span class="name">Pixel</span><span class="tools speed"><button data-action="speed" data-value="1" class="on">1×</button><button data-action="speed" data-value="0.5">½</button><button data-action="speed" data-value="0.2">⅕</button><button data-action="travel" class="on">Across</button><button data-action="rig">Rig</button></span></div>
+      </article>
+      <article class="card" data-version="sky" data-mode="run" data-palette="sky">
+        <div class="stage"><canvas class="view"></canvas><canvas class="overlay"></canvas></div>
+        <div class="caption"><span class="num">03</span><span class="name">Soft geometric</span><span class="tools speed"><button data-action="speed" data-value="1" class="on">1×</button><button data-action="speed" data-value="0.5">½</button><button data-action="speed" data-value="0.2">⅕</button><button data-action="travel" class="on">Across</button><button data-action="rig">Rig</button></span></div>
+        <div class="palettes"><button data-action="palette" data-value="0" class="on">Sky</button><button data-action="palette" data-value="1">Gradient · nose</button><button data-action="palette" data-value="2">Gradient · view</button></div>
+      </article>
+      <article class="card" data-version="ps1" data-mode="run">
+        <div class="stage pixelated"><canvas class="view"></canvas><canvas class="overlay"></canvas></div>
+        <div class="caption"><span class="num">04</span><span class="name">PS1 low-poly</span><span class="tools speed"><button data-action="speed" data-value="1" class="on">1×</button><button data-action="speed" data-value="0.5">½</button><button data-action="speed" data-value="0.2">⅕</button><button data-action="travel" class="on">Across</button><button data-action="rig">Rig</button></span></div>
+      </article>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <span>Study for tomorrowcompany.com</span>
+    <span>Rig, poses and gallop: <code>site/js/rig.js</code> · brief and references: <code>docs/</code></span>
+  </footer>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
