@@ -165,6 +165,13 @@ function holesScene(el) {
   return s;
 }
 
+// the navigation underlines the screen you are on
+const navLinks = [...document.querySelectorAll('.nav a[data-for]')];
+const spy = new IntersectionObserver((entries) => {
+  for (const e of entries) if (e.isIntersecting) navLinks.forEach((a) => a.classList.toggle('on', a.dataset.for === e.target.id));
+}, { rootMargin: '-45% 0px -45% 0px' });
+navLinks.forEach((a) => { const el = document.getElementById(a.dataset.for); if (el) spy.observe(el); });
+
 const makers = { hero: heroScene, run: runScene, holes: holesScene };
 document.querySelectorAll('[data-scene]').forEach((el) => {
   try {

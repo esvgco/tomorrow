@@ -216,7 +216,7 @@ void main() {
     if (tg > 0.0 && t < 0.0 && th < 0.0) {
       // the ground: paper, or ink where the hairline runs along z = 0 (about one pixel wide)
       // one pixel on screen covers more ground the flatter the ray hits it
-      bool line = uGround > 1.5 && abs(ro.z + rd.z * tg) < uPixAngle * tg * 0.9 / max(abs(rd.y), 0.02);
+      bool line = uGround > 1.5 && abs(ro.z + rd.z * tg) < uPixAngle * tg * 1.2 / max(abs(rd.y), 0.02);
       fragColor = vec4(tg, line ? 9.0 : 10.0, 0.0, 0.0); return;
     }
     if (th > 0.0 && (t < 0.0 || th < t)) { fragColor = vec4(th, 9.0, 0.0, 0.0); return; }
