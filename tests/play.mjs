@@ -1,0 +1,17 @@
+import assert from 'node:assert/strict';
+import {Game,HOLES} from '../site/js/play/state.js';
+import {gamePose} from '../site/js/play/motion.js';
+const g=new Game();
+const step=(n,input)=>{for(let i=0;i<n;i++){g.update(1/60,input);assert(Object.values(gamePose(g)).flat().every(Number.isFinite));}};
+step(60,{x:0,z:0});assert.equal(g.state,'free');assert.equal(g.speed,0);
+g.setTarget(HOLES[0].x,HOLES[0].z);
+for(let i=0;i<600 && g.state!=='peek';i++)step(1,{x:0,z:0});
+assert.equal(g.state,'peek');assert.equal(g.score,1);
+step(600,{x:0,z:0});assert.equal(g.state,'peek');assert.equal(g.score,1);
+step(1,{x:0,z:1});assert.equal(g.state,'exit');
+step(61,{x:0,z:1});assert.equal(g.state,'free');assert.equal(g.score,1);assert(Math.hypot(g.x-HOLES[0].x,g.z-HOLES[0].z)>1.5);
+step(600,{x:1,z:1});assert(Math.abs(g.x)<=10 && Math.abs(g.z)<=10);
+g.reset();assert.equal(g.score,0);assert.equal(g.state,'free');assert.equal(g.target,null);
+g.setTarget(100,-100);assert.deepEqual(g.target,{x:10,z:-10});
+step(1,{x:1,z:0});assert.equal(g.target,null);
+console.log('Passed: idle, click path, dive, single score, indefinite peek, input exit, bounds and restart.');
