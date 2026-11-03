@@ -23,3 +23,12 @@ resumed movement, restart, console. Existing homepage/studies retain their route
 
 Deployment uses the repository's existing GitHub → Cloudflare Workers integration.
 No hosting configuration, homepage source, or production secrets are changed.
+
+## Style selection and site typography
+
+The style controls switch Contour / Pixel / Soft geometric / PS1 without resetting
+position, score or the active burrow clip. Motion selects classic versus soft
+anatomy; the PS1 meshes share the world's depth buffer, and contour/pixel SDF
+passes composite over the world texture. Render contexts are released on switch.
+Header logo alignment and Geist/Geist Mono typography follow home.css; the existing
+Burrows found block keeps its original type, size and placement.

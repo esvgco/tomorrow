@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {Game,HOLES} from '../site/js/play/state.js';
 import {gamePose} from '../site/js/play/motion.js';
 const g=new Game();
-const step=(n,input)=>{for(let i=0;i<n;i++){g.update(1/60,input);assert(Object.values(gamePose(g)).flat().every(Number.isFinite));}};
+const step=(n,input)=>{for(let i=0;i<n;i++){g.update(1/60,input);for(const profile of ['soft','classic'])assert(Object.values(gamePose(g,profile)).flat().every(Number.isFinite));}};
 step(60,{x:0,z:0});assert.equal(g.state,'free');assert.equal(g.speed,0);
 g.setTarget(HOLES[0].x,HOLES[0].z);
 for(let i=0;i<600 && g.state!=='peek';i++)step(1,{x:0,z:0});

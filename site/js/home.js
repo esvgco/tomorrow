@@ -1,11 +1,15 @@
 // The homepage concept: one rabbit, three roles.
 //   hero  — sits by the hole on the white field; notices the cursor, looks up, settles back
 //   run   — crosses the "what we do" screen in a half-bound and goes down the hole
-//   holes — appears at whichever project hole the cursor approaches, looking into it
+//   holes — travels to the hovered project, dives, peeks, exits and travels again
 // All three are the contour rabbit from the study, drawn by the same ray-marcher.
 import * as THREE from 'three';
 import { solve, idlePose, gallopPose, GALLOP, CHANNELS } from './rig.js';
 import { SdfView } from './sdf.js';
+import { clipFrame } from './clips.js';
+import { ProjectView } from './project-view.js';
+import { ProjectJourney } from './home-journey.js';
+import { blend } from './play/motion.js';
 
 const HOLE = [0.66, 0.06, 0.13]; // x, z, radius — where the sitting rabbit looks
 const v3 = new THREE.Vector3();
@@ -28,10 +32,10 @@ class Rabbit {
     c.lookAt(tx, ty, tz);
     c.updateMatrixWorld();
   }
-  draw(J, hole) {
+  draw(J, hole, clip = false) {
     this.view.resize();
     this.place();
-    this.view.update(J, hole);
+    this.view.update(J, hole, clip);
     this.view.render();
   }
   /** A world point in CSS pixels of the canvas. */
@@ -95,73 +99,72 @@ function heroScene(el) {
 // ------------------------------------------------------------ 2 · the run
 function runScene(el) {
   const section = el.closest('section');
-  const rabbit = new Rabbit(el.querySelector('canvas.view'), { yaw: 0, pitch: 6, dist: 3.6, target: [0, 0.22, 0] }, { ground: true, maxDpr: 1.5 });
-  rabbit.view.uniforms.uGround.value = 2; // with the hairline it runs along
-  const again = el.querySelector('.again');
-  const s = { el, rabbit, visible: false, t: -1, runs: 0 };
-  const start = () => { s.t = 0; again.hidden = true; };
-  s.onVisible = (v) => { if (v && s.t < 0) start(); };
-  again.addEventListener('click', () => { section.classList.remove('revealed'); start(); });
-  const HOLE_X = 2.2; // where the hole is on the track, in world units
-  s.frame = (dt) => {
-    if (s.t < 0) return;
-    const cam = rabbit.view.camera;
-    const half = cam.aspect * rabbit.cam.dist * Math.tan((cam.fov * Math.PI) / 360) + 0.6;
-    const speed = GALLOP.stride / GALLOP.duration;
-    s.t += reduced ? 0 : dt;
-    const x = -half + s.t * speed; // runs in from the left edge
-    const phase = s.t / GALLOP.duration;
-    const pose = gallopPose(phase);
-    pose.x = Math.min(x, HOLE_X);
-    // at the hole: one more bound in place, going down — stands in for the dive animation
-    const over = x - HOLE_X;
-    let sink = 0;
-    if (over > 0) {
-      sink = smooth(over / 1.4);
-      pose.y -= sink * 0.9;
-      pose.lumbar -= sink * 50; pose.thoracic -= sink * 50; pose.neck -= sink * 40; // nose first
+  const rabbit = new Rabbit(el.querySelector('canvas.view'), { yaw: 10, pitch: 14, dist: 3.8, target: [0,.12,0] }, { maxDpr: 1.5 });
+  const s = { el, rabbit, visible:false, elapsed:0, started:false, done:false, approach:0, startX:0, holeX:0 };
+  s.frame = dt => {
+    const rect=el.getBoundingClientRect();
+    if(!s.started && rect.top<innerHeight-20 && rect.bottom>0){
+      rabbit.view.resize();rabbit.place();
+      const half=rabbit.view.camera.aspect*3.8*Math.tan(12*Math.PI/180);
+      s.holeX=Math.max(.5,half*.58);s.startX=-half-.8;
+      s.approach=(s.holeX-1.2-s.startX)/(GALLOP.stride/GALLOP.duration);
+      s.started=true;section.classList.add('revealed');
     }
-    if (x > -half + 1.6) section.classList.add('revealed');
-    if (sink >= 1) { s.t = -2; again.hidden = false; }
-    rabbit.draw(solve(pose, 'classic', false), [HOLE_X + 0.25, 0, 0.16]);
+    if(!s.started)return;
+    if(!s.done)s.elapsed+=reduced?s.approach+2:dt;
+    let J;
+    if(s.elapsed<s.approach){
+      const pose=gallopPose(.27+(s.elapsed-s.approach)/GALLOP.duration);
+      pose.x=s.startX+s.elapsed*GALLOP.stride/GALLOP.duration;J=solve(pose);
+    }else{
+      J=clipFrame('dive',Math.min(2.5,.85+s.elapsed-s.approach),'classic').J;
+      for(const p of Object.values(J))p[0]+=s.holeX-.55;
+      if(s.elapsed>s.approach+1.4)s.done=true;
+    }
+    el.dataset.phase=s.done?'done':s.elapsed<s.approach?'run':'dive';
+    rabbit.draw(J,[s.holeX,0,.36],true);
   };
   return s;
 }
 
 // ---------------------------------------------------------- 3 · the holes
 function holesScene(el) {
-  const peek = el.querySelector('.peek');
-  const rabbit = new Rabbit(peek.querySelector('canvas.view'), { yaw: 30, pitch: 10, dist: 3.2, target: [0.3, 0.3, 0] });
-  const holes = [...el.querySelectorAll('.hole')];
-  const s = { el, rabbit, visible: false, current: null, clock: 0, since: 0 };
-  const show = (h) => {
-    if (s.current === h) return;
-    holes.forEach((x) => x.classList.toggle('on', x === h));
-    s.current = h; s.since = 0;
-    peek.classList.toggle('on', !!h);
-    if (!h) return;
-    // put the canvas so that its hole lands on this hole
-    const dot = h.querySelector('.dot').getBoundingClientRect();
-    const box = el.getBoundingClientRect();
-    rabbit.view.resize(); rabbit.place();
-    const [hx, hy] = rabbit.project([HOLE[0], 0, HOLE[1]]);
-    peek.style.left = `${dot.left + dot.width / 2 - box.left - hx}px`;
-    peek.style.top = `${dot.top + dot.height / 2 - box.top - hy}px`;
+  const canvas=el.querySelector('canvas.view'),view=new ProjectView(canvas);
+  const holes=[...el.querySelectorAll('.hole')], scales=[1.45,1.18,.88,.7];
+  const raycaster=new THREE.Raycaster(),plane=new THREE.Plane(new THREE.Vector3(0,1,0),0);
+  let journey=null,dimensions='',lastState='',prior=null,transition=null,transitionTime=1;
+  const destinations=[];
+  const groundPoint=(x,y)=>{
+    raycaster.setFromCamera(new THREE.Vector2(x*2-1,1-y*2),view.camera);
+    return raycaster.ray.intersectPlane(plane,new THREE.Vector3());
   };
-  holes.forEach((h) => {
-    h.addEventListener('pointerenter', () => show(h));
-    h.addEventListener('focus', () => show(h));
-    h.addEventListener('click', () => show(h));
-  });
-  el.addEventListener('pointerleave', () => show(null));
-  s.frame = (dt) => {
-    s.clock += dt; s.since += dt;
-    if (!s.current) return;
-    // arrives alert, then leans in to look
-    const k = smooth((s.since - 0.4) / 1.2);
-    const pose = mix(idlePose(s.clock, 'sit'), idlePose(s.clock, 'look'), k);
-    rabbit.draw(solve(pose), HOLE);
+  const project=p=>{const v=new THREE.Vector3(...p).project(view.camera);return [(v.x*.5+.5)*view.cssW,(-v.y*.5+.5)*view.cssH];};
+  const layout=()=>{
+    view.resize();const key=`${view.cssW}:${view.cssH}`;if(key===dimensions)return;
+    dimensions=key;
+    holes.forEach((h,i)=>{
+      const x=parseFloat(h.style.getPropertyValue('--x'))/100,y=parseFloat(h.style.getPropertyValue('--y'))/100;
+      const p=groundPoint(x,y),scale=scales[i];destinations[i]={id:i,x:p.x,z:p.z,scale};
+      const r=.3*scale,points=Array.from({length:64},(_,j)=>project([p.x+Math.cos(j/64*Math.PI*2)*r,0,p.z+Math.sin(j/64*Math.PI*2)*r]));
+      const w=Math.max(...points.map(p=>p[0]))-Math.min(...points.map(p=>p[0]));
+      const height=Math.max(...points.map(p=>p[1]))-Math.min(...points.map(p=>p[1]));
+      const dot=h.querySelector('.dot');dot.style.width=`${w}px`;dot.style.height=`${height}px`;
+    });
+    if(!journey){const p=groundPoint(.08,.82);journey=new ProjectJourney(p.x,p.z);}
+    else if(journey.goal)journey.goal=destinations[journey.goal.id];
+    if(journey?.hole)journey.hole=destinations[journey.hole.id];
   };
+  const choose=i=>{layout();journey.select(destinations[i]);holes.forEach((h,j)=>h.classList.toggle('on',i===j));};
+  holes.forEach((h,i)=>{h.addEventListener('pointerenter',()=>choose(i));h.addEventListener('focus',()=>choose(i));h.addEventListener('click',()=>choose(i));});
+  const s={el,visible:false,frame(dt){
+    layout();journey.update(dt);let J=journey.pose();
+    if(journey.state!==lastState){transition=prior;transitionTime=0;lastState=journey.state;}
+    transitionTime+=dt;if(transition&&transitionTime<.14)J=blend(transition,J,transitionTime/.14);prior=J;
+    const h=journey.state==='run'?journey.goal:journey.hole;
+    holes.forEach((node,i)=>node.classList.toggle('rendered',i===h?.id));
+    view.update(J,journey.renderedHole(),true);view.render();
+    el.dataset.phase=journey.state;el.dataset.destination=String(journey.goal?.id??'');
+  }};
   return s;
 }
 

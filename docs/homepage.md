@@ -67,3 +67,22 @@ Placeholders, to be replaced once the client names things:
 - Headline and the three "kinds" lines: our draft, needs their voice.
 - Real project names and one line each; which may be shown, which stay as holes.
 - Whether the hole should lead somewhere (a project page, "another layer of the company").
+
+## Motion revision
+
+The hero no longer has the first screen's rule/index/field labels. Screen two uses
+the approved dive clip after an approach on white, without a ground line; camera
+yaw 10° / pitch 14° produces a slight upper-left to lower-right path. It plays
+once per page load, including when the section is revisited.
+
+Projects use ProjectView's shared orthographic ground and ProjectJourney's
+continuous run → dive → peek → exit state machine. Hover, keyboard focus and tap
+set the latest destination. A new target during a dive is queued until the rabbit
+can emerge and leave; it never relocates the canvas to the new hole. Deliberate
+reverse scale is 1.45 / 1.18 / 0.88 / 0.70 from the far upper-left to near lower-right;
+rabbit scale interpolates during travel and matches the destination hole. DOM hit
+areas and rendered holes use the same camera projection.
+
+Validation: tests/home-journey.mjs plus rig, clip and both game anatomy checks;
+browser checks cover the one-shot run, both extremes of project scale and all
+four game styles, including switching while peeking without losing score.

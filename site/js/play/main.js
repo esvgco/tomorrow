@@ -1,11 +1,12 @@
 import * as THREE from 'three';
-import {PlayView} from './view.js';
+import {makePlayView} from './view.js';
 import {Game,HOLES} from './state.js';
 import {gamePose,blend} from './motion.js';
-const canvas=document.querySelector('#field'), loading=document.querySelector('#loading');
+let canvas=document.querySelector('#field');
+const loading=document.querySelector('#loading');
 try {
-const view=new PlayView(canvas),game=new Game();
-const world=view.world;
+let style='sky',view=makePlayView(canvas,style);
+const game=new Game(),world=new THREE.Group();view.world.add(world);
 world.add(new THREE.HemisphereLight('#ffffff','#527568',2));
 const sun=new THREE.DirectionalLight('#fff9e8',2.2);sun.position.set(-5,9,4);world.add(sun);
 const material=(color)=>new THREE.MeshStandardMaterial({color,roughness:1,metalness:0});
@@ -58,11 +59,24 @@ for(const button of document.querySelectorAll('[data-dir]')){
  button.onpointerup=button.onpointercancel=()=>touch.delete(button.dataset.dir);
 }
 const raycaster=new THREE.Raycaster(),plane=new THREE.Plane(new THREE.Vector3(0,1,0),0),hit=new THREE.Vector3();
-canvas.addEventListener('pointerdown',e=>{
+function onFieldPointer(e){
  if(paused||e.button!==0)return;if(!started)start();
  const r=canvas.getBoundingClientRect();raycaster.setFromCamera(new THREE.Vector2((e.clientX-r.left)/r.width*2-1,1-(e.clientY-r.top)/r.height*2),view.camera);
  if(raycaster.ray.intersectPlane(plane,hit))game.setTarget(hit.x,hit.z);
-});
+}
+canvas.addEventListener('pointerdown',onFieldPointer);
+for(const button of document.querySelectorAll('[data-style]'))button.onclick=()=>{
+ const next=button.dataset.style;if(next===style)return;
+ const old=view,position=old.camera.position.clone(),quaternion=old.camera.quaternion.clone();
+ const fresh=canvas.cloneNode(false);canvas.replaceWith(fresh);canvas=fresh;
+ style=next;view=makePlayView(canvas,style);view.world.add(world);old.dispose();
+ view.camera.position.copy(position);view.camera.quaternion.copy(quaternion);
+ canvas.classList.toggle('pixelated',style==='pixel'||style==='ps1');
+ canvas.addEventListener('pointerdown',onFieldPointer);
+ previousJ=null;transitionFrom=null;
+ document.querySelectorAll('[data-style]').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));
+ keys.clear();touch.clear();canvas.focus();
+};
 const input=()=>{
  const right=Number(keys.has('KeyD')||keys.has('ArrowRight')||touch.has('right'))-Number(keys.has('KeyA')||keys.has('ArrowLeft')||touch.has('left'));
  const forward=Number(keys.has('KeyW')||keys.has('ArrowUp')||touch.has('up'))-Number(keys.has('KeyS')||keys.has('ArrowDown')||touch.has('down'));
@@ -73,7 +87,7 @@ const aim=new THREE.Vector3(game.x,.35,game.z),desired=new THREE.Vector3();
 function frame(now){
  const dt=Math.min(.05,(now-last)/1000);last=now;
  if(started&&!paused&&!document.hidden)game.update(dt,input());
- let J=gamePose(game);
+ let J=gamePose(game,style==='sky'?'soft':'classic');
  if(lastState!==game.state){transitionFrom=previousJ;transitionTime=0;lastState=game.state;}
  transitionTime+=dt;
  if(transitionFrom&&transitionTime<.18)J=blend(transitionFrom,J,Math.min(1,transitionTime/.18));
@@ -90,7 +104,7 @@ function frame(now){
  noticeTitle.textContent=game.state==='peek'?'+1 · Curiosity rewarded.':'';
  noticeDetail.textContent=game.state==='peek'?'Move or tap the field to leap back out.':'';
  // Readable state makes QA possible without exposing mutable game internals.
- canvas.dataset.state=game.state;canvas.dataset.position=`${game.x.toFixed(2)},${game.z.toFixed(2)}`;
+ canvas.dataset.style=style;canvas.dataset.state=game.state;canvas.dataset.position=`${game.x.toFixed(2)},${game.z.toFixed(2)}`;
  requestAnimationFrame(frame);
 }
 loading.hidden=true;requestAnimationFrame(frame);
