@@ -1,0 +1,65 @@
+/* Shared base for the second-pass studies. White paper, black ink, one monospace.
+   The typeface is undecided (see docs/typefaces.md); the system mono stands in. */
+:root {
+  --paper: #fff;
+  --ink: #000;
+  --in-hole: #c0c0c0;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --gutter: clamp(20px, 6vw, 96px);
+  --measure: 58ch;
+  --hole-scale: 1;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; overscroll-behavior: none; -webkit-tap-highlight-color: transparent; }
+body {
+  margin: 0; background: var(--paper); color: var(--ink);
+  font: clamp(13px, 0.9vw, 15px)/1.55 var(--mono);
+  -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+}
+a { color: inherit; }
+
+/* header */
+.hd {
+  position: fixed; inset: 0 0 auto 0; z-index: 20;
+  display: flex; justify-content: space-between; align-items: baseline; gap: 16px;
+  padding: 16px var(--gutter); font-size: clamp(10px, 0.78vw, 12px); letter-spacing: 0.12em; text-transform: uppercase;
+  pointer-events: none;
+}
+.hd a { text-decoration: none; pointer-events: auto; }
+.hd .hd-day { font-variant-numeric: tabular-nums; white-space: nowrap; }
+@media (max-width: 560px) { .hd .hd-sep2, .hd .hd-clock { display: none; } }
+
+/* the mark */
+.field { height: calc(100svh + var(--runway, 40) * 1svh); }
+.stage { position: sticky; top: 0; height: 100svh; display: grid; place-items: center; padding: var(--gutter); pointer-events: none; }
+.mark { display: block; height: clamp(170px, 30svh, 320px); aspect-ratio: 0.745; color: var(--ink); }
+.mark svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.mk-sunk { fill: var(--in-hole); }
+.mk-hole, #tc-rim { transform-box: fill-box; transform-origin: 50% 50%; }
+
+/* text */
+.column { width: 100%; max-width: var(--measure); margin-inline: auto; padding: 0 var(--gutter); }
+.column p { margin: 0 0 1.5em; }
+.lead { font-size: clamp(16px, 1.45vw, 21px); line-height: 1.45; }
+.defining { font-size: clamp(18px, 2.3vw, 30px); line-height: 1.3; text-wrap: balance; }
+.small { font-size: clamp(10px, 0.72vw, 12px); letter-spacing: 0.04em; }
+
+/* a rule is a hole seen edge-on */
+.rule { display: block; width: 240px; max-width: 100%; height: 12px; margin: 0 auto; overflow: visible; }
+.rule ellipse { fill: var(--ink); transform-box: fill-box; transform-origin: 50% 50%; transform: scaleY(var(--tilt, 1)); transition: transform .45s cubic-bezier(.2,.8,.2,1); }
+.rule:hover ellipse, .doorway:hover .rule ellipse { transform: scaleY(10); }
+
+/* doorways */
+.doorway { margin: clamp(90px, 22vh, 220px) 0 0; text-align: center; line-height: 1.6; }
+.doorway + .doorway { margin-top: 28px; }
+.doorway-link { display: inline-block; border: 0; padding: 0; background: none; font: inherit; color: inherit; cursor: pointer; text-decoration: none;
+  font-size: clamp(11px, 0.95vw, 13px); letter-spacing: 0.22em; text-transform: uppercase; }
+.doorway .rule { margin-top: 12px; }
+.doorway-sub { display: block; margin-top: 10px; font-size: clamp(10px, 0.8vw, 12px); letter-spacing: 0.16em; opacity: 0; transition: opacity .4s; }
+.doorway:hover .doorway-sub, .doorway:focus-within .doorway-sub { opacity: 1; }
+
+/* footer */
+.foot { text-align: center; padding: clamp(60px, 18vh, 200px) var(--gutter) clamp(40px, 10vh, 120px); }
+
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
