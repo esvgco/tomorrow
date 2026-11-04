@@ -13,6 +13,7 @@ Staging: https://tomorrow.esvgco.workers.dev — Cloudflare Workers, auto-deploy
   - [`references.md`](docs/references.md) — Pinterest board, every pin catalogued, animation breakdown
   - [`rabbit-study.md`](docs/rabbit-study.md) — the rabbit rig and its four looks: how it works
   - [`homepage.md`](docs/homepage.md) — homepage concept 01: the four screens, what's real and what's placeholder
+  - [`ideas-02.md`](docs/ideas-02.md) — after the first client meeting: teardown of the client's own prototype (the.tomorrowcompany.com), concept candidates, brainstorm log, creative principles, mobile-first notes. **Read this before any second-pass work.**
   - `references/` — local copies of the board and the PDF screenshots
 - `site/` — the static site, served as is (no build)
   - `index.html` — Rabbit study 01: four rabbits, one rig
