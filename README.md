@@ -15,6 +15,7 @@ Staging: https://tomorrow.esvgco.workers.dev — Cloudflare Workers, auto-deploy
   - [`homepage.md`](docs/homepage.md) — homepage concept 01: the four screens, what's real and what's placeholder
   - [`ideas-02.md`](docs/ideas-02.md) — after the first client meeting: teardown of the client's own prototype (the.tomorrowcompany.com), concept candidates, brainstorm log, creative principles, mobile-first notes. **Read this before any second-pass work.**
   - [`dormouse-and-the-coast.md`](docs/dormouse-and-the-coast.md) — background for the mood hypothesis: *What the Dormouse Said*, Whole Earth Catalog, Sea Ranch, Big Sur/Esalen, with sources; how to use it as an echo, not a style
+  - [`mechanics.md`](docs/mechanics.md) — only the mechanics Elisey proposed or explicitly accepted, with what is built where
   - [`studies-02-03.md`](docs/studies-02-03.md) — the second pass: study 02 *the corridor* and study 03 *someone else is here*, built on the client's own mark; what each mechanic does and where it lives
   - [`typefaces.md`](docs/typefaces.md) — typeface candidates (typewriter mono for body, Composer proportional for accents), criteria, pairs, how to decide
   - `references/` — local copies of the board and the PDF screenshots
