@@ -176,3 +176,40 @@ it should behave technically»: каталог не выглядел техно�
 - Hunter S. Thompson в Big Sur: [Alta, Fear and Loathing in Big Sur](https://altaonline.com/fear-loathing-big-sur/),
   [Beatdom](https://www.beatdom.com/?p=1934),
   [Totally Gonzo, статья в Rogue 1961](https://totallygonzo.org/gonzowriting/rare-articles/)
+
+---
+
+## 6. Шрифт: что на самом деле печатал Composer, и что брать
+
+**Нюанс.** Composer (1966) не был моноширинным: обычный Selectric печатал моно, Composer давал
+пропорциональный набор с выключкой для camera-ready оригиналов. Все гарнитуры Composer
+сидели на одной таблице ширин: семь групп от 3 до 9 единиц на кегельную, таблицу IBM
+зафиксировала по Times, Фрутигер подгонял под неё рисунки. Отсюда узнаваемые черты: узкая g,
+узкая s, широкие T и F (п). Наши механики с буквами (колонки, гнёзда) требуют моно, поэтому
+нужны **два шрифта с одной машины**.
+
+**Composer, пропорциональный — для акцентов** (одно слово «human», хедер с датой, цифры):
+- **Selectric UN** — ревайвал Univers с Composer, Jens Kutílek, 2022–23, по каталогам IBM:
+  900 upem, скруглённые углы оттиска, без кернинга (в оригинале его не было), TrueType-хинты
+  (п). Второй в работе — Century. На странице нет лицензии и скачивания — писать автору.
+  На Typedrawers пишут, что Whole Earth набирали в UN (форум, не подтверждено).
+
+**Selectric, моноширинный — для тела.** На машинке: Courier (Kettler для IBM, 1955), Prestige
+Elite (Clayton Smith для IBM, 1953), Letter Gothic (Roberson для IBM, 1950-е, моно-гротеск,
+ближе всего к их нынешнему виду) (п). Экранные кандидаты:
+1. **Pitch / Pitch Sans** (Klim) — «текст, который выглядит напечатанным», не копия машинки (п).
+2. **Triplicate** (Butterick) — из машинописных гарнитур 50-х, для длинного текста; есть
+   **Triplicate Poly**, пропорциональный вариант той же семьи — моно для тела, Poly для
+   акцентов, одна семья (п).
+3. Prestige Elite, Letter Gothic — аутентичные цифровые версии (URW, Adobe, Monotype).
+4. Courier Prime, IBM Plex Mono — запасные; Plex ещё и прямой потомок IBM.
+
+**Решение-кандидат:** тело в машинописном моно, одно слово или хедер в Composer Univers.
+Два оттиска с одной машины: кто знает — увидит каталог, остальные — элегантный набор.
+
+Источники: [Kutílek, Reviving the Selectric Composer fonts](https://www.kutilek.de/selectric/),
+[IBM Selectric, Wikipedia](https://en.wikipedia.org/wiki/IBM_Selectric),
+[Typedrawers, Selectric Composer catalog](https://typedrawers.com/discussion/comment/48317/),
+[Klim, Pitch](https://klim.co.nz/fonts/pitch), [Typographica о Triplicate](https://typographica.org/typeface-reviews/fb-alix/),
+[Prestige Elite, Wikipedia](https://en.wikipedia.org/wiki/Prestige_Elite),
+[Lloyd Kahn о Composer](https://www.lloydkahn.com/2017/07/font-from-ibm-selectric-composer-9000/).
