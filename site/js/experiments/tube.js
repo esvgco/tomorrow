@@ -8,6 +8,7 @@ import {mountMark} from '../mark.js';
 const $=s=>document.querySelector(s),body=document.body,viewport=$('#viewport'),camera=$('#camera'),lines=$('#tube-lines'),ctx=lines.getContext('2d');
 const panels=[...document.querySelectorAll('[data-panel]')];
 const R=1500,EYE=650,STEP=.62,DESC=2; // tube radius, eye behind the axis, turn per screen, length of the drop
+const guides=!body.classList.contains('no-guides');
 const safari=/^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 if(safari)body.classList.add('no-bend');
 let mobile=false,PW=1100,PH=650,H=760,bottomY=0,persp=1000,T=0,fit=1,segment=1100,iw=innerWidth,ih=innerHeight,dpr=1;
@@ -47,7 +48,7 @@ function wallPoint(t,y){return toCam(R*Math.sin(t),y,-R*Math.cos(t))}
 const buckets=[[],[],[],[]];
 function seg(a,b){let da=depth(a),db=depth(b);if(da<NEAR&&db<NEAR)return;if(da<NEAR||db<NEAR){const t=(NEAR-da)/(db-da),m=[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t,EYE-NEAR];if(da<NEAR){a=m;da=NEAR}else{b=m;db=NEAR}}const d=(da+db)/2,q=Math.min(3,Math.floor(d/2400));buckets[q].push(proj(a),proj(b))}
 function drawTube(){
-  ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,iw,ih);buckets.forEach(b=>b.length=0);
+  ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,iw,ih);if(!guides)return drawHole();buckets.forEach(b=>b.length=0);
   const rate=H/STEP,gap=rate*Math.PI*2/14,top=camY-3200,bot=bottomY,full=pitch<-.25;
   const t0=yaw-(full?Math.PI:2.1),t1=yaw+(full?Math.PI:2.1),dt=.045;
   // the thread: helical grooves parallel to the path of the screens
@@ -58,11 +59,15 @@ function drawTube(){
   const tones=['#d2d2d2','#dcdcdc','#e5e5e5','#eeeeee'];
   ctx.lineWidth=1;buckets.forEach((b,q)=>{if(!b.length)return;ctx.strokeStyle=tones[q];ctx.beginPath();for(let i=0;i<b.length;i+=2){ctx.moveTo(b[i][0],b[i][1]);ctx.lineTo(b[i+1][0],b[i+1][1])}ctx.stroke()});
   // the hole at the bottom of the shaft
+  drawHole();
+}
+
+function drawHole(){
+  const bot=bottomY;
   let poly=[];for(let i=0;i<72;i++){const t=i/72*Math.PI*2;poly.push(toCam(R*.4*Math.sin(t),bot,-R*.4*Math.cos(t)))}
   const out=[];for(let i=0;i<poly.length;i++){const a=poly[i],b=poly[(i+1)%poly.length],da=depth(a),db=depth(b);if(da>=NEAR)out.push(a);if((da<NEAR)!==(db<NEAR)){const t=(NEAR-da)/(db-da);out.push([a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t,EYE-NEAR])}}
   if(out.length>2){ctx.fillStyle='#000';ctx.beginPath();out.forEach((c,i)=>{const p=proj(c);i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1])});ctx.closePath();ctx.fill()}
 }
-
 const mark=mountMark($('#wall-rabbit')),fall=mountFall($('[data-fall]'));
 function go(i){if(reading){panels[i].scrollIntoView({behavior:reduced?'instant':'smooth'});return}scrollTo({top:i*segment,behavior:reduced?'instant':'smooth'})}
 function reset(){scrollTo({top:0,behavior:'instant'});s=0;lastScroll=0;velocity=0;falling=false}
