@@ -26,3 +26,5 @@
 .room-ceiling,.room-floor{left:0;right:0;height:1000px;transform-origin:top;transform:rotateX(-90deg);background:#050505!important}
 .room-ceiling{top:0}.room-floor{top:100%;background:#0a0a0a!important}
 .return-room{z-index:3;position:absolute;top:30px;left:32px}.room-caption{bottom:25px;font-size:12px}
+
+.wall-boot .viewport{visibility:hidden}

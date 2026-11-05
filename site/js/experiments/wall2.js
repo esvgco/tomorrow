@@ -57,7 +57,7 @@ viewport.addEventListener('touchend',()=>touch=null);
 addEventListener('keydown',e=>{if(document.querySelector('dialog[open]'))return;if(roomOpen){if(e.key==='Tab'){e.preventDefault();(document.activeElement===$('#leave-room')?$('#room-tomorrow'):$('#leave-room')).focus()}if(e.key==='Escape'){leaveRoom();e.preventDefault()}return}if(reading||e.metaKey||e.ctrlKey||e.target.closest('input,textarea'))return;if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();targetYaw+=(e.key==='ArrowLeft'?-1:1)*Math.PI/4}else if(e.key==='Escape'){targetYaw=0;side=0;retreat=0}else if(targetStep>4.9){if(e.key.toLowerCase()==='a'){side-=120;e.preventDefault()}if(e.key.toLowerCase()==='d'){side+=120;e.preventDefault()}if(e.key.toLowerCase()==='w'){travel(-130);e.preventDefault()}if(e.key.toLowerCase()==='s'){travel(130);e.preventDefault()}if(['ArrowDown','ArrowUp','PageDown','PageUp',' '].includes(e.key)){e.preventDefault();travel(['ArrowUp','PageUp'].includes(e.key)?-120:120)}}});
 mountGaps(()=>{setDay(getDay()+1);go(Math.min(5,Math.floor(targetStep)+1))});
 onDay(n=>{$('#rear-hole').style.width=600*(1+n*.01)+'px'});
-function frame(now){const dt=Math.min(.05,(now-lastTime)/1000);lastTime=now;const lerp=1-Math.exp(-dt*9);step=targetStep;yaw+=(targetYaw-yaw)*lerp;velocity*=Math.exp(-dt*5);scrollTilt+=(-clamp(velocity/100)*.03-scrollTilt)*(1-Math.exp(-dt*8));if(velocity<.01&&Math.abs(scrollTilt)<.00001)scrollTilt=0;
+function frame(now){const dt=Math.min(.05,(now-lastTime)/1000);lastTime=now;const lerp=1-Math.exp(-dt*9);step=targetStep;yaw+=(targetYaw-yaw)*lerp;velocity*=Math.exp(-dt*5);scrollTilt+=(-clamp(velocity/60)*.09-scrollTilt)*(1-Math.exp(-dt*8));if(velocity<.01&&Math.abs(scrollTilt)<.00001)scrollTilt=0;
 if(!reading&&!roomOpen){const i=Math.min(4,Math.floor(step)),t=step-i;const scale=Math.exp(Math.log(scales[i])*(1-t)+Math.log(scales[i+1])*t);const cy=centres[i]+(centres[i+1]-centres[i])*t;const z=focal*scale/fit+retreat;const breath=1;const pitch=scrollTilt+(retreat>0?(.23*ease(retreat/1500)*Math.max(0,Math.cos(yaw))-.04*Math.max(0,-Math.cos(yaw))):0);const turnLook=retreat?lookX*.18:0;
 camera.style.transform=`translateZ(${focal}px) rotateX(${pitch}rad) rotateY(${yaw+turnLook}rad) scale(${breath})`;
 world.style.transform=`translate3d(${-side}px,${-cy}px,${-z}px)`;
@@ -65,7 +65,7 @@ mark.set(ease(step/.7),ease((step-.45)/.3)*.98,1);fall(clamp((step-.72)/.62));wa
 // Focus cannot jump the native document to a transformed, tiny section.
 panels.forEach((p,j)=>p.inert=Math.abs(j-step)>1.15);$('#rear-hole').inert=Math.cos(yaw)>.2;$('#secret-hole').inert=retreat>=0&&Math.abs(side)<400;
 }else if(reading){watchEdit();updateTeasers();panels.forEach(p=>p.inert=false)}requestAnimationFrame(frame)}
-addEventListener('resize',layout);body.classList.remove('reading');layout();if(reduced)toggleReading(true);requestAnimationFrame(frame);
+addEventListener('resize',layout);await Promise.race([document.fonts.ready,new Promise(resolve=>setTimeout(resolve,2000))]);body.classList.remove('reading');layout();targetStep=clamp(scrollY/segment,0,5);lastScroll=scrollY;if(reduced)toggleReading(true);frame(performance.now());document.documentElement.classList.remove('wall-boot');
 // Direct anchors work from both the header and a copied URL.
 if(location.hash){const target=document.querySelector(location.hash);if(target?.dataset.panel)setTimeout(()=>go(+target.dataset.panel),50)}
 $('.skip-link').onclick=e=>{e.preventDefault();go(5);setTimeout(()=>$('.contact-link').focus({preventScroll:true}),400)};

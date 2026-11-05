@@ -173,3 +173,13 @@ Opacity follows projected scale (distance), easing from zero near scale .045 to
 full opacity at .365; nearby text stays opaque. No blur is applied to vector text.
 Wall 2’s scrolling tilt ceiling increased from .018 to .030 radians (~1.7 degrees);
 its timing, stationary zero angle and separate footer camera remain unchanged.
+
+### Stronger wall motion and completed-selection focus
+
+Wall 2 now caps scroll pitch at .09 radians (~5.2°), with a lower response threshold
+(60px event delta). It still returns to zero. Initial camera transforms are applied
+before revealing the sheet, after font readiness (bounded wait); native no-JS
+reading remains available. Ahead 2 waits until pointer release and 350ms without
+selection changes before zooming; pointer drag cancels pending focus. Selection
+clearing restores scale immediately. Browser regression covers held selection,
+release delay, initial/first-scroll scale, moving pitch and return to zero.

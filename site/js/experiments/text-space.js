@@ -1,6 +1,6 @@
 import {reduced,getDay,setDay} from './shared.js';
 const main=document.querySelector('main');
-let flying=false,down=null,selectionFrame=0;
+let flying=false,down=null,selectionFrame=0,selectionTimer=0,selecting=false;
 function textNodes(root){const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);const nodes=[];let n;while(n=walker.nextNode())if(n.textContent.trim()&&!n.parentElement.closest('svg,script,style'))nodes.push(n);return nodes}
 // Measure native text rather than adding spans/buttons. Selection and line wrapping stay native.
 function gapAt(x,y){for(const node of textNodes(main)){const parent=node.parentElement;if(parent.getClientRects().length===0)continue;const range=document.createRange();for(const m of node.textContent.matchAll(/\s+/g)){range.setStart(node,m.index);range.setEnd(node,m.index+m[0].length);for(const r of range.getClientRects())if(r.width>0&&x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom)return {node,range}}}return null}
@@ -14,4 +14,9 @@ function frame(now){const t=Math.min(1,(now-start)/duration);const k=t*t*(3-2*t)
 main.addEventListener('pointerdown',e=>down={x:e.clientX,y:e.clientY});
 main.addEventListener('click',e=>{if(!down||Math.hypot(e.clientX-down.x,e.clientY-down.y)>5||!getSelection().isCollapsed||e.detail>1)return;const hit=gapAt(e.clientX,e.clientY);if(!hit)return;e.preventDefault();e.stopImmediatePropagation();fly(e.clientX,e.clientY)},true);
 function selectionZoom(){cancelAnimationFrame(selectionFrame);selectionFrame=requestAnimationFrame(()=>{if(flying)return;const sel=getSelection();if(!sel.rangeCount||sel.isCollapsed||!main.contains(sel.anchorNode)||!main.contains(sel.focusNode)){main.style.transform='';main.dataset.selectionZoom='';return}const range=sel.getRangeAt(0),r=range.getBoundingClientRect();if(!r.width||!r.height)return;const scale=main.dataset.selectionZoom==='active'?1.15:1;const box=main.getBoundingClientRect();main.style.transformOrigin=`${(r.left+r.width/2-box.left)/scale}px ${(r.top+r.height/2-box.top)/scale}px`;main.style.transform='scale(1.15)';main.dataset.selectionZoom='active'})}
-document.addEventListener('selectionchange',selectionZoom);
+function scheduleSelectionZoom(){clearTimeout(selectionTimer);cancelAnimationFrame(selectionFrame);const sel=getSelection();if(sel.isCollapsed){main.style.transform='';main.dataset.selectionZoom='';return}if(!selecting)selectionTimer=setTimeout(selectionZoom,350)}
+document.addEventListener('pointerdown',()=>{selecting=true;clearTimeout(selectionTimer);cancelAnimationFrame(selectionFrame)},true);
+document.addEventListener('pointerup',()=>{selecting=false;scheduleSelectionZoom()},true);
+document.addEventListener('pointercancel',()=>{selecting=false;scheduleSelectionZoom()},true);
+addEventListener('blur',()=>{selecting=false;clearTimeout(selectionTimer)});
+document.addEventListener('selectionchange',scheduleSelectionZoom);
