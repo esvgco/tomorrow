@@ -165,3 +165,11 @@ and rear planes with matte near-black surfaces. Copy is on the rear plane. Escap
 or Back reverses the entrance. This replaces the previous inset for wall2 only;
 rooms share a rectangular interior rather than font-outline-derived mesh geometry.
 Validated glyph click, room rendering, keyboard exit and return in Chrome.
+
+### Motion tuning
+
+Ahead 2’s distant text layer starts transparent before its first rendered frame.
+Opacity follows projected scale (distance), easing from zero near scale .045 to
+full opacity at .365; nearby text stays opaque. No blur is applied to vector text.
+Wall 2’s scrolling tilt ceiling increased from .018 to .030 radians (~1.7 degrees);
+its timing, stationary zero angle and separate footer camera remain unchanged.
