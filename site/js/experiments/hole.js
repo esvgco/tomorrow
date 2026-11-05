@@ -20,7 +20,7 @@ const FACE=.8; // the height, as a fraction of the head, that sits on the disc's
 
 function layout(){
   iw=innerWidth;ih=innerHeight;const mobile=iw<650;
-  hx=iw/2;hy=ih*(mobile?.34:.33);R=Math.round(mobile?Math.min(iw*.21,ih*.12):Math.min(iw*.12,ih*.16));size=mobile?20:Math.round(clamp(iw/55,22,28));
+  hx=iw/2;hy=ih*(mobile?.34:.33);R=Math.round(mobile?Math.min(iw*.14,ih*.08):Math.min(iw*.08,ih*.105));size=mobile?20:Math.round(clamp(iw/55,22,28));
   body.style.setProperty('--r',R+'px');body.style.setProperty('--sentence-size',size+'px');
   const h=R*1.35,w=h*bb.width/bb.height;Object.assign(rabbitHost.style,{width:w+'px',height:h+'px',left:-w/2+'px',top:(-R-FACE*h)+'px'});
   text?.layout();
