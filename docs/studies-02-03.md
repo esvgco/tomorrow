@@ -93,16 +93,13 @@ just a click on a letter) and the whole text block flies past you in perspective
 point you clicked, into a project's own space — for now the word *hello* and a grey *back*.
 Back (or Esc) flies you out to the same scroll position.
 
-**Up from the top** (wheel, trackpad, pull down on touch, ↑ key): the head goes into the hole
-as well; at ~420 px of intent the hole opens from an ellipse into a circle, the circle grows
-past the screen and its colour runs black → dark blue → orange → light lilac → white in
-~1.25 s. Behind it the same content, **placed in a room** rather than centred: each stop
-puts its pieces in different places and at different distances from the centre — the
-statement top-left with its number bottom-right; the founders' sentence low-left with the
-names far top-right; the five kinds as a staggered list on the right; the long paragraph
-mid-left; the two people on a diagonal; the address low and large with the last line small
-top-right and the mark where it was. Layers scale as 2^d from the centre and blur with
-distance (xholding's depth mechanic), so edges fly past and the middle stays readable.
+**Up from the top is a second scroll, scrubbed like the first.** There is no threshold and no
+timer: `axis` is how far up you have gone, in pixels of intent (wheel, finger, keys), and
+everything hangs on it in order — the head goes into the hole (0…0.42 vh), the hole opens
+from an ellipse into a circle and fills the screen (next 0.6 vh), then the rooms, one every
+700 px. Scrolling down runs the same axis backwards until you are out, and only then does
+the page scroll normally again. No colour transit: the hole is black and we go into it, so
+the black fills the screen and the content fades in as it does.
 
 **Inside it is black.** You flew into the hole, so the room is black with white text; the
 colour flash passes through blue, orange and lilac and settles on black. Ahead, a **white**

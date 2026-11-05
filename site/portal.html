@@ -16,6 +16,7 @@
   :root { --runway: 42; }
   html { overscroll-behavior: none; }
   html.depth, html.inside { overflow: hidden; }
+  body.up { overflow: hidden; }
 
   /* ---- down: their page ---- */
   .statement { padding: 0 var(--gutter); margin-top: calc(-1 * var(--rise, 0px)); }
@@ -64,8 +65,7 @@
 
   /* ---- forward: the room ---- */
   .scene { position: fixed; inset: 0; z-index: 25; background: #000; color: #fff; overflow: hidden; visibility: hidden; opacity: 0; }
-  html.depth .scene, html.opening .scene { visibility: visible; }
-  html.depth .scene { opacity: 1; }
+
   .dl { position: absolute; inset: 0; transform-origin: 50% 50%; opacity: 0; pointer-events: none; will-change: transform, opacity, filter; }
   .dl.on { pointer-events: auto; }
   .pad { position: absolute; inset: clamp(64px, 11vh, 110px) var(--gutter) clamp(40px, 8vh, 90px); }
@@ -207,7 +207,7 @@
 </div>
 
 <div class="hud ticks" id="ticks"></div>
-<div class="hud hint" id="hint">Scroll up — forward · scroll down past the start to return</div>
+<div class="hud hint" id="hint">Scroll up — forward · scroll down — back out</div>
 <div class="out" aria-hidden="true"></div>
 
 <script type="module" src="js/portal.js"></script>

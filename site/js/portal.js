@@ -34,7 +34,7 @@ function layout() {
   const stageTop = document.querySelector('.stage').getBoundingClientRect().top;
   mark.set(1, 0, 1);
   const r = mark.hole.getBoundingClientRect();
-  mark.set(sinkDown(), 0, 1);
+  mark.set(Math.max(sinkDown(), sinkUp()), 0, 1);
   const rimY = r.top + r.height / 2 - stageTop;
   // the statement sits just under the sunk hole, but never peeks into the first screen
   statement.style.setProperty('--rise', Math.max(0, Math.min(vh - rimY - vh * 0.12, runway - vh * 0.03)).toFixed(1) + 'px');
@@ -42,8 +42,8 @@ function layout() {
 }
 function sinkDown() { return clamp(scrollY / runway, 0, 1); }
 function onScroll() {
-  if (mode !== 'page') return;
-  mark.set(Math.max(sinkDown(), upSink), 0, 1);
+  if (axis > 0) return;
+  mark.set(Math.max(sinkDown(), sinkUp()), 0, 1);
   document.body.classList.toggle('scrolled', scrollY > 8);
   fall.apply(scrollY);
 }
@@ -73,7 +73,7 @@ function onGlyph(x, y) {
   return false;
 }
 grid.addEventListener('click', e => {
-  if (mode !== 'page' || insideState !== 'out' || !fall.state().onShelf || reduced) return;
+  if (axis > 0 || insideState !== 'out' || !fall.state().onShelf || reduced) return;
   const s = stack.getBoundingClientRect();
   if (e.clientY < s.top - 6 || e.clientY > s.bottom + 6) return;   // the door is the list itself
   if (onGlyph(e.clientX, e.clientY)) return;
@@ -105,132 +105,96 @@ function flyOut() {
 }
 document.getElementById('inside-back').addEventListener('click', e => { e.preventDefault(); flyOut(); });
 
-// ---- up: the portal --------------------------------------------------------------------------
-// state: 'page' | 'opening' | 'depth' | 'closing'
-let mode = 'page';
-let up = 0, upSink = 0;         // accumulated upward intent at the top, 0..1
-const UP_NEED = 420;            // px of wheel/touch intent to go through
-const COLORS = [[0, 0, 0], [12, 24, 74], [242, 107, 29], [216, 200, 239], [0, 0, 0]];
-const STOPS_T = [0, 0.3, 0.55, 0.8, 1];
-function colorAt(t) {
-  t = clamp(t, 0, 1);
-  let i = 0; while (i < STOPS_T.length - 2 && t > STOPS_T[i + 1]) i++;
-  const k = inv(STOPS_T[i], STOPS_T[i + 1], t);
-  const a = COLORS[i], b = COLORS[i + 1];
-  return `rgb(${lerp(a[0], b[0], k) | 0},${lerp(a[1], b[1], k) | 0},${lerp(a[2], b[2], k) | 0})`;
-}
+// ---- up: one axis, scrubbed -------------------------------------------------------------------
+// Up is a second scroll. `axis` is how far up you have gone from the top, in pixels of intent
+// (wheel, finger, keys). Along it, in order: the head goes into the hole (0..S), the hole opens
+// into a circle and fills the screen (S..S+O), then the rooms, one every D px. Scrolling down
+// runs the same axis backwards until you are out and the page scrolls normally again.
+let axis = 0, shown = 0;              // shown follows axis with a short lag
+let S = 1, O = 1; const D = 700;
+function axisLayout() { S = Math.max(1, innerHeight * 0.42); O = Math.max(1, innerHeight * 0.6); }
+function sinkUp() { return clamp(shown / S, 0, 1); }
+function qOf(a) { return clamp((a - S) / O, 0, 1); }
+function pOf(a) { return Math.max(0, (a - S - O) / D); }
+const mode = { get v() { return shown <= 0.5 ? 'page' : qOf(shown) < 1 ? 'opening' : 'depth'; } };
+
 let holeRect = null;
 function placePortal() {
   const r = mark.hole.getBoundingClientRect();
   holeRect = { x: r.left + r.width / 2, y: r.top + r.height / 2, w: r.width, h: r.height };
   portal.style.left = holeRect.x + 'px'; portal.style.top = holeRect.y + 'px';
 }
-// q: 0 = the hole as it is, 1 = white over everything
+// q: 0 = the hole as it is, 1 = black over everything. The hole is black; we go into it.
 function drawPortal(q) {
-  const toCircle = seg(0, 0.35, q);           // ellipse → circle
-  const grow = seg(0.2, 0.85, q);             // circle → beyond the screen
+  const toCircle = seg(0, 0.4, q);
+  const grow = seg(0.25, 1, q);
   const need = Math.hypot(innerWidth, innerHeight) * 1.05;
   const w = lerp(holeRect.w, need, grow);
   const h = lerp(lerp(holeRect.h, holeRect.w, toCircle), need, grow);
   portal.style.width = w.toFixed(1) + 'px';
   portal.style.height = h.toFixed(1) + 'px';
-  portal.style.transform = `translate(-50%,-50%)`;
-  portal.style.backgroundColor = colorAt(seg(0.3, 1, q));
-}
-let anim = null;
-function openPortal() {
-  if (mode !== 'page') return;
-  mode = 'opening';
-  html.classList.add('opening');
-  placePortal();
-  mark.set(1, 0, 1);
-  portal.classList.add('on');
-  const t0 = performance.now(), D = 1250;
-  cancelAnimationFrame(anim);
-  (function step(now) {
-    const q = clamp((now - t0) / D, 0, 1);
-    drawPortal(q);
-    if (q >= 0.9 && !html.classList.contains('depth')) { html.classList.add('depth'); p = 0; target = 0; renderDepth(); }
-    if (q < 1) anim = requestAnimationFrame(step);
-    else { mode = 'depth'; html.classList.remove('opening'); portal.classList.remove('on'); lastInput = performance.now() - 9999; }
-  })(t0);
-}
-function closePortal() {
-  if (mode !== 'depth') return;
-  mode = 'closing';
-  placePortal();
-  portal.classList.add('on');
-  drawPortal(1);
-  html.classList.add('opening');
-  const t0 = performance.now(), D = 1250;
-  cancelAnimationFrame(anim);
-  (function step(now) {
-    const q = 1 - clamp((now - t0) / D, 0, 1);
-    drawPortal(q);
-    if (q <= 0.85 && html.classList.contains('depth')) html.classList.remove('depth');
-    // the head comes back up as the hole closes
-    mark.set(clamp(q / 0.35, 0, 1), 0, 1);
-    if (q > 0) anim = requestAnimationFrame(step);
-    else { mode = 'page'; up = 0; upSink = 0; html.classList.remove('opening'); portal.classList.remove('on'); mark.set(sinkDown(), 0, 1); }
-  })(t0);
+  portal.style.transform = 'translate(-50%,-50%)';
 }
 
-let cooldownUntil = 0;
-function pushUp(d) {                      // d > 0 means "up"
-  if (mode !== 'page' || scrollY > 2 || reduced || performance.now() < cooldownUntil) { up = 0; upSink = 0; return; }
-  up = clamp(up + d, 0, UP_NEED);
-  upSink = ease(up / UP_NEED);
-  mark.set(Math.max(sinkDown(), upSink), 0, 1);
-  if (up >= UP_NEED) openPortal();
+let upRaf = null;
+function renderUp() {
+  upRaf = null;
+  shown += (axis - shown) * 0.3;
+  if (Math.abs(axis - shown) < 0.4) shown = axis;
+  const q = qOf(shown), pp = pOf(shown);
+  // the head
+  mark.set(Math.max(sinkDown(), sinkUp()), 0, 1);
+  // the hole opening
+  const opening = shown > S && q < 1;
+  if (opening && !holeRect) placePortal();
+  portal.classList.toggle('on', opening);
+  if (opening) drawPortal(q);
+  html.classList.toggle('opening', opening);
+  // the rooms: the scene fades in as the hole fills the screen, content with it
+  const inDepth = q >= 1;
+  html.classList.toggle('depth', inDepth);
+  scene.style.opacity = seg(0.75, 1, q).toFixed(3);
+  scene.style.visibility = q > 0.75 ? 'visible' : '';
+  p = pp; renderDepth();
+  if (pp >= MAX + 0.55) { leaveThroughTheWhite(); return; }
+  if (shown === 0) holeRect = null;
+  document.body.classList.toggle('up', shown > 0);
+  if (shown !== axis) upRaf = requestAnimationFrame(renderUp);
 }
-let upDecay = null;
-function decayUp() {                       // let go before the threshold: the head comes back
-  clearTimeout(upDecay);
-  upDecay = setTimeout(() => {
-    if (mode !== 'page') return;
-    const t0 = performance.now(), from = up;
-    (function step(now) {
-      const k = clamp((now - t0) / 500, 0, 1);
-      up = from * (1 - ease(k)); upSink = ease(up / UP_NEED);
-      if (mode === 'page') mark.set(Math.max(sinkDown(), upSink), 0, 1);
-      if (k < 1 && up > 0) requestAnimationFrame(step);
-    })(t0);
-  }, 600);
+function kickUp() { if (!upRaf) upRaf = requestAnimationFrame(renderUp); }
+function pushUp(d) {                      // d > 0 means up, in px of intent
+  if (reduced || insideState !== 'out') return;
+  if (axis <= 0 && (scrollY > 2 || d <= 0)) return;
+  axis = clamp(axis + d, 0, S + O + (MAX + 0.7) * D);
+  kickUp();
+}
+// past the last room the white hole has filled the screen: you are out. For now, out means
+// back on the first screen, the head over the hole. What is really out there is undecided.
+let leaving = false, cooldownUntil = 0;
+function leaveThroughTheWhite() {
+  if (leaving) return;
+  leaving = true;
+  html.classList.add('leaving');
+  setTimeout(() => {
+    axis = 0; shown = 0; holeRect = null; p = 0;
+    html.classList.remove('depth', 'opening'); portal.classList.remove('on');
+    scene.style.opacity = '0'; scene.style.visibility = '';
+    scrollTo(0, 0); mark.set(0, 0, 1); renderDepth();
+    document.body.classList.remove('up');
+    html.classList.remove('leaving');
+    leaving = false; cooldownUntil = performance.now() + 1200;
+  }, 700);
 }
 
-// ---- forward: depth --------------------------------------------------------------------------
+// ---- the rooms --------------------------------------------------------------------------------
 const layers = [...document.querySelectorAll('.dl')].map(el => ({ el, c: +el.dataset.c, span: +el.dataset.span, vis: null }));
 const MAX = layers[layers.length - 1].c;
 const STOPS = layers.map(l => l.c);
-let p = 0, target = 0, lastInput = 0, depthRaf = null;
+let p = 0;
 const ticksEl = document.getElementById('ticks');
 STOPS.forEach(() => { const t = document.createElement('i'); t.className = 'tick'; ticksEl.appendChild(t); });
 const tickEls = [...ticksEl.children];
 const nearestStop = v => STOPS.reduce((b, s) => Math.abs(s - v) < Math.abs(b - v) ? s : b, STOPS[0]);
-
-// d > 0 means forward. Up is forward: the same direction that opened the portal.
-function pushDepth(d) {
-  target = clamp(target + d, -0.6, MAX + 0.7);
-  lastInput = performance.now();
-  if (target <= -0.45) { target = 0; p = 0; closePortal(); }
-  else if (target >= MAX + 0.55) { leaveThroughTheWhite(); }
-}
-// past the last room the white hole has filled the screen: you are out. For now, out means
-// back on the first screen, the head over the hole. What is really out there is undecided.
-function leaveThroughTheWhite() {
-  if (mode !== 'depth') return;
-  mode = 'leaving';
-  html.classList.add('leaving');
-  setTimeout(() => {
-    html.classList.remove('depth');
-    scrollTo(0, 0);
-    mode = 'page'; up = 0; upSink = 0; target = 0; p = 0;
-    mark.set(0, 0, 1);
-    renderDepth();
-    html.classList.remove('leaving');
-    cooldownUntil = performance.now() + 1200;
-  }, 700);
-}
 function renderDepth() {
   for (const L of layers) {
     const d = (p - L.c) / L.span;             // -1 far ahead, +1 passed
@@ -247,58 +211,46 @@ function renderDepth() {
   // the white hole ahead grows as you go; past the last room it fills the screen
   const k = clamp(p / (MAX + 0.55), 0, 1);
   const need = Math.hypot(innerWidth, innerHeight) / 44;
-  // slow at first, most of the growth in the last stretch: exponential in k^3
   far.style.transform = `scale(${(0.18 * Math.pow(need / 0.18, Math.pow(k, 3))).toFixed(3)})`;
   far.style.opacity = (0.95 * seg(-0.3, 0.05, p)).toFixed(3);
   const near = nearestStop(p);
   tickEls.forEach((t, i) => t.classList.toggle('act', STOPS[i] === near));
 }
-function depthFrame() {
-  depthRaf = null;
-  if (mode !== 'depth') return;
-  p = lerp(p, target, 0.3);                 // tied to the hand, with a short lag so it does not jitter
-  renderDepth();
-  if (Math.abs(p - target) > 0.0005) depthRaf = requestAnimationFrame(depthFrame);
-}
-function kickDepth() { if (!depthRaf) depthRaf = requestAnimationFrame(depthFrame); }
 
-// ---- input ----------------------------------------------------------------------------------
+// ---- input ------------------------------------------------------------------------------------
 addEventListener('wheel', e => {
   if (insideState !== 'out') { e.preventDefault(); return; }
-  if (mode === 'depth') {
-    e.preventDefault();
-    const d = Math.sign(e.deltaY) * Math.min(Math.abs(e.deltaY), 100);
-    pushDepth(-d / 700); kickDepth();
-  } else if (mode === 'page') {
-    if (e.deltaY < 0 && scrollY <= 2) { pushUp(-e.deltaY); decayUp(); }
-    else if (up > 0) { up = 0; upSink = 0; }
+  const d = Math.sign(e.deltaY) * Math.min(Math.abs(e.deltaY), 100);
+  if (axis > 0 || (scrollY <= 2 && d < 0 && performance.now() >= cooldownUntil)) {
+    e.preventDefault();                   // while we are on the up axis, the page does not scroll
+    pushUp(-d);
   }
 }, { passive: false });
 
 let touchY = null;
-addEventListener('touchstart', e => { touchY = e.touches[0].clientY; if (mode === 'depth') lastInput = performance.now(); }, { passive: true });
+addEventListener('touchstart', e => { touchY = e.touches[0].clientY; }, { passive: true });
 addEventListener('touchmove', e => {
   if (touchY === null || insideState !== 'out') return;
-  const y = e.touches[0].clientY, dy = touchY - y; touchY = y;
-  if (mode === 'depth') { pushDepth(-dy / 520); kickDepth(); }
-  else if (mode === 'page' && dy < 0 && scrollY <= 2) { pushUp(-dy * 1.6); decayUp(); }
-}, { passive: true });
+  const y = e.touches[0].clientY, dy = touchY - y; touchY = y;    // dy > 0: finger moved up (scroll down)
+  if (axis > 0 || (scrollY <= 2 && dy < 0 && performance.now() >= cooldownUntil)) { if (e.cancelable) e.preventDefault(); pushUp(-dy * 1.4); }
+}, { passive: false });
 addEventListener('touchend', () => { touchY = null; });
 
 addEventListener('keydown', e => {
-  if (mode === 'depth') {
-    if (e.key === 'ArrowUp' || e.key === 'PageUp') { e.preventDefault(); pushDepth(e.key === 'PageUp' ? 1 : 0.25); kickDepth(); }
-    else if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') { e.preventDefault(); pushDepth(e.key === 'ArrowDown' ? -0.25 : -1); kickDepth(); }
-    else if (e.key === 'Escape') closePortal();
-  } else if (insideState === 'in' && e.key === 'Escape') { flyOut(); }
-  else if (mode === 'page' && insideState === 'out' && scrollY <= 2 && (e.key === 'ArrowUp' || e.key === 'PageUp')) { pushUp(UP_NEED); }
+  if (insideState === 'in' && e.key === 'Escape') { flyOut(); return; }
+  if (insideState !== 'out') return;
+  const inUp = axis > 0;
+  if (e.key === 'ArrowUp' || e.key === 'PageUp') { if (inUp || scrollY <= 2) { e.preventDefault(); pushUp(e.key === 'PageUp' ? D : D / 4); } }
+  else if (inUp && (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ')) { e.preventDefault(); pushUp(e.key === 'ArrowDown' ? -D / 4 : -D); }
+  else if (inUp && e.key === 'Escape') { axis = 0; kickUp(); }
 });
 
 // ---- boot -----------------------------------------------------------------------------------
 addEventListener('scroll', onScroll, { passive: true });
-addEventListener('resize', () => { layout(); if (mode === 'depth') { renderDepth(); } }, { passive: true });
+addEventListener('resize', () => { axisLayout(); layout(); holeRect = null; kickUp(); renderDepth(); }, { passive: true });
 document.fonts && document.fonts.ready.then(layout);
+axisLayout();
 layout();
 onScroll();
 renderDepth();
-if (location.search.includes('debug')) window.__portal = { get up() { return up; }, get mode() { return mode; }, get p() { return p; }, get inside() { return insideState; }, fall, flyIn, flyOut };
+if (location.search.includes('debug')) window.__portal = { get axis() { return axis; }, get mode() { return mode.v; }, get p() { return p; }, get inside() { return insideState; }, fall, flyIn, flyOut, pushUp };
