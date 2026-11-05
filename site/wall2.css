@@ -1,0 +1,3 @@
+/* One continuous sheet: no chapter scale changes or per-chapter easing. */
+.wall-panel .eyebrow,.edge-note,.margin-note,.door-note{visibility:hidden}
+.page-tools .progress-line{display:none}

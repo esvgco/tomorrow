@@ -123,3 +123,13 @@ screenshots to `/tmp`. Existing rig, clips, journey and playground tests also pa
 Manual visual review: Chrome at 1440×1000 and 390×844. Touch gestures are additionally
 checked with the browser’s touch-event emulation. Real-device Safari testing remains
 necessary before treating the CSS 3D experiment as production-ready.
+
+## Second versions — simplification
+
+`wall2.html` and `ahead2.html` preserve the original routes as references.
+Wall 2 removes per-chapter scale and eased camera segments: equal-scale chapters
+form one sheet, vertical travel is linear, and a small whole-sheet perspective tilt
+responds to scrolling. The shrinking journey is intentionally removed in this iteration.
+Ahead 2 keeps the header and interactions, with one reading axis, smaller headings,
+no staggered project composition, and fewer labels and repeated entrances.
+Both have isolated CSS/JS so changes do not affect the reference versions.
