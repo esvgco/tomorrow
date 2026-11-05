@@ -1,0 +1,30 @@
+/* The tube: the same sheet, wrapped round the inside of a vertical shaft.
+   Panels sit on the wall in a helix; the camera goes down and round. */
+.bend-defs{position:absolute;width:0;height:0;overflow:hidden}
+.tube-page .viewport{background:#fff;filter:url(#bend)}
+.tube-page.no-bend .viewport{filter:none}
+.tube-lines{position:absolute;inset:0;width:100%;height:100%;display:block}
+.tube-page .camera{will-change:transform}
+.tube-page .wall-surface{left:0;top:0;width:0;height:0!important;background:none}
+.tube-page .wall-panel{left:0;top:0;transform-origin:0 0;transform-style:preserve-3d}
+.tube-page .scroll-track{height:8000px}
+
+/* First screen: the rabbit alone, in the exact middle. */
+.tube-page .opening .hero-rabbit{position:absolute;left:50%;top:50%;width:auto;transform:translate(-50%,-50%)}
+.tube-page .opening .hero-rabbit:hover{transform:translate(-50%,-50%) rotate(-5deg)}
+.tube-page .opening .rabbit-mark{width:190px;height:196px}
+.tube-page .hero-line{position:absolute;left:0;right:0;top:calc(50% + 150px);text-align:center;font-size:15px}
+
+.tube-page .transit.tube-transit{display:grid!important}
+
+.tube-page.reading .viewport{filter:none;background:none}
+.tube-page.reading .tube-lines{display:none}
+.tube-page.reading .opening{min-height:70svh}
+.tube-page.reading .hero-line{top:calc(50% + 120px)}
+
+@media(max-width:650px){
+  .tube-page .opening .rabbit-mark{width:230px;height:236px}
+  .tube-page .hero-line{font-size:22px;top:calc(50% + 180px);padding:0 90px}
+  .tube-page.reading .opening .rabbit-mark{width:120px;height:124px}
+  .tube-page.reading .hero-line{font-size:14px;top:calc(50% + 90px);padding:0}
+}

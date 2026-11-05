@@ -1,0 +1,140 @@
+:root {
+  --paper: #ffffff;
+  --ink: #000000;
+  --muted: rgba(0, 0, 0, 0.5);
+  --hair: rgba(0, 0, 0, 0.12);
+  --accent: #ff3d00;
+  --sans: 'Geist', ui-sans-serif, system-ui, -apple-system, 'Helvetica Neue', Arial, sans-serif;
+  --mono: 'Geist Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  --gutter: clamp(16px, 3.2vw, 48px);
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--paper); color: var(--ink); }
+body {
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  padding: 0 var(--gutter);
+}
+
+.top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+  padding: 22px 0;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.top .meta { color: var(--muted); }
+
+.intro { max-width: 720px; padding: 9vh 0 7vh; }
+.intro h1 {
+  font-weight: 400;
+  font-size: clamp(30px, 4.4vw, 56px);
+  line-height: 1.04;
+  letter-spacing: -0.025em;
+  margin: 0 0 22px;
+}
+.intro p { margin: 0; max-width: 560px; color: rgba(0, 0, 0, 0.72); }
+
+.row { padding-bottom: 8vh; }
+.row-head {
+  display: flex;
+  gap: 18px;
+  align-items: baseline;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-top: 1px solid var(--ink);
+  padding: 10px 0 18px;
+}
+.row-head .idx { min-width: 14px; }
+.row-head .hint { margin-left: auto; color: var(--muted); }
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(16px, 2vw, 28px);
+}
+@media (max-width: 1100px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 620px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+
+.card { min-width: 0; }
+.stage {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  outline: 1px solid var(--hair);
+  outline-offset: -1px;
+  cursor: grab;
+  touch-action: pan-y;
+  overflow: hidden;
+  background: var(--paper);
+}
+.card[data-palette='sky'] .stage { background: #14a3e4; outline-color: transparent; }
+.dragging .stage { cursor: grabbing; }
+.stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.stage .overlay { pointer-events: none; }
+.stage.pixelated .view { image-rendering: pixelated; image-rendering: crisp-edges; }
+.card.failed .stage::after {
+  content: 'WebGL2 is needed for this view';
+  position: absolute; inset: 0; display: grid; place-items: center;
+  font-family: var(--mono); font-size: 11px; color: var(--muted);
+}
+
+.caption {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 10px 0 0;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.caption .num { color: var(--muted); }
+.caption .name { font-family: var(--sans); font-size: 14px; letter-spacing: 0; text-transform: none; font-weight: 500; }
+.caption .tools { margin-left: auto; display: flex; gap: 2px; flex-wrap: wrap; justify-content: flex-end; }
+
+button {
+  font: inherit;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  background: none;
+  border: 0;
+  padding: 4px 6px;
+  cursor: pointer;
+  border-radius: 0;
+}
+button:hover { color: var(--ink); }
+button.on { color: var(--ink); box-shadow: inset 0 -1px 0 var(--ink); }
+button[data-action='rig'].on { color: var(--accent); box-shadow: inset 0 -1px 0 var(--accent); }
+button:focus-visible { outline: 1px solid var(--ink); outline-offset: 1px; }
+
+.palettes { display: flex; gap: 2px; margin: 4px 0 0 -6px; flex-wrap: wrap; }
+.note { margin: 8px 0 0; font-size: 13px; color: rgba(0, 0, 0, 0.62); max-width: 42ch; }
+
+.foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 22px 0 28px;
+  border-top: 1px solid var(--hair);
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+}
+.foot code { font-family: inherit; color: var(--ink); }
+
+.scrub { display: flex; align-items: center; gap: 10px; margin-top: 10px; font: 10px var(--mono); color: var(--muted); text-transform: uppercase; }
+.scrub input { flex: 1; min-width: 0; accent-color: var(--ink); cursor: ew-resize; }
