@@ -13,11 +13,11 @@ const zoomMode=document.body.classList.contains('wall-zoom');
 // In wall-zoom the chapters shrink faster (ratio .34 instead of .44): the near one larger,
 // the far ones smaller. It starts a little way into the walk, and the whole composition
 // sits lower in the window.
-const RATIO=zoomMode?.34:.44,scales=[0,1,2,3,4,5].map(i=>RATIO**i),centres=[0],BACK=1.6,START=zoomMode?BACK*.78:BACK,TAIL=zoomMode?0:BACK;
+const RATIO=zoomMode?.34:.44,scales=[0,1,2,3,4,5].map(i=>RATIO**i),centres=[0],BACK=1.6,START=zoomMode?BACK*.7:BACK,TAIL=zoomMode?0:BACK;
 let floor=0,origins=[],lastKey='',lastMark='',lastFall=-1;
 const surface=$('#wall-surface');
 function placeWall(){
-  const spacing=innerWidth<650?1280:830;
+  const spacing=(innerWidth<650?1280:830)*(zoomMode?.8:1);
   for(let i=1;i<6;i++)centres[i]=centres[i-1]+spacing*scales[i-1];
   floor=centres[5]+6;
   origins=panels.map(p=>{const o=getComputedStyle(p).transformOrigin.split(' ').map(parseFloat);return [surface.offsetLeft+p.offsetLeft+o[0],surface.offsetTop+p.offsetTop+o[1],p.offsetHeight,o[1]]});
@@ -58,10 +58,13 @@ if(!reading&&!roomOpen){
       if(!far)p.style.transform=`translate3d(${Z*ox-ox}px,${y-oy}px,0) scale(${k})`;
       const off=s<=5?Math.abs(j-step)>1.15:false;if(p.inert!==off)p.inert=off});
     // Chapter work only near its chapter, and only when its value changes.
-    if(step<1.1){const m=`${ease(step/.7).toFixed(4)}|${(ease((step-.45)/.3)*.98).toFixed(4)}`;if(m!==lastMark){lastMark=m;mark.set(ease(step/.7),ease((step-.45)/.3)*.98,1)}}
-    const f=Math.round(clamp((step-.72)/.62)*1000)/1000;if(f!==lastFall){lastFall=f;fall(f)}
+    // In wall-zoom nobody reads chapter by chapter, so the chapter animations run on the
+    // walk itself: the rabbit dives first, then the letters fall.
+    const a=zoomMode?clamp(scrollY/segment/START)/.3:step,fa=zoomMode?clamp((clamp(scrollY/segment/START)-.15)/.4):clamp((step-.72)/.62);
+    if(a<1.1){const m=`${ease(a/.7).toFixed(4)}|${(ease((a-.45)/.3)*.98).toFixed(4)}`;if(m!==lastMark){lastMark=m;mark.set(ease(a/.7),ease((a-.45)/.3)*.98,1)}}
+    const f=Math.round(fa*1000)/1000;if(f!==lastFall){lastFall=f;fall(f)}
   }
-  if(Math.abs(step-2)<1.3){watchEdit();updateTeasers()}
+  if(zoomMode)watchEdit();else if(Math.abs(step-2)<1.3){watchEdit();updateTeasers()}
 }else if(reading){watchEdit();updateTeasers();panels.forEach(p=>{p.inert=false;p.removeAttribute('hidden-far')})}requestAnimationFrame(frame)}
 addEventListener('resize',layout);body.classList.remove('reading');body.classList.add('flat');layout();if(reduced)toggleReading(true);requestAnimationFrame(frame);
 // Safari rasters a layer at the scale it is first shown and redraws it every time that
