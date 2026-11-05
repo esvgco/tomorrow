@@ -155,3 +155,13 @@ Wall 2 reading tilt now only responds to scrolling (maximum 0.018 radians, about
 1 degree). A time-based envelope gently returns it to exactly zero at rest; there
 is no permanent reading-plane tilt. Footer exploration keeps its separate camera
 orientation. Original wall study unchanged.
+
+### Wall 2 — letter interiors
+
+The last heading now has individual CSS 3D glyph depth layers. Hover exposes their
+depth; click/tap a letter or reverse-scroll over the heading to enter. The room grows
+from that letter’s screen position and contains actual CSS 3D side, floor, ceiling
+and rear planes with matte near-black surfaces. Copy is on the rear plane. Escape
+or Back reverses the entrance. This replaces the previous inset for wall2 only;
+rooms share a rectangular interior rather than font-outline-derived mesh geometry.
+Validated glyph click, room rendering, keyboard exit and return in Chrome.
