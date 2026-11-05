@@ -23,3 +23,15 @@
 .wall-fast .project-lines button>span:first-child{display:none}
 .wall-fast .project-lines button{grid-template-columns:1fr 180px}
 @media(max-width:650px){.wall-fast .project-lines button{grid-template-columns:1fr}.wall-fast .project-lines span:last-child{grid-column:1}}
+.wall-fast .teaser{display:none}
+
+/* wall-zoom: every text centred. */
+.wall-zoom .wall-panel{text-align:center}
+.wall-zoom .wall-panel .panel-copy,.wall-zoom .wall-panel .letter-fall,.wall-zoom .people-grid,.wall-zoom .project-lines{margin-left:auto;margin-right:auto}
+.wall-zoom .letter-fall .accessible-copy,.wall-zoom .letter-fall .fall-result{max-width:none;text-align:center}
+.wall-zoom .hero-bottom{flex-direction:column;justify-content:center;gap:34px;padding-right:0}
+.wall-zoom .hero-rabbit{margin:0 auto}
+.wall-zoom .project-lines button,.wall-zoom .project-lines button{grid-template-columns:1fr;justify-items:center;text-align:center;gap:6px}
+.wall-zoom .project-lines span:last-child{text-align:center;grid-column:1}
+.wall-zoom .field-note{left:50%;right:auto;transform:translateX(-50%);text-align:center}
+.wall-zoom .photo-caption{justify-content:center}
