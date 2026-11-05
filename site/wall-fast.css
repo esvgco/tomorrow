@@ -63,3 +63,14 @@
 .wall-zoom.reading .links-panel{min-height:300px}
 @media(max-width:650px){.burrow-card strong{font-size:44px}.burrow-card span{font-size:22px}.big-link{font-size:80px}}
 .wall-zoom .little-door{visibility:hidden}
+
+/* wall-zoom, looking up: a screen above the wall, with "possible" and a hidden door. */
+.above{position:fixed;inset:0;z-index:4;visibility:hidden;background:#fff;will-change:transform}
+.above.shown{visibility:visible}
+.above-ink{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:crosshair}
+.above-word{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);margin:0;font:400 26px/1 var(--sans);letter-spacing:-.02em;pointer-events:none;mix-blend-mode:difference;color:#fff}
+.above-back{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);font:14px var(--mono);padding:10px 14px;opacity:0;transition:opacity .4s;mix-blend-mode:difference;color:#fff}
+.above.drawable .above-back{opacity:1}
+.door-leaf{position:absolute;transform-origin:0 50%;pointer-events:none;backface-visibility:visible;background:#fff}
+.above.door-ready .above-word{animation:door-breathe 2.4s ease-in-out infinite}
+@keyframes door-breathe{50%{opacity:.55}}

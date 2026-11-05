@@ -1,5 +1,6 @@
 import {clamp,ease,reduced,tomorrow,setDay,mountFall,mountGaps,watchEdit} from './shared.js';
 import {mountMark} from '../mark.js';
+import {mountDoor} from './door-ink.js';
 // The wall, from afar (04.6). Built on 04.1's flat camera: every chapter is its own layer,
 // zoomed and moved directly from the scroll position.
 //
@@ -17,7 +18,7 @@ const panels=[...document.querySelectorAll('[data-panel]')],N=panels.length,LAST
 const RATIO=.34,scales=panels.map((_,i)=>RATIO**i),centres=[0],BACK=1.6,START=BACK*.7,SINK=.7,TOTAL=START+SINK+2;
 const surface=$('#wall-surface'),dock=$('#rabbit-dock'),hole6=$('.burrow-hole'),cards=[...document.querySelectorAll('.burrow-card')];
 let dockX=0,dockY=0,dockDepth=0,floor=0,origins=[],lastKey='',lastMark='',lastFall=-1,fit=1,segment=1100,mobile=false,lower=0,spacing=830;
-let warming=!reduced,roomEntering=false,roomFlight=null,reading=false,roomOpen=false,hoverLast=false,u=0,cardBase=[];
+let up=0,warming=!reduced,roomEntering=false,roomFlight=null,reading=false,roomOpen=false,hoverLast=false,u=0,cardBase=[];
 const mark=mountMark($('#wall-rabbit')),fall=mountFall($('[data-fall]'),{center:true});
 const hb=mark.holeBox,bb=mark.bunBox,depth=hb.y+hb.height-bb.y;
 hole6.setAttribute('viewBox',`${hb.x} ${hb.y} ${hb.width} ${hb.height}`);
@@ -62,6 +63,30 @@ addEventListener('wheel',e=>{if(reading||e.ctrlKey||document.querySelector('dial
 addEventListener('keydown',e=>{if(roomOpen){if(e.key==='Escape'){leaveRoom();e.preventDefault()}if(e.key==='Tab'){e.preventDefault();(document.activeElement===$('#leave-room')?$('#room-tomorrow'):$('#leave-room')).focus()}}});
 mountGaps((x,y)=>{if(reading){tomorrow();return}viewport.style.transformOrigin=`${x}px ${y}px`;const a=viewport.animate([{transform:'scale(1)'},{transform:'scale(20)',opacity:0}],{duration:reduced?1:650,fill:'forwards',easing:'cubic-bezier(.6,0,1,1)'});a.onfinish=()=>{tomorrow(()=>{a.cancel()})}});
 
+
+// ---------- Looking up ----------
+// From the first screen you can also scroll up. Then the hole stays where it is, the
+// rabbit drops into it, and the wall slides down in perspective: we did not move, we
+// raised our head. Above the wall is a white screen with one word, and a door to find.
+const above=$('#above'),TILT=62*Math.PI/180;
+const door=mountDoor(above,{reduced,onEnter:done=>tomorrow(()=>{done();up=0;scrollTo(0,0);lastKey='';lastMark=''})});
+function lookUp(){
+  const a=TILT*ease(clamp((up-.2)/.8)),P=innerHeight*1.1;
+  viewport.style.transform=a?`perspective(${P}px) translateZ(${P}px) rotateX(${a}rad) translateZ(${-P}px)`:'';
+  above.classList.toggle('shown',a>0);above.classList.toggle('drawable',up>=1);
+  above.style.transform=up>=1?'':`perspective(${P}px) translateZ(${P}px) rotateX(${a-TILT}rad) translateZ(${-P}px)`;
+}
+function lift(d){const before=up;up=clamp(up+d,0,1);if(up!==before)lastKey=''}
+addEventListener('wheel',e=>{if(reading||roomOpen||document.querySelector('dialog[open]'))return;
+  if(up>0||(scrollY<=0&&e.deltaY<0)){e.preventDefault();lift(-e.deltaY*(e.deltaMode===1?16:1)/(innerHeight*1.4))}},{passive:false});
+let touchY=null;
+addEventListener('touchstart',e=>{touchY=e.target.closest('.above-ink')&&up>=1?null:e.touches[0].clientY},{passive:true});
+addEventListener('touchmove',e=>{if(touchY==null||reading)return;const y=e.touches[0].clientY,dy=y-touchY;touchY=y;
+  if(up>0||(scrollY<=0&&dy>0)){e.preventDefault();lift(dy/(innerHeight*1.1))}},{passive:false});
+addEventListener('keydown',e=>{if(reading||roomOpen||document.querySelector('dialog[open]'))return;
+  if((e.key==='ArrowUp'||e.key==='PageUp')&&scrollY<=0&&up<1){e.preventDefault();lift(e.key==='PageUp'?.5:.15)}
+  else if((e.key==='ArrowDown'||e.key==='PageDown'||e.key===' ')&&up>0){e.preventDefault();lift(e.key==='ArrowDown'?-.15:-.5)}});
+$('#above-back').onclick=()=>{const from=up,t0=performance.now();const step=now=>{const k=clamp((now-t0)/900);up=from*(1-ease(k));lastKey='';if(k<1)requestAnimationFrame(step)};requestAnimationFrame(step)};
 const overview=()=>Math.min(fit*.3,innerHeight*.4/(floor+300));
 function camera(){
   if(u<START){// the pull-back of 04.1, backwards: distance shrinks linearly while descending
@@ -76,7 +101,7 @@ function frame(){
 if(warming){requestAnimationFrame(frame);return}
 if(!reading&&!roomOpen){
   u=clamp(scrollY/segment,0,TOTAL);
-  const key=`${u}|${innerWidth}|${innerHeight}`;
+  const key=`${u}|${up}|${innerWidth}|${innerHeight}`;
   if(key!==lastKey){lastKey=key;
     const [Z,cy]=camera(),half=innerHeight/2+80,inHole=u>=START+SINK;
     panels.forEach((p,j)=>{const [ox,oy,h,oyo]=origins[j],k=Z*scales[j],y=Z*(oy+centres[j]-cy)+lower;const top=y-oyo*k,bottom=y+(h-oyo)*k;
@@ -84,7 +109,8 @@ if(!reading&&!roomOpen){
       if(!far)p.style.transform=`translate3d(${Z*ox-ox}px,${y-oy}px,0) scale(${k})`;if(p.inert!==far)p.inert=far});
     // The dock until the rabbit is gone; from then on, the hole belongs to the wall.
     dock.style.visibility=inHole?'hidden':'';
-    const sink=ease(clamp((u-START)/SINK)),m=sink.toFixed(4);if(m!==lastMark){lastMark=m;mark.set(sink,0,1);dock.style.transform=`translate(${dockX}px,${dockY+dockDepth*sink}px)`}
+    lookUp();
+    const sink=u>0?ease(clamp((u-START)/SINK)):ease(clamp(up/.35)),m=sink.toFixed(4);if(m!==lastMark){lastMark=m;mark.set(sink,0,1);dock.style.transform=`translate(${dockX}px,${dockY+dockDepth*sink}px)`}
     const fa=Math.round(clamp((u/START-.15)/.4)*1000)/1000;if(fa!==lastFall){lastFall=fa;fall(fa)}
     // Projects come up from below and out of nothing, one after another, once the rabbit is in.
     const t=u-START-SINK;
