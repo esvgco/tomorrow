@@ -15,9 +15,13 @@ import {mountDoor} from './door-ink.js';
 // rabbit is gone, they are the same pixels; one is swapped for the other there.
 const $=s=>document.querySelector(s),body=document.body,viewport=$('#viewport');
 const panels=[...document.querySelectorAll('[data-panel]')],N=panels.length,LAST=5;
-const RATIO=.34,scales=panels.map((_,i)=>RATIO**i),centres=[0],BACK=1.6,START=BACK*.7,SINK=.7,TOTAL=START+SINK+2;
+// 04.7 (body.rabbit-top): the rabbit is fixed just above the first heading instead, and the
+// hole is simply on the wall after the last screen; it dives as the hole passes under it.
+const TOP=body.classList.contains('rabbit-top');
+// In 04.7 the camera stops at the hole's chapter (HOLD): the rabbit dives, then the projects come.
+const RATIO=.34,scales=panels.map((_,i)=>RATIO**i),centres=[0],BACK=1.6,START=BACK*.7,SINK=TOP?0:.7,HOLD=TOP?1.1:0,TOTAL=START+SINK+2+HOLD;
 const surface=$('#wall-surface'),dock=$('#rabbit-dock'),hole6=$('.burrow-hole'),cards=[...document.querySelectorAll('.burrow-card')];
-let dockX=0,dockY=0,dockDepth=0,floor=0,origins=[],lastKey='',lastMark='',lastFall=-1,fit=1,segment=1100,mobile=false,lower=0,spacing=830;
+let Yr=0,tStar=0,dockX=0,dockY=0,dockDepth=0,floor=0,origins=[],lastKey='',lastMark='',lastFall=-1,fit=1,segment=1100,mobile=false,lower=0,spacing=830;
 let up=0,warming=!reduced,roomEntering=false,roomFlight=null,reading=false,roomOpen=false,hoverLast=false,u=0,cardBase=[];
 const mark=mountMark($('#wall-rabbit')),fall=mountFall($('[data-fall]'),{center:true});
 const hb=mark.holeBox,bb=mark.bunBox,depth=hb.y+hb.height-bb.y;
@@ -31,6 +35,7 @@ function layout(){
   for(let i=1;i<=LAST;i++)centres[i]=centres[i-1]+spacing*scales[i-1];
   floor=centres[LAST]+6;
   origins=panels.map(p=>{const o=getComputedStyle(p).transformOrigin.split(' ').map(parseFloat);return [surface.offsetLeft+p.offsetLeft+o[0],surface.offsetTop+p.offsetTop+o[1],p.offsetHeight,o[1],p.offsetWidth,o[0]]});
+  if(TOP)layoutTop(iw,ih);else{
   // The dock: the rabbit and its hole, sized by the hole, sitting at the foot of the window.
   const wH=mobile?Math.min(iw*.24,100):Math.min(iw*.11,150),sc=wH/hb.width;
   // The mark lifts its hole over the head; the dock moves down by as much, so the hole stays
@@ -44,12 +49,32 @@ function layout(){
   Object.assign(hole6.style,{width:W6+'px',height:H6+'px',left:PW/2-W6/2+'px',top:hy-H6/2+'px'});
   centres[6]=centres[LAST]-oy+((yEnd-ih/2)-lower-(hy-oyo)*k6)/Z5;
   centres[7]=centres[6]+spacing*scales[6];
-  cardBase=cards.map((c,k)=>{c.style.top=hy+H6/2+(mobile?90:60)+k*(mobile?150:95)+'px';return {w:c.offsetWidth,dx:parseFloat(c.style.getPropertyValue('--dx'))*PW}});
+  }
+  const [,,PH6,,PW6]=origins[6],hb6=parseFloat(hole6.style.top)+parseFloat(hole6.style.height);
+  cardBase=cards.map((c,k)=>{c.style.top=hb6+(mobile?90:60)+k*(mobile?150:95)+'px';return {w:c.offsetWidth,dx:parseFloat(c.style.getPropertyValue('--dx'))*PW6}});
   lastKey='';lastMark='';
+}
+
+// 04.7: the rabbit sits just above the first heading as the page opens, and stays there.
+// The hole is placed on the wall so that, walking on past the last screen, it rises under
+// the rabbit and keeps rising until the rabbit is gone; it is sized to the rabbit there.
+function layoutTop(iw,ih){
+  const wR=mobile?Math.min(iw*.2,80):Math.min(iw*.07,100),sc=wR/932;
+  const [Z0,cy0]=camera(0),[,oy0,,oyo0]=origins[0],h1=panels[0].querySelector('h1');
+  const titleY=ih/2+Z0*(oy0+centres[0]-cy0)+lower+(h1.offsetTop-oyo0)*Z0*scales[0];
+  Yr=titleY-(mobile?10:16);
+  dockX=iw/2-(hb.x+hb.width/2-882)*sc;dockY=Yr-(hb.y+hb.height/2-264)*sc;dockDepth=depth*sc;
+  Object.assign(dock.style,{width:wR+'px',height:1251*sc+'px',transform:`translate(${dockX}px,${dockY}px)`});
+  const [,oy,,oyo,PW]=origins[6];
+  // The hole's chapter is placed as usual after the last screen; inside it, the hole sits
+  // where it ends up exactly under the rabbit once the camera stands at that chapter.
+  centres[6]=centres[LAST]+spacing*scales[LAST];centres[7]=centres[6]+spacing*scales[6];
+  const hy=oyo+(Yr-ih/2-lower)/fit,W6=hb.width*sc*1.25/fit,H6=W6*hb.height/hb.width;
+  Object.assign(hole6.style,{width:W6+'px',height:H6+'px',left:PW/2-W6/2+'px',top:hy-H6/2+'px'});
 }
 function reset(){scrollTo(0,0);leaveRoom()}
 const at=v=>v*segment;
-function go(i){if(reading){panels[i].scrollIntoView({behavior:reduced?'instant':'smooth'});return}scrollTo({top:at(i<=LAST?START:i===6?START+SINK+1:TOTAL),behavior:reduced?'instant':'smooth'})}
+function go(i){if(reading){panels[i].scrollIntoView({behavior:reduced?'instant':'smooth'});return}scrollTo({top:at(i<=LAST?START:i===6?START+SINK+1+HOLD:TOTAL),behavior:reduced?'instant':'smooth'})}
 document.querySelectorAll('[data-stop]').forEach(b=>b.onclick=e=>{e.preventDefault();go(+b.dataset.stop)});
 $('#little-door').onclick=()=>scrollTo({top:at(START+SINK),behavior:reduced?'instant':'smooth'});
 $('#about-link').onclick=()=>$('#about-dialog').showModal();
@@ -73,6 +98,7 @@ const door=mountDoor(above,{reduced,onEnter:done=>tomorrow(()=>{done();up=0;scro
 function lookUp(){
   const a=TILT*ease(clamp((up-.2)/.8)),P=innerHeight*1.1;
   viewport.style.transform=a?`perspective(${P}px) translateZ(${P}px) rotateX(${a}rad) translateZ(${-P}px)`:'';
+  if(TOP)dock.style.opacity=(1-ease(clamp(up/.3))).toFixed(3);
   above.classList.toggle('shown',a>0);above.classList.toggle('drawable',up>=1);
   above.style.transform=up>=1?'':`perspective(${P}px) translateZ(${P}px) rotateX(${a-TILT}rad) translateZ(${-P}px)`;
 }
@@ -88,33 +114,34 @@ addEventListener('keydown',e=>{if(reading||roomOpen||document.querySelector('dia
   else if((e.key==='ArrowDown'||e.key==='PageDown'||e.key===' ')&&up>0){e.preventDefault();lift(e.key==='ArrowDown'?-.15:-.5)}});
 $('#above-back').onclick=()=>{const from=up,t0=performance.now();const step=now=>{const k=clamp((now-t0)/900);up=from*(1-ease(k));lastKey='';if(k<1)requestAnimationFrame(step)};requestAnimationFrame(step)};
 const overview=()=>Math.min(fit*.3,innerHeight*.4/(floor+300));
-function camera(){
+function camera(u=window.__u??0){
   if(u<START){// the pull-back of 04.1, backwards: distance shrinks linearly while descending
     const v=ease((START-u)/BACK),Z5=fit/scales[LAST],Zend=overview();
     return [1/((1-v)/Z5+v/Zend),centres[LAST]+(centres[0]-centres[LAST])*v];
   }
-  const t=Math.max(0,u-START-SINK);if(t<=0)return [fit/scales[LAST],centres[LAST]];
+  let t=Math.max(0,u-START-SINK);if(t<=0)return [fit/scales[LAST],centres[LAST]];
+  if(HOLD)t=t<=1?t:t<=1+HOLD?1:t-HOLD;
   const i=Math.min(6,LAST+Math.floor(t)),f=LAST+t-i;
   const scale=Math.exp(Math.log(scales[i])*(1-f)+Math.log(scales[i+1])*f);return [fit/scale,centres[i]+(centres[i+1]-centres[i])*f];
 }
 function frame(){
 if(warming){requestAnimationFrame(frame);return}
 if(!reading&&!roomOpen){
-  u=clamp(scrollY/segment,0,TOTAL);
+  u=clamp(scrollY/segment,0,TOTAL);window.__u=u;
   const key=`${u}|${up}|${innerWidth}|${innerHeight}`;
   if(key!==lastKey){lastKey=key;
-    const [Z,cy]=camera(),half=innerHeight/2+80,inHole=u>=START+SINK;
+    const [Z,cy]=camera(),half=innerHeight/2+80,inHole=TOP||u>=START+SINK;
     panels.forEach((p,j)=>{const [ox,oy,h,oyo]=origins[j],k=Z*scales[j],y=Z*(oy+centres[j]-cy)+lower;const top=y-oyo*k,bottom=y+(h-oyo)*k;
       const far=k<.004||bottom<-half||top>half||(j>LAST&&!inHole);if(far!==p.hasAttribute('hidden-far'))far?p.setAttribute('hidden-far',''):p.removeAttribute('hidden-far');
       if(!far)p.style.transform=`translate3d(${Z*ox-ox}px,${y-oy}px,0) scale(${k})`;if(p.inert!==far)p.inert=far});
     // The dock until the rabbit is gone; from then on, the hole belongs to the wall.
-    dock.style.visibility=inHole?'hidden':'';
+    if(!TOP)dock.style.visibility=inHole?'hidden':'';
     lookUp();
-    const sink=u>0?ease(clamp((u-START)/SINK)):ease(clamp(up/.35)),m=sink.toFixed(4);if(m!==lastMark){lastMark=m;mark.set(sink,0,1);dock.style.transform=`translate(${dockX}px,${dockY+dockDepth*sink}px)`}
+    const sink=TOP?ease(clamp((u-START-1)/.45)):u>0?ease(clamp((u-START)/SINK)):ease(clamp(up/.35)),m=sink.toFixed(4);if(m!==lastMark){lastMark=m;mark.set(sink,0,1);if(TOP){dock.style.visibility=sink>=1?'hidden':''}else dock.style.transform=`translate(${dockX}px,${dockY+dockDepth*sink}px)`}
     const fa=Math.round(clamp((u/START-.15)/.4)*1000)/1000;if(fa!==lastFall){lastFall=fa;fall(fa)}
     // Projects come up from below and out of nothing, one after another, once the rabbit is in.
     const t=u-START-SINK;
-    cards.forEach((c,k)=>{const l=ease(clamp((t-.12-k*.17)/.45)),dy=(1-l)*(mobile?260:170);c.style.transform=`translate(${-cardBase[k].w/2+cardBase[k].dx}px,${dy}px)`;c.style.opacity=l.toFixed(3)});
+    cards.forEach((c,k)=>{const l=ease(clamp((t-(TOP?1.5:.12)-k*.17)/.45)),dy=(1-l)*(mobile?260:170);c.style.transform=`translate(${-cardBase[k].w/2+cardBase[k].dx}px,${dy}px)`;c.style.opacity=l.toFixed(3)});
   }
   watchEdit();
 }else if(reading){watchEdit();panels.forEach(p=>{p.inert=false;p.removeAttribute('hidden-far')})}requestAnimationFrame(frame)}
