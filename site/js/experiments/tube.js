@@ -9,7 +9,8 @@ const $=s=>document.querySelector(s),body=document.body,viewport=$('#viewport'),
 const panels=[...document.querySelectorAll('[data-panel]')];
 const R=1500,EYE=650,STEP=.62,DESC=2; // tube radius, eye behind the axis, turn per screen, length of the drop
 const guides=!body.classList.contains('no-guides');
-const safari=/^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+// Safari (and every iPad browser, all WebKit) is left flat unless ?bend=1 forces the filter on.
+const safari=/^((?!chrome|android).)*safari/i.test(navigator.userAgent)&&new URLSearchParams(location.search).get('bend')!=='1';
 if(safari)body.classList.add('no-bend');
 let mobile=false,PW=1100,PH=650,H=760,bottomY=0,persp=1000,T=0,fit=1,segment=1100,iw=innerWidth,ih=innerHeight,dpr=1;
 let s=0,yaw=0,camY=0,pitch=0,roll=0,lookX=0,lookY=0,look={x:0,y:0},velocity=0,lastScroll=0,lastTime=performance.now();
