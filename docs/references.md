@@ -23,22 +23,38 @@ Board by Elisey Soloviev, 13 pins: https://pin.it/2U39nPOyn
 The client's own mark (in the PDF): a line-drawn rabbit head, two tall ears, seen from the
 front, looking down into a flat black elliptical hole.
 
-## Animation breakdown — gallop (ref 05)
+## Animation breakdown — the half-bound (ref 05 for timing, real rabbits for the poses)
 
-The cycle is 16 frames at 30 fps ≈ **0.53 s**. Hare in profile, facing right. Phase `t` is used
-as-is in `site/js/rig.js` (`GALLOP`).
+Ref 05 is 16 frames at 30 fps ≈ **0.53 s**; the rig runs the cycle in 0.56 s. The hare in
+ref 05 is stylised (long legs that sweep down through the vertical on the way forward); the
+poses below follow a real rabbit instead, and the 9-frame run breakdown the team lead sent
+(skeleton over a rabbit: 1 crouch → 2 push → 3 toe-off, forelegs tucked → 4 flight →
+5 fore landing → 6 fore stance, hinds folding → 7 hinds rolling forward → 8 hinds reaching →
+9 crouch). Phase `t` is used as-is in `site/js/rig.js` (`GALLOP`).
 
-| t | Frames | Pose |
-|---|---|---|
-| 0.00 | 1–3 | **Push-off.** Hind feet planted behind the hips, legs straightening; forelegs tucked under the chest; back flattening, head forward. |
-| 0.25 | 5–7 | **Extension / flight.** Longest silhouette: hind legs stretched straight back, forelegs reaching forward, back flat, ears laid back. Highest point. |
-| 0.45 | 8–9 | **Fore landing.** Forelegs touch down one after the other (lead and trailing), hind legs still trailing. |
-| 0.60 | 10–11 | **Fore stance.** Forelegs under the chest pushing back; hind legs swing forward under the belly; back starts to round. |
-| 0.75 | 12–14 | **Gather.** Back fully rounded, hind feet pass in front of the forefeet, forelegs leave the ground backwards. Most compact silhouette. Lowest point. |
-| 0.90 | 15–16 | **Hind landing.** Hind feet plant far forward; forelegs swing forward; back starts to open into the next push. |
+| t | Ref 05 fr. | Key | Pose |
+|---|---|---|---|
+| 0.00 | 14–16 | **Hind plant** | Back at its roundest (a C leaning forward: rump high, head low), torso squashed (×0.90), tail tucked. Hind feet reach ahead of the body (thigh forward, shin folded back under it, foot out to the toes) and plant together. Forelegs folded up under the chest. |
+| 0.09 | 1 | **Crouch** | The body passes over the planted feet and sinks on them (lowest point); the back begins to open. Forelegs still pressed to the chest. |
+| 0.18 | 2 | **Launch** | Hind legs straightening under the body, hocks and toes flat on the ground; the back nearly straight, nose up. |
+| 0.27 | 3 | **Toe-off** | Hind legs one straight line down-back to the toes; spine and legs almost one line. Forelegs still tucked, just starting to open. |
+| 0.42 | 5–6 | **Flight** | Longest silhouette, highest point. Back a hollow arc (rump and head up), torso stretched (×1.14), ears flat. Hind legs trail straight back; forelegs shoot forward. |
+| 0.54 | 7 | **Fore reach** | Forelegs reach down ahead to land. Hind knees fold, hocks drop, feet begin to tuck. |
+| 0.64 | 8–9 | **Fore plant** | Forelegs down under the chest, toes angled. Hind legs folded into a Z, feet tucked up under the belly, rolling forward close to the body. |
+| 0.76 | 10–11 | **Fore stance** | Brief: the body vaults over the forelegs, they push back; back starts to round. Hind legs still folded, feet skimming forward past the forepaws. |
+| 0.88 | 12–13 | **Gather** | All feet off the ground. Head forward and low, forelegs back, hind legs forward and unfolding toward the ground. The back rounds into a C leaning forward for the next plant. |
 
 Left/right legs are almost in phase (hind legs as a pair, forelegs slightly staggered) — a
-rabbit "half-bound" rather than a horse gallop.
+rabbit "half-bound" rather than a horse gallop. While feet are planted the body's height is
+solved from the legs every frame, so the planted feet stay put (and the body rides up and
+down on them, which is where the "spring" feel comes from).
+
+Reading on the gait: the flexed-back half-bound is the usual high-speed gait of rabbits and
+hares (hind feet contact together, forefeet together or slightly apart), with most of the
+hip's travel coming from the spine and pelvis rather than the hip joint itself —
+[Bertram & Gutmann 2009](https://pmc.ncbi.nlm.nih.gov/articles/PMC2696142/) on gallop
+mechanics; [Hall et al. 2022](https://peerj.com/articles/13611) for rabbit hind-limb
+stance kinematics (digitigrade: the heel lifts through the push).
 
 ## Hop breakdown (refs 06 and 10)
 

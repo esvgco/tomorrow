@@ -19,7 +19,7 @@ Code: [`site/js/`](../site/js/).
 
 ## Decision: one 3D rig for every look
 
-All four rabbits are the same 3D skeleton. Even the "2D" looks (contour, pixel) are rendered
+All four rabbits use the same motion channels. Contour, pixel and PS1 keep the original anatomy; soft geometric uses shorter body segments, a rounder head, thicker paws and curved paddle ears. Even the "2D" looks (contour, pixel) are rendered
 from the 3D body, which is why the contour stays correct when you orbit it and why one
 animation drives every version. Later the same rig can be steered on the site (turn toward
 the cursor, run along a path, dive into the hole) without redrawing anything per look.
@@ -33,20 +33,21 @@ the cursor, run along a path, dive into the hole) without redrawing anything per
 - A pose is a flat set of channels. Body and limb channels are **world angles in the
   sagittal plane** (degrees: 0 forward, 90 up, 180 back, 270 down). Hind thigh lives in
   ~190–345, so the sit and the gallop blend without wrapping round.
-- `solve(pose)` — forward kinematics, returns joint positions.
+- `solve(pose, profile = 'classic')` — forward kinematics, returns joint positions.
 - `SHAPES` — 21 round cones on the joints (radius at each end, a group, a flatten factor
   for the ears). Groups decide what melts into what and where contour lines are drawn.
 
 ### Poses and animation
 
-- `SIT` — sitting, head down, looking into the hole (the client's mark).
-  `idlePose(t)` adds breathing, sniffing and an ear twitch.
-- `GALLOP` — six keys over 0.56 s, keyed against ref 05 frame by frame
-  (push-off 0.00 · extension 0.25 · fore landing 0.45 · fore stance 0.60 · gather 0.75 ·
-  hind landing 0.88; table in [references.md](references.md)). Cyclic Catmull-Rom between
-  keys. Far legs lag the near ones slightly (`GALLOP.far`). Keys marked `contact` have their
-  height solved so those feet sit on the ground; flight keys float above (`lift`).
-  `GALLOP.stride` is the distance covered per cycle when it travels.
+- `SIT` — alert sitting, head lifted. `LOOK_DOWN` keeps the torso angles and lowers the neck/head toward the hole.
+  `idlePose(t, mode)` eases between them over 12 seconds (`auto`), or holds `sit` / `look`, with breathing and an ear twitch.
+- `GALLOP` — restored nine-key half-bound over 0.56 s from `009c361`: hind plant,
+  crouch, launch, toe-off, flight, fore reach, fore plant, fore stance, gather.
+  Uniform cyclic Catmull-Rom preserves the earlier timing. Far legs lag the near
+  pair. Adjacent keys with the same `contact` determine the support phase; its
+  feet set the body height. Flight heights interpolate between contact keys.
+  `GALLOP.stride` is 1.9. See the restoration note below for validation and limits.
+
 
 ### Renderers
 
@@ -59,8 +60,9 @@ the cursor, run along a path, dive into the hole) without redrawing anything per
 
 ### Page — `site/index.html`, `site/js/main.js`
 
-Row A: the sitting model with the hole, drag to orbit, `Rig` shows the bones.
+Row A: the sitting model with the hole, drag to orbit, `Rig` shows the bones; Auto / Alert / Inspect controls the pose.
 Row B: the gallop, speed 1× / ½ / ⅕, `Across` (travels through the frame) or `In place`.
+Pause / Play and the Cycle slider let you inspect any frame.
 Version 03 switches between Sky / Gradient · nose / Gradient · view.
 Views only render while on screen. Three.js 0.170 from jsDelivr through an import map, no build.
 
@@ -71,9 +73,103 @@ the reference frames: `lab.html?style=contour|pixel|sky|gradient|ps1&frames=16&r
 
 ## Next steps
 
-- Tune proportions per look (the soft geometric one wants a rounder, chunkier body; the pixel
-  one may want hand-placed eye/ear pixels on top of the render).
+- Review the new soft proportions and the bound in motion with the art director; the pixel
+  one may still want hand-placed eye/ear pixels on top of the render.
 - More clips on the same rig: hop (refs 06/10), sit ↔ run transitions, look-at-cursor,
   dive into the hole, emerge.
 - Pick one look with the client, then decide whether the site keeps the SDF renderer or the
   rabbit gets baked to a skinned mesh (glTF) for a full scene.
+
+## Local refinement — 2026-11-03
+
+The side-view rodent read came from downturned heads, ears disappearing into the
+back, a sharply folded lumbar/thoracic angle in gather, and forelegs hanging down
+in extended flight. The revised keys lift the gaze, keep the ears above the back,
+reach the forelegs forward in flight and reduce the spinal fold. A `stretch` channel
+scales only lumbar/thoracic lengths (keys 0.96–1.12), leaving limb lengths intact.
+
+`site/js/soft.js` supplies a separate shape set (33 primitives): wide, curved ears
+are sampled quadratic curves with eight round-cone segments each. Both Sky and
+Gradient use that anatomy. The gradient is matte with restrained directional shade.
+
+Validation: `node tests/rig.mjs` samples 1,001 phases per anatomy, checks finite
+joints, foot clearance, valid SDF cone geometry, loop closure and spline velocity
+continuity. Browser checks cover contour/pixel/sky/gradient/PS1, all palettes, pose
+buttons, pause/scrub and a 390 px viewport. Contact sheets: `/lab.html?style=sky&frames=12&cols=4&rig=0`.
+
+Remaining animation limitation: this is still a keyed FK bound, without world-space
+IK foot locking. Floor clearance is enforced; exact no-slip planted contacts are
+not guaranteed while travelling.
+
+## Run restoration — 2026-11-03
+
+The merge `53ead12` replaced the nine-phase main-branch run with a six-phase
+revision. Restored the run from `009c361`: all nine keys, uniform Catmull-Rom
+sampling, fore/hind offsets, 1.9 stride, flight heights and contact-driven root
+height. Classic running paw length and hip spacing also match that revision.
+The latest SIT, LOOK_DOWN and idle motion, soft anatomy, and palettes are retained.
+Soft contact heights are fitted to its current proportions. Swing feet no longer
+raise the whole running body; as in the earlier run, this is keyed FK without
+IK locking or a guarantee of clearance for every swing foot. Unevenly spaced
+uniform spline keys retain the earlier velocity discontinuities.
+
+Validation: 1,001 sampled phases match the earlier classic torso and leg joint
+trajectories to floating-point precision. Both profiles' sitting/inspection loops
+match the pre-restoration version exactly. Rig tests check authored support
+contacts, finite geometry, cycle closure and positional continuity.
+
+## Soft ear arches and running posture — 2026-11-03
+
+Soft ears now use two separately authored quadratic arches, each sampled into
+8 broad round-cone segments with rounded tips. The outer halves remain separated
+in side silhouette throughout the cycle; ear motion is restrained so they do not
+collapse onto the back in flight. The rig overlay follows the new curves. Soft
+camera framing includes the larger silhouette in the main page and contact lab.
+
+Running body keys reduce the lumbar/thoracic fold (the maximum keyed difference
+is now 38 degrees instead of 68), raise the neck and bring the gaze forward.
+The restored nine-phase timing, stride, limb angles and near/far offsets are
+unchanged. Sitting pose channels and palettes are unchanged. This supersedes the
+exact torso-trajectory match recorded in the earlier restoration note.
+
+Validation: rig tests pass; 1,001 phases confirm unchanged near/far limb channels
+and separated outer ear arches. Browser review covers the contact sheet's sitting
+angles and running phases, plus the main page at half speed.
+
+## Matched tubular ears — 2026-11-03
+
+Supersedes the separate silhouette arches above. Soft ears are now a mirrored
+pair of equal 0.43-unit quadratic tubes, rooted at the same x/y on each side of
+the head. Radius increases gently from 0.048 to 0.061, with round end caps and
+no depth flattening. Idle ears lean slightly back with restrained curvature;
+running ears sweep farther back using the existing ear channel. Exact side views
+naturally overlap; the anatomy is no longer distorted to force two visible arcs.
+
+The SDF evaluates each tube as a single continuous curve (five closest-point
+Newton iterations on these shallow quadratics), replacing the smooth-unioned
+segment chain that caused repeated bulges. Body anatomy, sitting poses, running
+keys, limb motion and palettes are unchanged. Tests check mirrored ear geometry;
+1,001 sampled running frames and idle samples also match the preceding version
+at every non-ear joint. Browser inspection covers front, profile and three-quarter
+views in sitting and running poses.
+
+## Burrow story clips — 2026-11-03
+
+Approved model baseline: `d5153f1`. `site/js/clips.js` adds two joint-level clips
+without changing the saved rig or anatomy:
+
+- **Into the burrow**, 3.6 s: approach using the existing gallop, lift-off,
+  an arcing head-first dive through the opening, then a hidden hold.
+- **A look outside**, 7.6 s: rise to the waist, pause, turn the head one way and
+  then the other, return to centre and descend. The hole stays centred.
+
+Rows C/D show both clips in all four styles with pause, replay, half speed,
+rig overlay, timeline scrubbing and soft palettes. Ground clipping is enabled
+only for these clips: the SDF ray stops at the floor; PS1 rabbit fragments
+below it are discarded. Offscreen views release their WebGL contexts and
+recreate them when visible, avoiding context exhaustion with 16 previews.
+
+Validation: `node tests/rig.mjs` and `node tests/clips.mjs`; finite geometry,
+fully hidden holds, chest-above/waist-below reveal, head entry within the hole,
+and takeoff continuity. Browser review of all eight new previews, both look
+directions, timeline controls and console errors.

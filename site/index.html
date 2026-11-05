@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
+<meta name="robots" content="noindex, nofollow, noarchive">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Rabbit Study 01 — The Tomorrow Company</title>
   <meta name="description" content="Four rabbits on one rig: contour, pixel, soft geometric and PS1 low-poly, each sitting by the hole and running a gallop cycle.">
@@ -21,7 +22,7 @@
 
   <section class="intro">
     <h1>Four rabbits, one&nbsp;skeleton.</h1>
-    <p>Every rabbit below is the same rig — 28 bones, 21 primitives — drawn four different ways. The top row sits by the hole: drag to turn it around, switch on the rig to see the bones. The bottom row runs the gallop cycle keyed from the reference footage.</p>
+    <p>One motion rig, four interpretations. Soft geometric has its own rounded proportions and curved ears. The top row alternates between an alert sit and a curious look into the hole. Drag to orbit, or hold either pose. Below: the gallop, a leap into the burrow, and a curious look outside.</p>
   </section>
 
   <section class="row" aria-label="Models">
@@ -30,50 +31,96 @@
       <article class="card" data-version="contour" data-mode="model">
         <div class="stage"><canvas class="view"></canvas><canvas class="overlay"></canvas></div>
         <div class="caption"><span class="num">01</span><span class="name">Contour</span><span class="tools"><button data-action="rig">Rig</button><button data-action="reset">Reset</button></span></div>
+        <div class="palettes"><button data-action="pose" data-value="auto" class="on">Auto</button><button data-action="pose" data-value="sit">Alert</button><button data-action="pose" data-value="look">Inspect</button></div>
         <p class="note">Ink line on white, as the client's mark. Silhouette and occlusion contours come from the 3D body, so the line stays right from any angle.</p>
       </article>
       <article class="card" data-version="pixel" data-mode="model">
         <div class="stage pixelated"><canvas class="view"></canvas><canvas class="overlay"></canvas></div>
         <div class="caption"><span class="num">02</span><span class="name">Pixel</span><span class="tools"><button data-action="rig">Rig</button><button data-action="reset">Reset</button></span></div>
+        <div class="palettes"><button data-action="pose" data-value="auto" class="on">Auto</button><button data-action="pose" data-value="sit">Alert</button><button data-action="pose" data-value="look">Inspect</button></div>
         <p class="note">1-bit, about 20 px tall. White pixel seams where one part passes in front of another — the eye, ear, haunch and legs.</p>
       </article>
       <article class="card" data-version="sky" data-mode="model" data-palette="sky">
         <div class="stage"><canvas class="view"></canvas><canvas class="overlay"></canvas></div>
         <div class="caption"><span class="num">03</span><span class="name">Soft geometric</span><span class="tools"><button data-action="rig">Rig</button><button data-action="reset">Reset</button></span></div>
         <div class="palettes"><button data-action="palette" data-value="0" class="on">Sky</button><button data-action="palette" data-value="1">Gradient · nose</button><button data-action="palette" data-value="2">Gradient · view</button></div>
-        <p class="note">Primitives melted together like metaballs. Sky: white volumes dissolving into blue, blue eye, red nose. Gradient: orange-red → pink → white, from the nose back or by how each surface faces the camera.</p>
+        <div class="palettes"><button data-action="pose" data-value="auto" class="on">Auto</button><button data-action="pose" data-value="sit">Alert</button><button data-action="pose" data-value="look">Inspect</button></div>
+        <p class="note">A round head, short muzzle, pill-shaped paws and broad curved ears. Sky: white volumes dissolving into blue, blue eye, red nose. Gradient: orange-red → pink → white, from the nose back or by how each surface faces the camera.</p>
       </article>
       <article class="card" data-version="ps1" data-mode="model">
         <div class="stage pixelated"><canvas class="view"></canvas><canvas class="overlay"></canvas></div>
         <div class="caption"><span class="num">04</span><span class="name">PS1 low-poly</span><span class="tools"><button data-action="rig">Rig</button><button data-action="reset">Reset</button></span></div>
+        <div class="palettes"><button data-action="pose" data-value="auto" class="on">Auto</button><button data-action="pose" data-value="sit">Alert</button><button data-action="pose" data-value="look">Inspect</button></div>
         <p class="note">Rigid segments, few flat faces, 32 px textures, snapped vertices, affine texture warp, 15-bit dither — as in Unity 8.</p>
       </article>
     </div>
   </section>
 
   <section class="row" aria-label="Animation">
-    <div class="row-head"><span class="idx">B</span><span>Animation · gallop cycle, 0.56 s</span><span class="hint">ref 05, 16 frames</span></div>
+    <div class="row-head"><span class="idx">B</span><span>Animation · gallop cycle, 0.56 s</span><span class="hint">drive · flight · catch · gather</span></div>
     <div class="grid">
       <article class="card" data-version="contour" data-mode="run">
         <div class="stage"><canvas class="view"></canvas><canvas class="overlay"></canvas></div>
-        <div class="caption"><span class="num">01</span><span class="name">Contour</span><span class="tools speed"><button data-action="speed" data-value="1" class="on">1×</button><button data-action="speed" data-value="0.5">½</button><button data-action="speed" data-value="0.2">⅕</button><button data-action="travel" class="on">Across</button><button data-action="rig">Rig</button></span></div>
+        <div class="caption"><span class="num">01</span><span class="name">Contour</span><span class="tools speed"><button data-action="speed" data-value="1" class="on">1×</button><button data-action="speed" data-value="0.5">½</button><button data-action="speed" data-value="0.2">⅕</button><button data-action="pause">Pause</button><button data-action="travel" class="on">Across</button><button data-action="rig">Rig</button></span></div>
+        <label class="scrub">Cycle <input data-phase type="range" min="0" max="1" step="0.001" value="0" aria-label="Gallop cycle phase"></label>
       </article>
       <article class="card" data-version="pixel" data-mode="run">
         <div class="stage pixelated"><canvas class="view"></canvas><canvas class="overlay"></canvas></div>
-        <div class="caption"><span class="num">02</span><span class="name">Pixel</span><span class="tools speed"><button data-action="speed" data-value="1" class="on">1×</button><button data-action="speed" data-value="0.5">½</button><button data-action="speed" data-value="0.2">⅕</button><button data-action="travel" class="on">Across</button><button data-action="rig">Rig</button></span></div>
+        <div class="caption"><span class="num">02</span><span class="name">Pixel</span><span class="tools speed"><button data-action="speed" data-value="1" class="on">1×</button><button data-action="speed" data-value="0.5">½</button><button data-action="speed" data-value="0.2">⅕</button><button data-action="pause">Pause</button><button data-action="travel" class="on">Across</button><button data-action="rig">Rig</button></span></div>
+        <label class="scrub">Cycle <input data-phase type="range" min="0" max="1" step="0.001" value="0" aria-label="Gallop cycle phase"></label>
       </article>
       <article class="card" data-version="sky" data-mode="run" data-palette="sky">
         <div class="stage"><canvas class="view"></canvas><canvas class="overlay"></canvas></div>
-        <div class="caption"><span class="num">03</span><span class="name">Soft geometric</span><span class="tools speed"><button data-action="speed" data-value="1" class="on">1×</button><button data-action="speed" data-value="0.5">½</button><button data-action="speed" data-value="0.2">⅕</button><button data-action="travel" class="on">Across</button><button data-action="rig">Rig</button></span></div>
+        <div class="caption"><span class="num">03</span><span class="name">Soft geometric</span><span class="tools speed"><button data-action="speed" data-value="1" class="on">1×</button><button data-action="speed" data-value="0.5">½</button><button data-action="speed" data-value="0.2">⅕</button><button data-action="pause">Pause</button><button data-action="travel" class="on">Across</button><button data-action="rig">Rig</button></span></div>
         <div class="palettes"><button data-action="palette" data-value="0" class="on">Sky</button><button data-action="palette" data-value="1">Gradient · nose</button><button data-action="palette" data-value="2">Gradient · view</button></div>
+        <label class="scrub">Cycle <input data-phase type="range" min="0" max="1" step="0.001" value="0" aria-label="Gallop cycle phase"></label>
       </article>
       <article class="card" data-version="ps1" data-mode="run">
         <div class="stage pixelated"><canvas class="view"></canvas><canvas class="overlay"></canvas></div>
-        <div class="caption"><span class="num">04</span><span class="name">PS1 low-poly</span><span class="tools speed"><button data-action="speed" data-value="1" class="on">1×</button><button data-action="speed" data-value="0.5">½</button><button data-action="speed" data-value="0.2">⅕</button><button data-action="travel" class="on">Across</button><button data-action="rig">Rig</button></span></div>
+        <div class="caption"><span class="num">04</span><span class="name">PS1 low-poly</span><span class="tools speed"><button data-action="speed" data-value="1" class="on">1×</button><button data-action="speed" data-value="0.5">½</button><button data-action="speed" data-value="0.2">⅕</button><button data-action="pause">Pause</button><button data-action="travel" class="on">Across</button><button data-action="rig">Rig</button></span></div>
+        <label class="scrub">Cycle <input data-phase type="range" min="0" max="1" step="0.001" value="0" aria-label="Gallop cycle phase"></label>
       </article>
     </div>
   </section>
 
+<section class="row" aria-label="Into the burrow"><div class="row-head"><span class="idx">C</span><span>Into the burrow</span><span class="hint">run · leap · dive</span></div><div class="grid">
+<article class="card" data-version="contour" data-mode="dive">
+  <div class="stage"><canvas class="view"></canvas><canvas class="overlay"></canvas></div>
+  <div class="caption"><span class="num">01</span><span class="name">Contour</span><span class="tools"><button data-action="speed" data-value="1" class="on">1×</button><button data-action="speed" data-value="0.5">½</button><button data-action="pause">Pause</button><button data-action="replay">Replay</button><button data-action="rig">Rig</button></span></div>
+<label class="scrub">Clip <input data-phase type="range" min="0" max="1" step="0.001" value="0" aria-label="Into the burrow phase"></label></article>
+<article class="card" data-version="pixel" data-mode="dive">
+  <div class="stage pixelated"><canvas class="view"></canvas><canvas class="overlay"></canvas></div>
+  <div class="caption"><span class="num">02</span><span class="name">Pixel</span><span class="tools"><button data-action="speed" data-value="1" class="on">1×</button><button data-action="speed" data-value="0.5">½</button><button data-action="pause">Pause</button><button data-action="replay">Replay</button><button data-action="rig">Rig</button></span></div>
+<label class="scrub">Clip <input data-phase type="range" min="0" max="1" step="0.001" value="0" aria-label="Into the burrow phase"></label></article>
+<article class="card" data-version="sky" data-mode="dive" data-palette="sky">
+  <div class="stage"><canvas class="view"></canvas><canvas class="overlay"></canvas></div>
+  <div class="caption"><span class="num">03</span><span class="name">Soft geometric</span><span class="tools"><button data-action="speed" data-value="1" class="on">1×</button><button data-action="speed" data-value="0.5">½</button><button data-action="pause">Pause</button><button data-action="replay">Replay</button><button data-action="rig">Rig</button></span></div>
+<div class="palettes"><button data-action="palette" data-value="0" class="on">Sky</button><button data-action="palette" data-value="1">Gradient · nose</button><button data-action="palette" data-value="2">Gradient · view</button></div>
+<label class="scrub">Clip <input data-phase type="range" min="0" max="1" step="0.001" value="0" aria-label="Into the burrow phase"></label></article>
+<article class="card" data-version="ps1" data-mode="dive">
+  <div class="stage pixelated"><canvas class="view"></canvas><canvas class="overlay"></canvas></div>
+  <div class="caption"><span class="num">04</span><span class="name">PS1 low-poly</span><span class="tools"><button data-action="speed" data-value="1" class="on">1×</button><button data-action="speed" data-value="0.5">½</button><button data-action="pause">Pause</button><button data-action="replay">Replay</button><button data-action="rig">Rig</button></span></div>
+<label class="scrub">Clip <input data-phase type="range" min="0" max="1" step="0.001" value="0" aria-label="Into the burrow phase"></label></article>
+</div></section>
+<section class="row" aria-label="A look outside"><div class="row-head"><span class="idx">D</span><span>A look outside</span><span class="hint">emerge · look left · look right · retreat</span></div><div class="grid">
+<article class="card" data-version="contour" data-mode="peek">
+  <div class="stage"><canvas class="view"></canvas><canvas class="overlay"></canvas></div>
+  <div class="caption"><span class="num">01</span><span class="name">Contour</span><span class="tools"><button data-action="speed" data-value="1" class="on">1×</button><button data-action="speed" data-value="0.5">½</button><button data-action="pause">Pause</button><button data-action="replay">Replay</button><button data-action="rig">Rig</button></span></div>
+<label class="scrub">Clip <input data-phase type="range" min="0" max="1" step="0.001" value="0" aria-label="A look outside phase"></label></article>
+<article class="card" data-version="pixel" data-mode="peek">
+  <div class="stage pixelated"><canvas class="view"></canvas><canvas class="overlay"></canvas></div>
+  <div class="caption"><span class="num">02</span><span class="name">Pixel</span><span class="tools"><button data-action="speed" data-value="1" class="on">1×</button><button data-action="speed" data-value="0.5">½</button><button data-action="pause">Pause</button><button data-action="replay">Replay</button><button data-action="rig">Rig</button></span></div>
+<label class="scrub">Clip <input data-phase type="range" min="0" max="1" step="0.001" value="0" aria-label="A look outside phase"></label></article>
+<article class="card" data-version="sky" data-mode="peek" data-palette="sky">
+  <div class="stage"><canvas class="view"></canvas><canvas class="overlay"></canvas></div>
+  <div class="caption"><span class="num">03</span><span class="name">Soft geometric</span><span class="tools"><button data-action="speed" data-value="1" class="on">1×</button><button data-action="speed" data-value="0.5">½</button><button data-action="pause">Pause</button><button data-action="replay">Replay</button><button data-action="rig">Rig</button></span></div>
+<div class="palettes"><button data-action="palette" data-value="0" class="on">Sky</button><button data-action="palette" data-value="1">Gradient · nose</button><button data-action="palette" data-value="2">Gradient · view</button></div>
+<label class="scrub">Clip <input data-phase type="range" min="0" max="1" step="0.001" value="0" aria-label="A look outside phase"></label></article>
+<article class="card" data-version="ps1" data-mode="peek">
+  <div class="stage pixelated"><canvas class="view"></canvas><canvas class="overlay"></canvas></div>
+  <div class="caption"><span class="num">04</span><span class="name">PS1 low-poly</span><span class="tools"><button data-action="speed" data-value="1" class="on">1×</button><button data-action="speed" data-value="0.5">½</button><button data-action="pause">Pause</button><button data-action="replay">Replay</button><button data-action="rig">Rig</button></span></div>
+<label class="scrub">Clip <input data-phase type="range" min="0" max="1" step="0.001" value="0" aria-label="A look outside phase"></label></article>
+</div></section>
   <footer class="foot">
     <span>Study for tomorrowcompany.com</span>
     <span>Rig, poses and gallop: <code>site/js/rig.js</code> · brief and references: <code>docs/</code></span>

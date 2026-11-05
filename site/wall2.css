@@ -1,0 +1,34 @@
+/* One continuous sheet: no chapter scale changes or per-chapter easing. */
+.wall-panel .eyebrow,.edge-note,.margin-note,.door-note{visibility:hidden}
+.page-tools .progress-line{display:none}
+
+/* The letter opens beside the sheet; it never replaces the viewport. */
+.room{inset:auto 24px 75px auto;width:min(420px,calc(100vw - 48px));height:300px;border-radius:3px;perspective:none}
+.room-space{inset:60px 25px 45px;animation:none;transform:none;border-radius:0}
+.room-space .room-end{transform:none;outline:none;background:#000}
+.room-end p{font-size:28px}.room-end button{margin-top:25px}
+.room-left,.room-right,.room-ceiling,.room-floor{display:none}
+.return-room{position:absolute;top:20px;left:25px}.room-caption{bottom:15px;font-size:10px}
+.transit{display:none!important}
+
+/* Actual depth behind each glyph; each character is an entrance. */
+#last-heading{transform-style:preserve-3d;perspective:800px;overflow:visible}
+.room-letter{position:relative;display:inline-block;transform-style:preserve-3d;cursor:zoom-in;transition:transform .5s}
+.room-letter:hover{transform:rotateY(-18deg) rotateX(8deg) translateZ(6px)}
+.letter-depth{position:absolute;inset:0;color:#080808;pointer-events:none;backface-visibility:hidden}
+.room{inset:0;width:100%;height:100%;border-radius:0;perspective:900px;background:#000;overflow:hidden;z-index:60}
+.room-space{position:absolute;inset:12% 16%;transform-style:preserve-3d;transform:translateZ(280px);animation:none;border-radius:0}
+.room-space .room-end{inset:0;transform:translateZ(-1000px);background:#030303;outline:1px solid #111;display:grid;place-content:center}
+.room-end p{font-size:clamp(44px,7vw,100px);line-height:1.15}.room-end button{font-size:22px;margin-top:60px}
+.room-left,.room-right,.room-ceiling,.room-floor{display:block!important;position:absolute}
+.room-left,.room-right{top:0;bottom:0;width:1000px;transform-origin:left;background:#080808!important;transform:rotateY(90deg)}
+.room-left{left:0}.room-right{left:100%}
+.room-ceiling,.room-floor{left:0;right:0;height:1000px;transform-origin:top;transform:rotateX(-90deg);background:#050505!important}
+.room-ceiling{top:0}.room-floor{top:100%;background:#0a0a0a!important}
+.return-room{z-index:3;position:absolute;top:30px;left:32px}.room-caption{bottom:25px;font-size:12px}
+
+.wall-boot .viewport{visibility:hidden}
+
+#room{display:none!important}.volume-ready .room-letter{color:transparent;transform:none!important;transition:none}.volume-ready .letter-depth{display:none}.volume-ready{perspective:none!important}
+
+.reading .volume-ready .room-letter{color:inherit}

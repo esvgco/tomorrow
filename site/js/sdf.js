@@ -8,21 +8,24 @@
 // screen-space pass that finds the edges; sky and gradient shade directly.
 import * as THREE from 'three';
 import { SHAPES } from './rig.js';
+import { SOFT_SHAPES } from './soft.js';
 
 THREE.ColorManagement.enabled = false; // colours here are display values
 
-const NS = SHAPES.length;
+const NS = Math.max(SHAPES.length, SOFT_SHAPES.length);
 
 const COMMON = /* glsl */ `
 #define NS ${NS}
 uniform vec4 uA[NS];
 uniform vec4 uB[NS];
 uniform vec4 uC[NS];
+uniform vec3 uControl[NS];
 uniform vec3 uCamPos;
 uniform mat4 uCamWorld;
 uniform mat4 uProjInv;
 uniform vec4 uBound;
 uniform vec4 uHole;
+uniform float uGround; // 1: the ground plane y=0 hides what is below it (the rabbit can go down the hole); 2: also a hairline along z=0
 uniform vec3 uNose;
 uniform vec3 uEyeN;
 uniform vec3 uEyeF;
@@ -32,6 +35,7 @@ uniform int uMode;
 uniform int uPalette;
 uniform vec3 uBg;
 uniform float uEyeR;
+uniform bool uClipGround;
 in vec2 vUv;
 out vec4 fragColor;
 
@@ -60,6 +64,22 @@ float sdRoundCone(vec3 p, vec3 a, vec3 b, float r1, float r2) {
   return (sqrt(x2 * a2 * il2) + y * rr) * il2 - r1;
 }
 
+// Closest point on a gently curved quadratic centreline. A single distance
+// field avoids the repeated bulges from smooth-unioning overlapping segments.
+float sdEarTube(vec3 p, vec3 a, vec3 c, vec3 b, float r0, float r1) {
+  vec3 ab = b-a;
+  float t = clamp(dot(p-a, ab)/dot(ab, ab), 0.0, 1.0);
+  vec3 acc = 2.0*(a-2.0*c+b);
+  for (int i=0; i<5; i++) {
+    vec3 q = mix(mix(a,c,t), mix(c,b,t), t);
+    vec3 v = 2.0*mix(c-a,b-c,t);
+    float denom = dot(v,v)+dot(q-p,acc);
+    t = clamp(t-dot(q-p,v)/max(denom,0.0001),0.0,1.0);
+  }
+  vec3 q = mix(mix(a,c,t), mix(c,b,t), t);
+  return (length(p-q)-mix(r0,r1,t))/1.04;
+}
+
 float mapG(vec3 p, out int gid) {
   float dg[8];
   for (int i = 0; i < 8; i++) dg[i] = 1e5;
@@ -67,6 +87,7 @@ float mapG(vec3 p, out int gid) {
     vec4 A = uA[i];
     vec4 B = uB[i];
     vec4 C = uC[i];
+    if (C.z < 0.0) continue;
     int g = int(C.x + 0.5);
     float f = C.y;
     vec3 a = A.xyz;
@@ -74,7 +95,9 @@ float mapG(vec3 p, out int gid) {
     vec3 q = p;
     q.z = a.z + (p.z - a.z) * f;
     b.z = a.z + (b.z - a.z) * f;
-    float d = sdRoundCone(q, a, b, A.w, B.w) / f;
+    float d = C.z > 0.5
+      ? sdEarTube(p, A.xyz, uControl[i], B.xyz, A.w, B.w)
+      : sdRoundCone(q, a, b, A.w, B.w) / f;
     dg[g] = smin(dg[g], d, 0.022);
   }
   float best = dg[0];
@@ -118,7 +141,9 @@ float march(vec3 ro, vec3 rd, out float minD, out float minT) {
   h = sqrt(h);
   float t = max(-b - h, 0.0);
   float tEnd = -b + h;
+  if (uClipGround && rd.y < 0.0) tEnd = min(tEnd, -ro.y / rd.y);
   for (int i = 0; i < 110; i++) {
+    if (t > tEnd) break;
     float d = map(ro + rd * t);
     float pr = d / t;
     if (pr < minD) { minD = pr; minT = t; }
@@ -127,6 +152,15 @@ float march(vec3 ro, vec3 rd, out float minD, out float minT) {
     if (t > tEnd) break;
   }
   return -1.0;
+}
+
+// the ground plane outside the hole, when it is switched on: paper, and it hides what is under it
+float groundHit(vec3 ro, vec3 rd) {
+  if (uGround < 0.5 || rd.y >= 0.0 || ro.y <= 0.0) return -1.0;
+  float t = -ro.y / rd.y;
+  vec3 p = ro + rd * t;
+  if (uHole.w > 0.5 && length(p.xz - uHole.xy) < uHole.z) return -1.0;
+  return t;
 }
 
 float holeHit(vec3 ro, vec3 rd) {
@@ -186,8 +220,8 @@ vec3 shade(vec3 p, vec3 rd) {
   else t = clamp(pow(ndv, 1.4) * 0.95 + n.y * 0.12, 0.0, 1.0);
   vec3 col = ramp(t);
   float sh = clamp(0.5 - 0.5 * ndl, 0.0, 1.0);
-  col = mix(col, vec3(0.23, 0.03, 0.09), sh * sh * 0.55);
-  col += vec3(1.0, 0.9, 0.95) * pow(max(dot(reflect(rd, n), LIGHT), 0.0), 18.0) * 0.25;
+  col = mix(col, vec3(0.23, 0.03, 0.09), sh * sh * 0.20);
+  // Broad matte colour fields: an illustration rather than a glossy toy.
   return col;
 }
 
@@ -197,8 +231,16 @@ void main() {
   float minD, minT;
   float t = march(ro, rd, minD, minT);
   float th = holeHit(ro, rd);
+  float tg = groundHit(ro, rd);
+  if (tg > 0.0 && (t < 0.0 || tg < t)) { t = -1.0; th = -1.0; }
   if (uMode == 0) {
-    // G-buffer: t, part, light, feature
+    // G-buffer: t, part, light, feature (part 9 = hole, 10 = ground plane)
+    if (tg > 0.0 && t < 0.0 && th < 0.0) {
+      // the ground: paper, or ink where the hairline runs along z = 0 (about one pixel wide)
+      // one pixel on screen covers more ground the flatter the ray hits it
+      bool line = uGround > 1.5 && abs(ro.z + rd.z * tg) < uPixAngle * tg * 1.2 / max(abs(rd.y), 0.02);
+      fragColor = vec4(tg, line ? 9.0 : 10.0, 0.0, 0.0); return;
+    }
     if (th > 0.0 && (t < 0.0 || th < t)) { fragColor = vec4(th, 9.0, 0.0, 0.0); return; }
     if (t < 0.0) { fragColor = vec4(-1.0, -1.0, 0.0, 0.0); return; }
     vec3 p = ro + rd * t;
@@ -232,9 +274,10 @@ in vec2 vUv;
 out vec4 fragColor;
 
 bool edge(vec4 c, vec4 n) {
-  bool ch = c.x > 0.0, nh = n.x > 0.0;
+  bool ch = c.x > 0.0 && c.y < 9.5, nh = n.x > 0.0 && n.y < 9.5; // the ground plane counts as nothing
   if (ch != nh) return true;
   if (!ch) return false;
+  if (c.y > 9.5 && n.y > 9.5) return false; // ground against ground: no line
   if (c.y > 8.5 || n.y > 8.5) return abs(c.y - n.y) > 0.5;
   float dd = abs(c.x - n.x);
   if (dd > 0.05) return true;
@@ -246,6 +289,7 @@ void main() {
   ivec2 px = ivec2(gl_FragCoord.xy);
   ivec2 sz = textureSize(uG, 0);
   vec4 c = texelFetch(uG, px, 0);
+  if (c.y > 9.5) { fragColor = vec4(uPaper, 1.0); return; } // ground plane: paper, no edges drawn on it
   if (c.y > 8.5 || c.w > 0.5) { fragColor = vec4(uInk, 1.0); return; }
   float ink = 0.0;
   for (int r = 1; r <= 2; r++) {
@@ -273,6 +317,7 @@ void main() {
   ivec2 sz = textureSize(uG, 0);
   vec4 c = texelFetch(uG, px, 0);
   if (c.x < 0.0) { fragColor = vec4(uPaper, 1.0); return; }
+  if (c.y > 9.5) { fragColor = vec4(uPaper, 1.0); return; }
   if (c.y > 8.5) { fragColor = vec4(uInk, 1.0); return; }
   if (c.w > 0.5 && c.w < 1.5) { fragColor = vec4(uPaper, 1.0); return; }
   ivec2 nb[4] = ivec2[4](ivec2(1, 0), ivec2(-1, 0), ivec2(0, 1), ivec2(0, -1));
@@ -296,7 +341,9 @@ export class SdfView {
   constructor(canvas, opts) {
     this.canvas = canvas;
     this.style = opts.style;
+    this.shapes = ['sky', 'gradient'].includes(this.style) ? SOFT_SHAPES : SHAPES;
     this.pixelSize = opts.pixelSize || 5;
+    this.maxDpr = opts.maxDpr; // cap for big canvases: every pixel is a ray
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: false, preserveDrawingBuffer: false });
     this.renderer.setClearColor(0xffffff, 1);
     this.renderer.outputColorSpace = THREE.LinearSRGBColorSpace; // colours below are display values
@@ -307,11 +354,13 @@ export class SdfView {
     const zeros = () => Array.from({ length: NS }, () => new THREE.Vector4());
     this.uniforms = {
       uA: { value: zeros() }, uB: { value: zeros() }, uC: { value: zeros() },
+      uControl: { value: Array.from({ length: NS }, () => new THREE.Vector3()) },
       uCamPos: { value: new THREE.Vector3() },
       uCamWorld: { value: new THREE.Matrix4() },
       uProjInv: { value: new THREE.Matrix4() },
       uBound: { value: new THREE.Vector4(0, 0.3, 0, 1) },
       uHole: { value: new THREE.Vector4(0, 0, 0, 0) },
+      uGround: { value: opts.ground ? 1 : 0 },
       uNose: { value: new THREE.Vector3() },
       uEyeN: { value: new THREE.Vector3() },
       uEyeF: { value: new THREE.Vector3() },
@@ -320,9 +369,11 @@ export class SdfView {
       uMode: { value: 0 },
       uPalette: { value: opts.palette || 0 },
       uBg: { value: hex(opts.bg || '#ffffff') },
+      uClipGround: { value: false },
       uEyeR: { value: opts.style === 'pixel' ? 0.03 : 0.019 },
     };
-    SHAPES.forEach((s, i) => this.uniforms.uC.value[i].set(s.g, s.flat || 1, 0, 0));
+    this.uniforms.uC.value.forEach(v => v.z = -1);
+    this.shapes.forEach((s, i) => this.uniforms.uC.value[i].set(s.g, s.flat || 1, s.control ? 1 : 0, 0));
     this.uniforms.uMode.value = { contour: 0, pixel: 0, sky: 1, gradient: 2 }[this.style];
 
     this.marchMat = new THREE.ShaderMaterial({
@@ -371,7 +422,7 @@ export class SdfView {
       this.target.setSize(pw, ph);
       this.uniforms.uRes.value.set(pw, ph);
     } else {
-      const dpr = Math.min(window.devicePixelRatio || 1, this.style === 'contour' ? 2 : 1.5);
+      const dpr = Math.min(window.devicePixelRatio || 1, this.maxDpr || (this.style === 'contour' ? 2 : 1.5));
       this.renderer.setPixelRatio(dpr);
       this.renderer.setSize(w, h, false);
       const bw = Math.round(w * dpr), bh = Math.round(h * dpr);
@@ -384,18 +435,20 @@ export class SdfView {
   }
 
   /** @param J joints from rig.solve(); hole: [x, z, r] or null */
-  update(J, hole) {
+  update(J, hole, clipGround = false) {
     const u = this.uniforms;
+    u.uClipGround.value = clipGround;
     let cx = 0, cy = 0, cz = 0, n = 0;
-    SHAPES.forEach((s, i) => {
+    this.shapes.forEach((s, i) => {
       const a = J[s.a], b = J[s.b];
+      if (s.control) u.uControl.value[i].set(...J[s.control]);
       u.uA.value[i].set(a[0], a[1], a[2], s.ra);
       u.uB.value[i].set(b[0], b[1], b[2], s.rb);
       cx += a[0] + b[0]; cy += a[1] + b[1]; cz += a[2] + b[2]; n += 2;
     });
     cx /= n; cy /= n; cz /= n;
     let rad = 0;
-    SHAPES.forEach((s) => {
+    this.shapes.forEach((s) => {
       for (const k of [s.a, s.b]) {
         const p = J[k];
         rad = Math.max(rad, Math.hypot(p[0] - cx, p[1] - cy, p[2] - cz) + Math.max(s.ra, s.rb) + 0.05);
@@ -427,5 +480,5 @@ export class SdfView {
     }
   }
 
-  dispose() { this.renderer.dispose(); }
+  dispose() { this.renderer.dispose(); this.renderer.forceContextLoss(); }
 }

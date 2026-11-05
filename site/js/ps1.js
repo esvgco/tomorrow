@@ -16,8 +16,10 @@ in vec3 color;
 out vec3 vCol;
 out vec2 vUvW;
 out float vW;
+out float vWorldY;
 void main() {
   vec4 wp = modelMatrix * vec4(position, 1.0);
+  vWorldY = wp.y;
   vec3 n = normalize(mat3(modelMatrix) * normal);
   float l = 0.7 + 0.42 * max(dot(n, uLight), 0.0) + 0.06 * n.y;
   vCol = color * l;
@@ -37,9 +39,12 @@ uniform float uAlpha;
 in vec3 vCol;
 in vec2 vUvW;
 in float vW;
+in float vWorldY;
+uniform bool uClipGround;
 out vec4 fragColor;
 const float B[16] = float[16](0.0, 8.0, 2.0, 10.0, 12.0, 4.0, 14.0, 6.0, 3.0, 11.0, 1.0, 9.0, 15.0, 7.0, 13.0, 5.0);
 void main() {
+  if (uClipGround && vWorldY < 0.0) discard;
   vec3 c = vCol;
   if (uUseMap > 0.5) c *= texture(uMap, vUvW / vW).rgb;
   ivec2 p = ivec2(gl_FragCoord.xy) % 4;
@@ -126,10 +131,11 @@ export class Ps1View {
     const mat = (map, alpha = 1) => new THREE.ShaderMaterial({
       glslVersion: THREE.GLSL3, vertexShader: VERT, fragmentShader: FRAG,
       transparent: alpha < 1, depthWrite: alpha >= 1,
-      uniforms: { ...this.shared, uMap: { value: map }, uUseMap: { value: map ? 1 : 0 }, uAlpha: { value: alpha } },
+      uniforms: { ...this.shared, uMap: { value: map }, uUseMap: { value: map ? 1 : 0 }, uAlpha: { value: alpha }, uClipGround: { value: false } },
     });
     const fur = mat(furTex());
     const plain = mat(null);
+    this.rabbitMaterials = [fur, plain];
 
     // rest lengths: the segments are rigid, so the rest pose gives their length
     const J = solve(SIT);
@@ -208,16 +214,20 @@ export class Ps1View {
 
   setFloorScroll(u) { this.floorMap.offset.x = u; }
 
-  update(J, hole) {
+  update(J, hole, clipGround = false) {
+    this.rabbitMaterials.forEach(m => m.uniforms.uClipGround.value = clipGround);
+    this.shadow.visible = !clipGround;
     const up = new THREE.Vector3(0, 1, 0);
     const d = new THREE.Vector3();
+    const bs = J.bodyScale || 1; // the torso thins as it stretches
     for (const p of this.parts) {
       const a = J[p.s.a], b = J[p.s.b];
       d.set(b[0] - a[0], b[1] - a[1], b[2] - a[2]);
       const l = d.length();
+      const rs = p.s.g === 0 ? bs : 1;
       p.m.position.set(a[0], a[1], a[2]);
       p.m.quaternion.setFromUnitVectors(up, d.normalize());
-      p.m.scale.set(1, l / p.len, 1 / p.flat);
+      p.m.scale.set(rs, l / p.len, rs / p.flat);
       const inner = p.m.userData.inner;
       if (inner) inner.position.z = inner.userData.side * p.s.ra * 0.55 * p.flat;
     }
@@ -237,5 +247,5 @@ export class Ps1View {
   }
 
   render() { this.renderer.render(this.scene, this.camera); }
-  dispose() { this.renderer.dispose(); }
+  dispose() { this.renderer.dispose(); this.renderer.forceContextLoss(); }
 }
