@@ -133,3 +133,11 @@ responds to scrolling. The shrinking journey is intentionally removed in this it
 Ahead 2 keeps the header and interactions, with one reading axis, smaller headings,
 no staggered project composition, and fewer labels and repeated entrances.
 Both have isolated CSS/JS so changes do not affect the reference versions.
+
+### Continuous transitions in version 2
+
+Removed the full-screen aperture, opacity-to-zero and large zoom transitions from
+version 2 only. Inter-word passages scroll to the next content section and advance
+the date. The final hole returns along a visible scroll/camera path. The letter
+interior is now a nonmodal inset; the page remains visible. Existing DOM nodes and
+interaction state stay in place throughout. Original study transitions are unchanged.

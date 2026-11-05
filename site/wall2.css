@@ -1,3 +1,12 @@
 /* One continuous sheet: no chapter scale changes or per-chapter easing. */
 .wall-panel .eyebrow,.edge-note,.margin-note,.door-note{visibility:hidden}
 .page-tools .progress-line{display:none}
+
+/* The letter opens beside the sheet; it never replaces the viewport. */
+.room{inset:auto 24px 75px auto;width:min(420px,calc(100vw - 48px));height:300px;border-radius:3px;perspective:none}
+.room-space{inset:60px 25px 45px;animation:none;transform:none;border-radius:0}
+.room-space .room-end{transform:none;outline:none;background:#000}
+.room-end p{font-size:28px}.room-end button{margin-top:25px}
+.room-left,.room-right,.room-ceiling,.room-floor{display:none}
+.return-room{position:absolute;top:20px;left:25px}.room-caption{bottom:15px;font-size:10px}
+.transit{display:none!important}

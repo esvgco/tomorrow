@@ -16,3 +16,5 @@
 .invitation-section{border:0;padding:70px 0 100px}.invite-bottom{display:block;margin-top:40px}.hello-link{font-size:36px;display:inline-block;margin-top:35px}.email-small{font-size:12px}
 .ahead-footer{border:0;padding:0 0 60px}.tomorrow-door{margin:30px auto 100px}.door-ellipse{max-width:170px;height:35px}.tomorrow-door:hover .door-ellipse{height:55px}.footer-bottom{font-size:10px;flex-wrap:wrap}.footer-bottom>a{display:none}
 @media(max-width:650px){.ahead-page main{padding:0 24px}.ahead-hero{padding-top:165px}.hero-base>.mono{font-size:14px}.theory-copy{font-size:16px}.people-bottom{display:block}.rabbit-follow{margin-top:45px}.hero-base .rabbit-follow{position:static}.invitation-section h2{font-size:36px}.possibility-section,.people-section,.making-section{padding-bottom:75px}}
+
+.transit{display:none!important}
