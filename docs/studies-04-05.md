@@ -141,3 +141,12 @@ version 2 only. Inter-word passages scroll to the next content section and advan
 the date. The final hole returns along a visible scroll/camera path. The letter
 interior is now a nonmodal inset; the page remains visible. Existing DOM nodes and
 interaction state stay in place throughout. Original study transitions are unchanged.
+
+### Ahead 2 — text space
+
+All visible main-content text supports native whitespace hit-testing (without span
+wrappers). A click flies through SVG vector-text foreground into a simultaneous
+distant layer, then advances the date in place. Text selection and dragging do not
+trigger flight. Escape/resize cancels; reduced motion changes the day without flight.
+Selecting a word or paragraph scales main content to 1.15 around the selection;
+clearing selection restores it. The header stays fixed. Original routes unchanged.

@@ -18,3 +18,8 @@
 @media(max-width:650px){.ahead-page main{padding:0 24px}.ahead-hero{padding-top:165px}.hero-base>.mono{font-size:14px}.theory-copy{font-size:16px}.people-bottom{display:block}.rabbit-follow{margin-top:45px}.hero-base .rabbit-follow{position:static}.invitation-section h2{font-size:36px}.possibility-section,.people-section,.making-section{padding-bottom:75px}}
 
 .transit{display:none!important}
+
+.ahead-page main{transition:transform .45s cubic-bezier(.2,.7,.2,1)}
+.text-flight{position:fixed;inset:0;width:100%;height:100%;z-index:25;background:white;pointer-events:none;overflow:hidden}
+.text-flight text{ text-rendering:geometricPrecision }
+@media(prefers-reduced-motion:reduce){.ahead-page main{transition:none}}
