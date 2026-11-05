@@ -7,10 +7,13 @@ import {mountMark} from '../mark.js';
 const $=s=>document.querySelector(s),body=document.body,viewport=$('#viewport');
 const panels=[...document.querySelectorAll('[data-panel]')];
 // Each chapter is printed at less than half the physical size of the previous one.
-const scales=[1,.44,.1936,.08518,.03748,.01649],centres=[0],BACK=1.6;
 // wall-zoom is only that pull-back, played backwards: it opens on the whole wall seen
 // from afar, and scrolling down walks in until you stand at the last screen.
-const zoomMode=body.classList.contains('wall-zoom'),AHEAD=0,TAIL=zoomMode?0:BACK;
+const zoomMode=document.body.classList.contains('wall-zoom');
+// In wall-zoom the chapters shrink faster (ratio .34 instead of .44): the near one larger,
+// the far ones smaller. It starts a little way into the walk, and the whole composition
+// sits lower in the window.
+const RATIO=zoomMode?.34:.44,scales=[0,1,2,3,4,5].map(i=>RATIO**i),centres=[0],BACK=1.6,START=zoomMode?BACK*.78:BACK,TAIL=zoomMode?0:BACK;
 let floor=0,origins=[],lastKey='',lastMark='',lastFall=-1;
 const surface=$('#wall-surface');
 function placeWall(){
@@ -22,7 +25,7 @@ function placeWall(){
 const mark=mountMark($('#wall-rabbit')),fall=mountFall($('[data-fall]'),{center:zoomMode});
 let warming=zoomMode&&!reduced,roomEntering=false,roomFlight=null,reading=false,roomOpen=false,hoverLast=false,step=0;
 let fit=1,segment=1100;
-function layout(){placeWall();fit=Math.max(.3,Math.min((innerWidth-(innerWidth<650?40:100))/(innerWidth<650?700:1100),(innerHeight-60)/650));segment=Math.max(850,innerHeight*1.3);$('#scroll-track').style.height=(segment*(zoomMode?BACK:5+TAIL)+innerHeight)+'px';lastKey=''}
+function layout(){placeWall();fit=Math.max(.3,Math.min((innerWidth-(innerWidth<650?40:100))/(innerWidth<650?700:1100),(innerHeight-60)/650));segment=Math.max(850,innerHeight*1.3);$('#scroll-track').style.height=(segment*(zoomMode?START:5+TAIL)+innerHeight)+'px';lastKey=''}
 function reset(){scrollTo(0,0);leaveRoom()}
 function go(i){if(reading){panels[i].scrollIntoView({behavior:reduced?'instant':'smooth'});return}if(zoomMode){scrollTo({top:segment*BACK,behavior:reduced?'instant':'smooth'});return}scrollTo({top:i*segment,behavior:reduced?'instant':'smooth'})}
 document.querySelectorAll('[data-stop]').forEach(b=>b.onclick=e=>{e.preventDefault();go(+b.dataset.stop)});
@@ -46,11 +49,11 @@ function camera(s){
 function frame(){
 if(warming){requestAnimationFrame(frame);return}
 if(!reading&&!roomOpen){
-  const s=zoomMode?5+BACK-clamp(scrollY/segment,0,BACK):clamp(scrollY/segment,0,5+TAIL);step=Math.min(5,s);
+  const s=zoomMode?5+START-clamp(scrollY/segment,0,START):clamp(scrollY/segment,0,5+TAIL);step=Math.min(5,s);
   const key=`${s}|${innerWidth}|${innerHeight}`;
   if(key!==lastKey){lastKey=key;
-    const [Z,cy]=camera(s),half=innerHeight/2+80;
-    panels.forEach((p,j)=>{const [ox,oy,h,oyo]=origins[j],k=Z*scales[j],y=Z*(oy+centres[j]-cy);const top=y-oyo*k,bottom=y+(h-oyo)*k;
+    const [Z,cy]=camera(s),half=innerHeight/2+80,lower=zoomMode?innerHeight*.1:0;
+    panels.forEach((p,j)=>{const [ox,oy,h,oyo]=origins[j],k=Z*scales[j],y=Z*(oy+centres[j]-cy)+lower;const top=y-oyo*k,bottom=y+(h-oyo)*k;
       const far=k<.004||bottom<-half||top>half;if(far!==p.hasAttribute('hidden-far'))far?p.setAttribute('hidden-far',''):p.removeAttribute('hidden-far');
       if(!far)p.style.transform=`translate3d(${Z*ox-ox}px,${y-oy}px,0) scale(${k})`;
       const off=s<=5?Math.abs(j-step)>1.15:false;if(p.inert!==off)p.inert=off});
