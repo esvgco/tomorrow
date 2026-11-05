@@ -35,3 +35,8 @@
 .wall-zoom .project-lines span:last-child{text-align:center;grid-column:1}
 .wall-zoom .field-note{left:50%;right:auto;transform:translateX(-50%);text-align:center}
 .wall-zoom .photo-caption{justify-content:center}
+/* "Different worlds" keeps its original layout: names left, photograph bottom right. */
+.wall-zoom .wall-panel.people{text-align:left}
+.wall-zoom .people .people-grid{margin-left:0;margin-right:0}
+.wall-zoom .people .field-note{left:auto;right:0;transform:none;text-align:left}
+.wall-zoom .people .photo-caption{justify-content:space-between}
