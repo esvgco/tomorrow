@@ -1,0 +1,100 @@
+import {clamp,ease,reduced,tomorrow,setDay,mountFall,mountGaps,watchEdit} from './shared.js';
+import {mountMark} from '../mark.js';
+// The wall, from afar (04.6). Built on 04.1's flat camera: every chapter is its own layer,
+// zoomed and moved directly from the scroll position.
+//
+// The walk, in scroll segments:
+//   1. START  the 04.1 pull-back played backwards: from the whole wall to the last screen.
+//             The rabbit waits at the foot of the window the whole way.
+//   2. SINK   standing at the last screen, the rabbit goes into its hole.
+//   3. +1     the hole is now a chapter of the wall: it rises and grows like the others did,
+//             and the projects the studio backs arrive from below, one after another.
+//   4. +1     on to the last chapter: About and Contact.
+// The hole in the dock and the hole on the wall are placed so that, at the moment the
+// rabbit is gone, they are the same pixels; one is swapped for the other there.
+const $=s=>document.querySelector(s),body=document.body,viewport=$('#viewport');
+const panels=[...document.querySelectorAll('[data-panel]')],N=panels.length,LAST=5;
+const RATIO=.34,scales=panels.map((_,i)=>RATIO**i),centres=[0],BACK=1.6,START=BACK*.7,SINK=.7,TOTAL=START+SINK+2;
+const surface=$('#wall-surface'),dock=$('#rabbit-dock'),hole6=$('.burrow-hole'),cards=[...document.querySelectorAll('.burrow-card')];
+let dockX=0,dockY=0,dockDepth=0,floor=0,origins=[],lastKey='',lastMark='',lastFall=-1,fit=1,segment=1100,mobile=false,lower=0,spacing=830;
+let warming=!reduced,roomEntering=false,roomFlight=null,reading=false,roomOpen=false,hoverLast=false,u=0,cardBase=[];
+const mark=mountMark($('#wall-rabbit')),fall=mountFall($('[data-fall]'),{center:true});
+const hb=mark.holeBox,bb=mark.bunBox,depth=hb.y+hb.height-bb.y;
+hole6.setAttribute('viewBox',`${hb.x} ${hb.y} ${hb.width} ${hb.height}`);
+
+function layout(){
+  const iw=innerWidth,ih=innerHeight;mobile=iw<650;
+  fit=Math.max(.3,Math.min((iw-(mobile?40:100))/(mobile?700:1100),(ih-60)/650));
+  segment=Math.max(850,ih*1.3);$('#scroll-track').style.height=(segment*TOTAL+ih)+'px';
+  lower=ih*.1;spacing=(mobile?1280:830)*.8;
+  for(let i=1;i<=LAST;i++)centres[i]=centres[i-1]+spacing*scales[i-1];
+  floor=centres[LAST]+6;
+  origins=panels.map(p=>{const o=getComputedStyle(p).transformOrigin.split(' ').map(parseFloat);return [surface.offsetLeft+p.offsetLeft+o[0],surface.offsetTop+p.offsetTop+o[1],p.offsetHeight,o[1],p.offsetWidth,o[0]]});
+  // The dock: the rabbit and its hole, sized by the hole, sitting at the foot of the window.
+  const wH=mobile?Math.min(iw*.24,100):Math.min(iw*.11,150),sc=wH/hb.width;
+  // The mark lifts its hole over the head; the dock moves down by as much, so the hole stays
+  // where it is and the rabbit is seen going down into it.
+  const y0=ih-ih*.05-hb.height/2*sc,yEnd=y0;
+  dockX=iw/2-(hb.x+hb.width/2-882)*sc;dockY=y0-(hb.y+hb.height/2-264)*sc;dockDepth=depth*sc;
+  Object.assign(dock.style,{width:932*sc+'px',height:1251*sc+'px'});
+  // The hole as a chapter: the size and place that project exactly onto the dock's hole
+  // when the camera stands at the last screen.
+  const [,oy,PH,oyo,PW]=origins[6],k6=fit*RATIO,Z5=fit/scales[LAST],W6=wH/k6,H6=W6*hb.height/hb.width,hy=PH*(mobile?.26:.3);
+  Object.assign(hole6.style,{width:W6+'px',height:H6+'px',left:PW/2-W6/2+'px',top:hy-H6/2+'px'});
+  centres[6]=centres[LAST]-oy+((yEnd-ih/2)-lower-(hy-oyo)*k6)/Z5;
+  centres[7]=centres[6]+spacing*scales[6];
+  cardBase=cards.map((c,k)=>{c.style.top=hy+H6/2+(mobile?90:60)+k*(mobile?150:95)+'px';return {w:c.offsetWidth,dx:parseFloat(c.style.getPropertyValue('--dx'))*PW}});
+  lastKey='';lastMark='';
+}
+function reset(){scrollTo(0,0);leaveRoom()}
+const at=v=>v*segment;
+function go(i){if(reading){panels[i].scrollIntoView({behavior:reduced?'instant':'smooth'});return}scrollTo({top:at(i<=LAST?START:i===6?START+SINK+1:TOTAL),behavior:reduced?'instant':'smooth'})}
+document.querySelectorAll('[data-stop]').forEach(b=>b.onclick=e=>{e.preventDefault();go(+b.dataset.stop)});
+$('#little-door').onclick=()=>scrollTo({top:at(START+SINK),behavior:reduced?'instant':'smooth'});
+$('#about-link').onclick=()=>$('#about-dialog').showModal();
+$('#reset-wall').onclick=()=>{setDay(0);$('#help').close();reset()};
+function toggleReading(force){reading=typeof force==='boolean'?force:!reading;body.classList.toggle('reading',reading);dock.hidden=reading;if(reading){viewport.removeAttribute('inert');scrollTo(0,0)}else{layout();reset()}}
+async function enterRoom(){if(roomOpen||roomEntering||reading)return;roomEntering=true;const r=$('#last-heading').getBoundingClientRect();viewport.style.transformOrigin=`${r.left+r.width*.18}px ${r.top+r.height*.3}px`;roomFlight=viewport.animate([{transform:'scale(1)'},{transform:'scale(34)'}],{duration:reduced?1:950,fill:'forwards',easing:'cubic-bezier(.6,0,.8,.4)'});await roomFlight.finished;roomOpen=true;roomEntering=false;$('#room').hidden=false;viewport.inert=true;$('#leave-room').focus();roomFlight.cancel()}
+function leaveRoom(){if(!roomOpen)return;roomOpen=false;$('#room').hidden=true;viewport.inert=false;$('#last-heading').focus({preventScroll:true})}
+$('#leave-room').onclick=leaveRoom;$('#room-tomorrow').onclick=()=>tomorrow(reset);
+{const h=$('#last-heading');h.onpointerenter=()=>hoverLast=true;h.onpointerleave=()=>hoverLast=false;h.onclick=enterRoom;h.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();enterRoom()}}}
+addEventListener('wheel',e=>{if(reading||e.ctrlKey||document.querySelector('dialog[open]'))return;if(roomOpen||roomEntering){e.preventDefault();return}if(hoverLast&&u>START-.3&&u<START+SINK&&e.deltaY<0){e.preventDefault();enterRoom()}},{passive:false});
+addEventListener('keydown',e=>{if(roomOpen){if(e.key==='Escape'){leaveRoom();e.preventDefault()}if(e.key==='Tab'){e.preventDefault();(document.activeElement===$('#leave-room')?$('#room-tomorrow'):$('#leave-room')).focus()}}});
+mountGaps((x,y)=>{if(reading){tomorrow();return}viewport.style.transformOrigin=`${x}px ${y}px`;const a=viewport.animate([{transform:'scale(1)'},{transform:'scale(20)',opacity:0}],{duration:reduced?1:650,fill:'forwards',easing:'cubic-bezier(.6,0,1,1)'});a.onfinish=()=>{tomorrow(()=>{a.cancel()})}});
+
+const overview=()=>Math.min(fit*.3,innerHeight*.4/(floor+300));
+function camera(){
+  if(u<START){// the pull-back of 04.1, backwards: distance shrinks linearly while descending
+    const v=ease((START-u)/BACK),Z5=fit/scales[LAST],Zend=overview();
+    return [1/((1-v)/Z5+v/Zend),centres[LAST]+(centres[0]-centres[LAST])*v];
+  }
+  const t=Math.max(0,u-START-SINK);if(t<=0)return [fit/scales[LAST],centres[LAST]];
+  const i=Math.min(6,LAST+Math.floor(t)),f=LAST+t-i;
+  const scale=Math.exp(Math.log(scales[i])*(1-f)+Math.log(scales[i+1])*f);return [fit/scale,centres[i]+(centres[i+1]-centres[i])*f];
+}
+function frame(){
+if(warming){requestAnimationFrame(frame);return}
+if(!reading&&!roomOpen){
+  u=clamp(scrollY/segment,0,TOTAL);
+  const key=`${u}|${innerWidth}|${innerHeight}`;
+  if(key!==lastKey){lastKey=key;
+    const [Z,cy]=camera(),half=innerHeight/2+80,inHole=u>=START+SINK;
+    panels.forEach((p,j)=>{const [ox,oy,h,oyo]=origins[j],k=Z*scales[j],y=Z*(oy+centres[j]-cy)+lower;const top=y-oyo*k,bottom=y+(h-oyo)*k;
+      const far=k<.004||bottom<-half||top>half||(j>LAST&&!inHole);if(far!==p.hasAttribute('hidden-far'))far?p.setAttribute('hidden-far',''):p.removeAttribute('hidden-far');
+      if(!far)p.style.transform=`translate3d(${Z*ox-ox}px,${y-oy}px,0) scale(${k})`;if(p.inert!==far)p.inert=far});
+    // The dock until the rabbit is gone; from then on, the hole belongs to the wall.
+    dock.style.visibility=inHole?'hidden':'';
+    const sink=ease(clamp((u-START)/SINK)),m=sink.toFixed(4);if(m!==lastMark){lastMark=m;mark.set(sink,0,1);dock.style.transform=`translate(${dockX}px,${dockY+dockDepth*sink}px)`}
+    const fa=Math.round(clamp((u/START-.15)/.4)*1000)/1000;if(fa!==lastFall){lastFall=fa;fall(fa)}
+    // Projects come up from below and out of nothing, one after another, once the rabbit is in.
+    const t=u-START-SINK;
+    cards.forEach((c,k)=>{const l=ease(clamp((t-.12-k*.17)/.45)),dy=(1-l)*(mobile?260:170);c.style.transform=`translate(${-cardBase[k].w/2+cardBase[k].dx}px,${dy}px)`;c.style.opacity=l.toFixed(3)});
+  }
+  watchEdit();
+}else if(reading){watchEdit();panels.forEach(p=>{p.inert=false;p.removeAttribute('hidden-far')})}requestAnimationFrame(frame)}
+document.fonts.ready.then(layout);addEventListener("resize",layout);body.classList.remove('reading');body.classList.add('flat');layout();if(reduced)toggleReading(true);requestAnimationFrame(frame);
+// Safari rasters a layer at the scale it is first shown and redraws it each time that scale
+// grows; draw every chapter once at full size, invisibly, before showing the far view.
+if(warming){viewport.style.opacity='.01';panels.forEach(p=>{p.removeAttribute('hidden-far');p.style.transform=`scale(${fit})`});let n=0;const tick=()=>{if(++n<4)requestAnimationFrame(tick);else{warming=false;lastKey='';requestAnimationFrame(()=>viewport.style.opacity='')}};requestAnimationFrame(tick)}
+if(location.hash){const target=document.querySelector(location.hash);if(target?.dataset.panel)setTimeout(()=>go(+target.dataset.panel),50)}
+$('.skip-link').onclick=e=>{e.preventDefault();go(7)};

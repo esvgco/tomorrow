@@ -43,3 +43,23 @@
 /* wall-zoom: the studio line is the second screen's heading; it is longer, so smaller. */
 .wall-zoom .wall-panel h2.studio-line{font-size:60px;line-height:1.05;margin-bottom:34px}
 @media(max-width:650px){.wall-zoom .wall-panel h2.studio-line{font-size:46px}}
+
+/* wall-zoom: the rabbit waits at the foot of the window, then its hole becomes a screen. */
+.rabbit-dock{position:fixed;left:0;top:0;z-index:5;pointer-events:none;will-change:transform}
+.rabbit-dock .rabbit-mark{display:block;width:100%;height:100%}
+
+.burrow-hole{position:absolute;left:0;top:0;overflow:visible;fill:#000}
+.burrow-cards{position:absolute;left:0;top:0;width:100%}
+.burrow-card{position:absolute;left:50%;display:flex;flex-direction:column;align-items:center;gap:8px;white-space:nowrap;will-change:transform,opacity;opacity:0}
+.burrow-card strong{font-weight:400;font-size:30px;letter-spacing:-.03em}
+.burrow-card span{font-size:13px}
+.burrow-card:hover strong{text-decoration:underline;text-underline-offset:6px;text-decoration-thickness:1px}
+.links-panel{display:grid;grid-template-columns:1fr 1fr;align-items:center;justify-items:center}
+.big-link{font:400 64px/1 var(--sans);letter-spacing:-.04em;border-bottom:2px solid transparent}
+.big-link:hover{border-color:currentColor}
+.wall-zoom.reading .burrow-card{position:relative;left:auto;opacity:1;transform:none!important;margin:18px auto}
+.wall-zoom.reading .burrow-hole{position:relative;display:block;margin:0 auto 30px;transform:none!important}
+.wall-zoom.reading .burrow-cards{position:relative}
+.wall-zoom.reading .links-panel{min-height:300px}
+@media(max-width:650px){.burrow-card strong{font-size:44px}.burrow-card span{font-size:22px}.big-link{font-size:80px}}
+.wall-zoom .little-door{visibility:hidden}
