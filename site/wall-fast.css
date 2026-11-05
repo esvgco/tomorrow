@@ -16,3 +16,10 @@
 .wall-fast .photo-study .photo-reveal{filter:none;transition:clip-path 2.4s .2s,opacity .8s .2s}
 .wall-fast .progress-line i{width:100%;transform-origin:0 0;transform:scaleX(var(--p,0))}
 .wall-fast.flat .space-hole,.wall-fast.flat .back-inscription{visibility:hidden}
+
+/* Only the wall: no header, no footer, no captions or numbering. */
+.wall-fast .site-header,.wall-fast .page-tools{display:none}
+.wall-fast .wall-panel .eyebrow,.wall-fast .edge-note,.wall-fast .margin-note,.wall-fast .project-note,.wall-fast .door-note{visibility:hidden}
+.wall-fast .project-lines button>span:first-child{display:none}
+.wall-fast .project-lines button{grid-template-columns:1fr 180px}
+@media(max-width:650px){.wall-fast .project-lines button{grid-template-columns:1fr}.wall-fast .project-lines span:last-child{grid-column:1}}
