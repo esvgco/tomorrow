@@ -1,0 +1,18 @@
+/* The wall, fast. Same composition; what made it slow is gone or only runs when seen.
+   - Reading the wall is a flat 2D zoom: every chapter is its own GPU layer, moved and
+     scaled directly, rastered near 1:1 instead of through a 3D camera across 60x of scale.
+   - The 3D camera only takes over at the foot of the wall (step back, turn, walk round).
+   - The photograph loses the SVG posterize filter, the backdrop blur, the blend-mode
+     scanlines and the endless mobile pulse; it is a plain greyscale that warms on reveal. */
+.wall-fast .camera,.wall-fast .world{will-change:auto}
+.wall-fast.flat .camera,.wall-fast.flat .world{transform:none!important}
+.wall-fast .wall-panel{will-change:transform;contain:layout style}
+.wall-fast .wall-panel[hidden-far]{visibility:hidden}
+.wall-fast.flat .viewport{perspective:none!important}
+.wall-fast.flat .wall-surface{background:none}
+.wall-fast .photo-study{animation:none!important}
+.wall-fast .photo-study:before,.wall-fast .photo-study:after{display:none}
+.wall-fast .photo-study img:not(.photo-reveal){filter:grayscale(1) contrast(1.5);opacity:.9}
+.wall-fast .photo-study .photo-reveal{filter:none;transition:clip-path 2.4s .2s,opacity .8s .2s}
+.wall-fast .progress-line i{width:100%;transform-origin:0 0;transform:scaleX(var(--p,0))}
+.wall-fast.flat .space-hole,.wall-fast.flat .back-inscription{visibility:hidden}
