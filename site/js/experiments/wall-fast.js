@@ -20,7 +20,7 @@ function placeWall(){
   origins=panels.map(p=>{const o=getComputedStyle(p).transformOrigin.split(' ').map(parseFloat);return [surface.offsetLeft+p.offsetLeft+o[0],surface.offsetTop+p.offsetTop+o[1],p.offsetHeight,o[1]]});
 }
 const mark=mountMark($('#wall-rabbit')),fall=mountFall($('[data-fall]'),{center:zoomMode});
-let roomEntering=false,roomFlight=null,reading=false,roomOpen=false,hoverLast=false,step=0;
+let warming=zoomMode&&!reduced,roomEntering=false,roomFlight=null,reading=false,roomOpen=false,hoverLast=false,step=0;
 let fit=1,segment=1100;
 function layout(){placeWall();fit=Math.max(.3,Math.min((innerWidth-(innerWidth<650?40:100))/(innerWidth<650?700:1100),(innerHeight-60)/650));segment=Math.max(850,innerHeight*1.3);$('#scroll-track').style.height=(segment*(zoomMode?BACK:5+TAIL)+innerHeight)+'px';lastKey=''}
 function reset(){scrollTo(0,0);leaveRoom()}
@@ -44,6 +44,7 @@ function camera(s){
   return [1/((1-u)/Z5+u/Zend),centres[5]+(centres[0]-centres[5])*u];
 }
 function frame(){
+if(warming){requestAnimationFrame(frame);return}
 if(!reading&&!roomOpen){
   const s=zoomMode?5+BACK-clamp(scrollY/segment,0,BACK):clamp(scrollY/segment,0,5+TAIL);step=Math.min(5,s);
   const key=`${s}|${innerWidth}|${innerHeight}`;
@@ -60,5 +61,10 @@ if(!reading&&!roomOpen){
   if(Math.abs(step-2)<1.3){watchEdit();updateTeasers()}
 }else if(reading){watchEdit();updateTeasers();panels.forEach(p=>{p.inert=false;p.removeAttribute('hidden-far')})}requestAnimationFrame(frame)}
 addEventListener('resize',layout);body.classList.remove('reading');body.classList.add('flat');layout();if(reduced)toggleReading(true);requestAnimationFrame(frame);
+// Safari rasters a layer at the scale it is first shown and redraws it every time that
+// scale grows. Opening on the far view and walking in therefore redrew the chapters on
+// every scroll step. So: draw every chapter once at full size, invisibly, then show the
+// far view; zooming in after that only scales tiles that already exist.
+if(warming){viewport.style.opacity='.01';panels.forEach(p=>{p.removeAttribute('hidden-far');p.style.transform=`scale(${fit})`});let n=0;const tick=()=>{if(++n<4)requestAnimationFrame(tick);else{warming=false;lastKey='';requestAnimationFrame(()=>viewport.style.opacity='')}};requestAnimationFrame(tick)}
 if(location.hash){const target=document.querySelector(location.hash);if(target?.dataset.panel)setTimeout(()=>go(+target.dataset.panel),50)}
 $('.skip-link').onclick=e=>{e.preventDefault();go(5);setTimeout(()=>$('.contact-link').focus({preventScroll:true}),400)};
