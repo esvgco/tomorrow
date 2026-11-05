@@ -26,3 +26,9 @@
   .tube-page .opening .rabbit-mark{width:230px;height:236px}
   .tube-page.reading .opening .rabbit-mark{width:120px;height:124px}
 }
+
+/* tube-3d: real strips on the wall; the flat original only catches the pointer. */
+.tube-strip{position:absolute;left:0;top:0;overflow:hidden;transform-origin:0 0;pointer-events:none;backface-visibility:hidden}
+.tube-strip>.wall-panel{position:absolute;left:0;top:0}
+.tube-strips:not(.reading) .wall-surface>.wall-panel{opacity:0}
+.tube-strips.reading .tube-strip{display:none}

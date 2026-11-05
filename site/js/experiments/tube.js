@@ -7,10 +7,14 @@ import {mountMark} from '../mark.js';
 // displacement filter that bends its sides towards you, like a concave screen.
 const $=s=>document.querySelector(s),body=document.body,viewport=$('#viewport'),camera=$('#camera'),lines=$('#tube-lines'),ctx=lines.getContext('2d');
 const panels=[...document.querySelectorAll('[data-panel]')];
-const R=1500,EYE=650,STEP=.62,DESC=2; // tube radius, eye behind the axis, turn per screen, length of the drop
+// tube-3d (body.tube-strips) bends the screens for real instead of with a filter: each one is
+// cut into vertical strips, each strip a copy of the screen, set on the wall at its own angle.
+// A narrower tube and an eye further back make the curve read without any distortion.
+const strips=body.classList.contains('tube-strips');
+const R=strips?850:1500,EYE=strips?1000:650,STEP=strips?1:.62,DESC=2; // tube radius, eye behind the axis, turn per screen, length of the drop
 const guides=!body.classList.contains('no-guides');
 // Safari (and every iPad browser, all WebKit) is left flat unless ?bend=1 forces the filter on.
-const safari=/^((?!chrome|android).)*safari/i.test(navigator.userAgent)&&new URLSearchParams(location.search).get('bend')!=='1';
+const safari=strips||/^((?!chrome|android).)*safari/i.test(navigator.userAgent)&&new URLSearchParams(location.search).get('bend')!=='1';
 if(safari)body.classList.add('no-bend');
 let mobile=false,PW=1100,PH=650,H=760,bottomY=0,persp=1000,T=0,fit=1,segment=1100,iw=innerWidth,ih=innerHeight,dpr=1;
 let s=0,yaw=0,camY=0,pitch=0,roll=0,lookX=0,lookY=0,look={x:0,y:0},velocity=0,lastScroll=0,lastTime=performance.now();
@@ -35,7 +39,7 @@ function layout(){
   persp=(R+EYE)*fit;T=persp-EYE;viewport.style.perspective=persp+'px';
   segment=Math.max(850,ih*1.3);$('#scroll-track').style.height=(segment*(5+DESC)+ih)+'px';
   dpr=Math.min(2,devicePixelRatio||1);lines.width=Math.round(iw*dpr);lines.height=Math.round(ih*dpr);
-  placePanels();if(!safari)bendMap();
+  placePanels();if(strips)buildStrips();if(!safari)bendMap();
 }
 
 // The CSS chain on #camera is translateZ(T) rotateZ(roll) rotateX(pitch) rotateY(yaw) translate(0,-camY);
@@ -63,6 +67,39 @@ function drawTube(){
   drawHole();
 }
 
+
+// ---------- strips: the screens bent for real ----------
+// The original screen stays where it was, flat and transparent, so links, hover and
+// focus still work; the strips are copies that follow it through a MutationObserver.
+const stripsOf=[];let stripMaps=[];
+function buildStrips(){
+  const world=$('#world');stripsOf.forEach(list=>list?.forEach(c=>c.remove()));stripMaps=[];
+  const N=mobile?8:12,w=PW/N;
+  panels.forEach((panel,i)=>{
+    const list=[],origEls=[...panel.querySelectorAll('*')],maps=[];
+    for(let j=0;j<N;j++){
+      const x0=j*w,a=i*STEP+(x0+w/2-PW/2)/R;
+      const strip=document.createElement('div');strip.className='tube-strip';strip.setAttribute('aria-hidden','true');strip.inert=true;
+      strip.style.cssText=`width:${w+1.5}px;height:${PH}px;transform:translate3d(0,${i*H}px,0) rotateY(${-a}rad) translateZ(${-R}px) translate(${-w/2}px,${-PH/2}px)`;
+      const copy=panel.cloneNode(true);copy.removeAttribute('id');copy.removeAttribute('data-panel');copy.removeAttribute('inert');copy.style.cssText=`transform:translateX(${-x0}px);visibility:visible;transform-style:flat`;
+      strip.append(copy);world.append(strip);list.push(strip);maps.push([...copy.querySelectorAll('*')]);
+    }
+    stripsOf[i]=list;stripMaps[i]={orig:new Map(origEls.map((el,k)=>[el,k])),maps,list};
+  });
+}
+const pendingRebuild=new Set();
+const observer=new MutationObserver(records=>{
+  for(const r of records){
+    const panel=(r.target.nodeType===1?r.target:r.target.parentElement)?.closest('[data-panel]');if(!panel)continue;const i=+panel.dataset.panel,m=stripMaps[i];if(!m)continue;
+    if(r.type==='attributes'){if(r.target===panel){if(r.attributeName==='class')m.list.forEach(st=>st.firstChild.className=panel.className);continue}
+      const k=m.orig.get(r.target);if(k==null){pendingRebuild.add(i);continue}const v=r.target.getAttribute(r.attributeName);
+      for(const els of m.maps){const el=els[k];if(!el)continue;v==null?el.removeAttribute(r.attributeName):el.setAttribute(r.attributeName,v)}continue}
+    const el=r.target.nodeType===1?r.target:r.target.parentElement,k=m.orig.get(el);
+    if(k!=null&&!el.firstElementChild){for(const els of m.maps)if(els[k])els[k].textContent=el.textContent}else pendingRebuild.add(i);
+  }
+  if(pendingRebuild.size)queueMicrotask(()=>{if(pendingRebuild.size){pendingRebuild.clear();buildStrips()}});
+});
+if(strips)panels.forEach(p=>observer.observe(p,{attributes:true,childList:true,characterData:true,subtree:true}));
 function drawHole(){
   const bot=bottomY;
   let poly=[];for(let i=0;i<72;i++){const t=i/72*Math.PI*2;poly.push(toCam(R*.4*Math.sin(t),bot,-R*.4*Math.cos(t)))}
@@ -109,7 +146,7 @@ function frame(now){
     cy=Math.cos(yaw);sy=Math.sin(yaw);cp=Math.cos(pitch);sp=Math.sin(pitch);cr=Math.cos(roll);sr=Math.sin(roll);
     camera.style.transform=`translateZ(${T}px) rotateZ(${roll}rad) rotateX(${pitch}rad) rotateY(${yaw}rad) translate3d(0,${-camY}px,0)`;
     drawTube();
-    panels.forEach((p,j)=>{const off=Math.abs(j-Math.min(s,5));p.style.visibility=off>2.6?'hidden':'';p.inert=off>1.15});
+    panels.forEach((p,j)=>{const off=Math.abs(j-Math.min(s,5));p.style.visibility=off>2.6?'hidden':'';p.inert=off>1.15;stripsOf[j]?.forEach(c=>c.style.visibility=off>2.6?'hidden':'')});
     mark.set(ease(s/.7),ease((s-.45)/.3)*.98,1);fall(clamp((s-.72)/.62));watchEdit();updateTeasers();
     const index=Math.min(5,Math.round(s));$('#position-label').textContent=u>.15?'06 — Down the hole':`${String(index+1).padStart(2,'0')} — ${names[index]}`;
     if(u>.985&&!falling){falling=true;tomorrow(reset)}
