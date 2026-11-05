@@ -6,7 +6,8 @@
 // the portal plays in reverse: white → lilac → orange → blue → black, circle → ellipse, and
 // the rabbit's head comes back up. Nothing changed; you just went the other way.
 
-import { mountMark } from './mark.js';
+import { mountMark, MARK_SVG } from './mark.js';
+import { mountFall } from './fall.js';
 
 const html = document.documentElement;
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -25,6 +26,8 @@ const page = document.getElementById('page');
 
 // ---- down: their page ----------------------------------------------------------------------
 let runway = 1;
+const markSmall = document.getElementById('mark-small');
+if (markSmall) { markSmall.innerHTML = MARK_SVG.replace(/id="tc-/g, 'id="tcs-').replace(/url\(#tc-/g, 'url(#tcs-').replace(/href="#tc-/g, 'href="#tcs-').replace('width="0" height="0" x="0" y="0"', 'width="9999" height="9999" x="-4000" y="-4000"'); }
 function layout() {
   const vh = innerHeight;
   runway = Math.max(1, vh * 0.42);
@@ -35,13 +38,72 @@ function layout() {
   const rimY = r.top + r.height / 2 - stageTop;
   // the statement sits just under the sunk hole, but never peeks into the first screen
   statement.style.setProperty('--rise', Math.max(0, Math.min(vh - rimY - vh * 0.12, runway - vh * 0.03)).toFixed(1) + 'px');
+  fall.measure();
 }
 function sinkDown() { return clamp(scrollY / runway, 0, 1); }
 function onScroll() {
   if (mode !== 'page') return;
   mark.set(Math.max(sinkDown(), upSink), 0, 1);
   document.body.classList.toggle('scrolled', scrollY > 8);
+  fall.apply(scrollY);
 }
+
+// ---- down: the lead falls into a list; while it is a list, the space between the letters
+//      is a door. Click it and you fly in, a little ahead, into a project's own space. -----
+const grid = document.getElementById('grid');
+const stack = document.getElementById('stack');
+const fall = mountFall({ grid, p1: document.getElementById('p1'), stack, p2: document.getElementById('p2') });
+const inside = document.getElementById('inside');
+let insideState = 'out'; // out | flying | in | returning
+function onGlyph(x, y) {
+  // a click on an actual letter is a click on a letter; a gap between letters, lines or words is a door
+  for (const el of stack.querySelectorAll('.nest.shown, .ch')) {
+    if (getComputedStyle(el).color === 'rgba(0, 0, 0, 0)') continue;
+    const r = el.getBoundingClientRect();
+    if (r.width && x >= r.left + 1 && x <= r.right - 1 && y >= r.top + 2 && y <= r.bottom - 2) return true;
+  }
+  // travellers sitting on the shelf are children of p1, positioned by transform
+  for (const el of fall.travellers) {
+    if (el.classList.contains('gone')) continue;
+    const r = el.getBoundingClientRect();
+    const s = stack.getBoundingClientRect();
+    if (r.top < s.top - 4 || r.bottom > s.bottom + 4) continue;
+    if (x >= r.left + 1 && x <= r.right - 1 && y >= r.top + 2 && y <= r.bottom - 2) return true;
+  }
+  return false;
+}
+grid.addEventListener('click', e => {
+  if (mode !== 'page' || insideState !== 'out' || !fall.state().onShelf || reduced) return;
+  const s = stack.getBoundingClientRect();
+  if (e.clientY < s.top - 6 || e.clientY > s.bottom + 6) return;   // the door is the list itself
+  if (onGlyph(e.clientX, e.clientY)) return;
+  e.preventDefault();
+  flyIn(e.clientX, e.clientY);
+});
+let heldY = null;
+function flyIn(x, y) {
+  insideState = 'flying';
+  heldY = scrollY;
+  const host = grid.parentElement, r = host.getBoundingClientRect();
+  host.style.perspectiveOrigin = `${(x - r.left).toFixed(1)}px ${(y - r.top).toFixed(1)}px`;
+  html.classList.add('flying');
+  grid.style.transform = 'translateZ(820px)';
+  setTimeout(() => {
+    html.classList.add('inside');
+    html.classList.remove('flying');
+    insideState = 'in';
+  }, 1100);
+}
+function flyOut() {
+  if (insideState !== 'in') return;
+  insideState = 'returning';
+  html.classList.remove('inside');
+  html.classList.add('returning');
+  if (heldY !== null) scrollTo(0, heldY);
+  requestAnimationFrame(() => { grid.style.transform = 'translateZ(0)'; });
+  setTimeout(() => { html.classList.remove('returning'); grid.style.transform = ''; insideState = 'out'; onScroll(); }, 850);
+}
+document.getElementById('inside-back').addEventListener('click', e => { e.preventDefault(); flyOut(); });
 
 // ---- up: the portal --------------------------------------------------------------------------
 // state: 'page' | 'opening' | 'depth' | 'closing'
@@ -145,6 +207,7 @@ STOPS.forEach(() => { const t = document.createElement('i'); t.className = 'tick
 const tickEls = [...ticksEl.children];
 const nearestStop = v => STOPS.reduce((b, s) => Math.abs(s - v) < Math.abs(b - v) ? s : b, STOPS[0]);
 
+// d > 0 means forward. Up is forward: the same direction that opened the portal.
 function pushDepth(d) {
   target = clamp(target + d, -0.6, MAX);
   lastInput = performance.now();
@@ -182,10 +245,11 @@ function kickDepth() { if (!depthRaf) depthRaf = requestAnimationFrame(depthFram
 
 // ---- input ----------------------------------------------------------------------------------
 addEventListener('wheel', e => {
+  if (insideState !== 'out') { e.preventDefault(); return; }
   if (mode === 'depth') {
     e.preventDefault();
     const d = Math.sign(e.deltaY) * Math.min(Math.abs(e.deltaY), 100);
-    pushDepth(d / 700); kickDepth();
+    pushDepth(-d / 700); kickDepth();
   } else if (mode === 'page') {
     if (e.deltaY < 0 && scrollY <= 2) { pushUp(-e.deltaY); decayUp(); }
     else if (up > 0) { up = 0; upSink = 0; }
@@ -195,19 +259,20 @@ addEventListener('wheel', e => {
 let touchY = null;
 addEventListener('touchstart', e => { touchY = e.touches[0].clientY; if (mode === 'depth') lastInput = performance.now(); }, { passive: true });
 addEventListener('touchmove', e => {
-  if (touchY === null) return;
+  if (touchY === null || insideState !== 'out') return;
   const y = e.touches[0].clientY, dy = touchY - y; touchY = y;
-  if (mode === 'depth') { pushDepth(dy / 420); kickDepth(); }
+  if (mode === 'depth') { pushDepth(-dy / 420); kickDepth(); }
   else if (mode === 'page' && dy < 0 && scrollY <= 2) { pushUp(-dy * 1.6); decayUp(); }
 }, { passive: true });
 addEventListener('touchend', () => { touchY = null; });
 
 addEventListener('keydown', e => {
   if (mode === 'depth') {
-    if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') { e.preventDefault(); const i = STOPS.indexOf(nearestStop(target)); target = STOPS[clamp(i + 1, 0, STOPS.length - 1)]; lastInput = 0; kickDepth(); }
-    else if (e.key === 'ArrowUp' || e.key === 'PageUp') { e.preventDefault(); const i = STOPS.indexOf(nearestStop(target)); if (i === 0) closePortal(); else { target = STOPS[i - 1]; lastInput = 0; kickDepth(); } }
+    if (e.key === 'ArrowUp' || e.key === 'PageUp') { e.preventDefault(); const i = STOPS.indexOf(nearestStop(target)); target = STOPS[clamp(i + 1, 0, STOPS.length - 1)]; lastInput = 0; kickDepth(); }
+    else if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') { e.preventDefault(); const i = STOPS.indexOf(nearestStop(target)); if (i === 0) closePortal(); else { target = STOPS[i - 1]; lastInput = 0; kickDepth(); } }
     else if (e.key === 'Escape') closePortal();
-  } else if (mode === 'page' && scrollY <= 2 && (e.key === 'ArrowUp' || e.key === 'PageUp')) { pushUp(UP_NEED); }
+  } else if (insideState === 'in' && e.key === 'Escape') { flyOut(); }
+  else if (mode === 'page' && insideState === 'out' && scrollY <= 2 && (e.key === 'ArrowUp' || e.key === 'PageUp')) { pushUp(UP_NEED); }
 });
 
 // ---- boot -----------------------------------------------------------------------------------
@@ -217,4 +282,4 @@ document.fonts && document.fonts.ready.then(layout);
 layout();
 onScroll();
 renderDepth();
-if (location.search.includes('debug')) window.__portal = { get up() { return up; }, get mode() { return mode; }, get p() { return p; } };
+if (location.search.includes('debug')) window.__portal = { get up() { return up; }, get mode() { return mode; }, get p() { return p; }, get inside() { return insideState; }, fall, flyIn, flyOut };

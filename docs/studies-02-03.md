@@ -80,18 +80,31 @@ Ideas and principles: [ideas-02.md](ideas-02.md).
 - On touch there is no cursor tilt, no drag-turn, no fly-through by tap (taps on text are
   accidental); the core — sink, fall, teaser, edit, turn, dive — works.
 
-## Study 06 — the portal (`portal.html`, `js/portal.js`)
+## Study 06 — the portal (`portal.html`, `js/portal.js`, `js/fall.js`)
 
-Elisey's brief, built as asked. The first screen is theirs: the head over the hole, no header.
-**Down:** their sink, then one column of their text. **Up from the top** (wheel, trackpad, or
-pull down on touch; ← ↑ key too): the head goes into the hole as well; at ~420 px of intent
-the hole opens from an ellipse into a circle, the circle grows past the screen, and its colour
-runs black → dark blue → orange → light lilac → white in about 1.25 s. Behind it the same
-content is already there, in **depth**: fixed layers at stops 0…5 (statement, lead, two
-paragraphs, the two bios, the e-mail), scrolled forward with a virtual position that eases
-and snaps to the nearest stop — the mechanic of xholding's `/x-holding/depth` (layers scale as
-2^d and fade/blur with distance). A small hole sits ahead and grows as you go. Ticks on the
-right show the stop. **Back:** scroll back past the first stop, ↑ at the first stop, or Esc:
-the portal plays in reverse, white → lilac → orange → blue → black, circle → ellipse, and the
-head comes back up. Let go of the upward intent before the threshold and the head just
-comes back. `?debug` exposes `window.__portal` for tests.
+Elisey's brief. The first screen is theirs: the head over the hole, no header.
+
+**Down** is their site in one column, with one addition: the lead paragraph falls down its
+monospace columns into a five-word list (Technologies · Companies · Products · Experiences ·
+Original IP) and on into the next paragraph — the fall from study 03, extracted to `fall.js`
+so both pages share it. While the list is a list (the hold), the space between its letters
+is a door: click between two letters, between words or between lines (a click on a letter is
+just a click on a letter) and the whole text block flies past you in perspective, from the
+point you clicked, into a project's own space — for now the word *hello* and a grey *back*.
+Back (or Esc) flies you out to the same scroll position.
+
+**Up from the top** (wheel, trackpad, pull down on touch, ↑ key): the head goes into the hole
+as well; at ~420 px of intent the hole opens from an ellipse into a circle, the circle grows
+past the screen and its colour runs black → dark blue → orange → light lilac → white in
+~1.25 s. Behind it the same content, **placed in a room** rather than centred: each stop
+puts its pieces in different places and at different distances from the centre — the
+statement top-left with its number bottom-right; the founders' sentence low-left with the
+names far top-right; the five kinds as a staggered list on the right; the long paragraph
+mid-left; the two people on a diagonal; the address low and large with the last line small
+top-right and the mark where it was. Layers scale as 2^d from the centre and blur with
+distance (xholding's depth mechanic), so edges fly past and the middle stays readable.
+
+**Directions never flip.** Up opened the portal, so up is forward inside it; down is back.
+Scroll down past the first stop, ↓ at the first stop, or Esc: the portal plays in reverse
+and the head comes back up. Let go before the threshold and the head simply returns.
+`?debug` exposes `window.__portal` (mode, p, inside, fall, flyIn, flyOut) for tests.

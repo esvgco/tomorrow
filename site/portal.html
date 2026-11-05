@@ -8,20 +8,22 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cellipse cx='16' cy='17' rx='14' ry='6'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="study.css">
 <style>
-  /* Study 06 — the portal. Down: their site. Up: the rabbit goes in, the hole opens into a
-     circle, the circle fills the screen, black → dark blue → orange → lilac → white, and the
-     same content is there again — only now you scroll forward, into depth. */
+  /* Study 06 — the portal. Down: their site, one column; the lead falls into a list and on
+     into the next paragraph, and while it is a list you can step into the space between the
+     letters. Up: the rabbit goes in, the hole opens into a circle, the circle fills the screen,
+     black → dark blue → orange → lilac → white, and the same content is there again — placed
+     in a room, scrolled forward. Up is always up, down is always down. */
   :root { --runway: 42; }
   html { overscroll-behavior: none; }
-  html.depth { overflow: hidden; }
+  html.depth, html.inside { overflow: hidden; }
 
   /* ---- down: their page ---- */
   .statement { padding: 0 var(--gutter); margin-top: calc(-1 * var(--rise, 0px)); }
   .statement .defining { margin: 0 auto; max-width: 18em; text-align: center; }
   .statement-gap { height: 46svh; }
   .layer-text { padding: 0 var(--gutter) clamp(40px, 7vh, 80px); }
-  .layer-text .column { text-align: center; }
-  .layer-text p + p { margin-top: clamp(100px, 24vh, 240px); }
+  .layer-text .column { text-align: left; }
+  .layer-text .prose p + p { margin-top: clamp(100px, 24vh, 240px); }
   .doorways { margin-top: clamp(120px, 28vh, 280px); text-align: center; }
   .doorway { margin: 0; }
   .doorway + .doorway { margin-top: 28px; }
@@ -29,37 +31,86 @@
   .doorway:hover .doorway-rule { transform: scaleX(1); }
   .last { text-align: center; margin: clamp(140px, 30vh, 320px) auto 0; }
 
+  /* the fall */
+  .layer-text { perspective: 900px; }
+  .grid { position: relative; transform-style: preserve-3d; }
+  .grid .w { white-space: nowrap; }
+  .grid .ch { display: inline-block; white-space: pre; transform: translateY(var(--ty, 0)); will-change: transform; }
+  .grid .ch.gone { opacity: 0; }
+  .nest { display: inline-block; white-space: pre; color: transparent; }
+  .nest.shown { color: inherit; }
+  .stack { margin: clamp(60px, 14vh, 140px) 0; line-height: 1.45; cursor: default; }
+  .stack.held { cursor: zoom-in; }
+  .stack p { margin: 0; }
+  .p2 { margin-bottom: 0; }
+  .gap { height: clamp(80px, 22vh, 220px); }
+  html.flying .grid { transition: transform 1.1s cubic-bezier(.7, 0, .9, .5); }
+  html.returning .grid { transition: transform .8s cubic-bezier(.2, .8, .3, 1); }
+
+  /* inside the letters: a project's space, a little ahead */
+  .inside-space { position: fixed; inset: 0; z-index: 40; background: var(--paper); display: grid; place-items: center; text-align: center;
+    visibility: hidden; opacity: 0; transition: opacity .5s ease, visibility 0s .5s; }
+  html.inside .inside-space { visibility: visible; opacity: 1; transition: opacity .6s ease .3s; }
+  .inside-space h1 { font-weight: 400; font-size: clamp(28px, 4vw, 56px); letter-spacing: -0.01em; margin: 0 0 .6em; }
+  .inside-space a { font-size: 11px; letter-spacing: .22em; text-transform: uppercase; color: #9a9a9a; text-decoration: none; }
+  .inside-space a:hover { color: var(--ink); }
+  .veil { position: fixed; inset: 0; z-index: 39; background: var(--paper); opacity: 0; pointer-events: none; transition: opacity .5s ease .6s; }
+  html.flying .veil { opacity: 1; }
+
   /* ---- the portal ---- */
   .portal { position: fixed; z-index: 30; left: 0; top: 0; width: 100px; height: 40px; border-radius: 50%; background: #000;
     transform-origin: 50% 50%; pointer-events: none; opacity: 0; will-change: transform, width, height, background-color; }
   .portal.on { opacity: 1; }
 
-  /* ---- forward: depth ---- */
+  /* ---- forward: the room ---- */
   .scene { position: fixed; inset: 0; z-index: 25; background: var(--paper); overflow: hidden; visibility: hidden; opacity: 0; }
   html.depth .scene, html.opening .scene { visibility: visible; }
   html.depth .scene { opacity: 1; }
-  .dl { position: absolute; inset: 0; display: grid; place-items: center; padding: var(--gutter); transform-origin: 50% 50%; opacity: 0; pointer-events: none; will-change: transform, opacity, filter; }
+  .dl { position: absolute; inset: 0; transform-origin: 50% 50%; opacity: 0; pointer-events: none; will-change: transform, opacity, filter; }
   .dl.on { pointer-events: auto; }
-  .dl .box { width: 100%; max-width: 56ch; text-align: center; }
-  .dl .defining { max-width: 18em; margin: 0 auto; }
-  .dl .who { text-align: left; max-width: 52ch; margin: 0 auto 1.6em; }
-  .dl .who b { font-weight: 700; }
-  .dl .big { font-size: clamp(20px, 3vw, 40px); letter-spacing: -0.01em; text-decoration: none; border-bottom: 1px solid var(--ink); }
-  .dl .cap { display: block; margin-top: 1.2em; font-size: 11px; letter-spacing: .22em; text-transform: uppercase; opacity: .5; }
+  .pad { position: absolute; inset: clamp(64px, 11vh, 110px) var(--gutter) clamp(40px, 8vh, 90px); }
+  .tl { position: absolute; left: 0; top: 0; }
+  .tr { position: absolute; right: 0; top: 0; text-align: right; }
+  .bl { position: absolute; left: 0; bottom: 0; }
+  .br { position: absolute; right: 0; bottom: 0; text-align: right; }
+  .ml { position: absolute; left: 0; top: 50%; transform: translateY(-50%); }
+  .mr { position: absolute; right: 0; top: 50%; transform: translateY(-50%); text-align: right; }
+  .cc { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); text-align: center; }
+  .dl p { margin: 0; }
+  .dl .h { font-size: clamp(22px, 3.2vw, 44px); line-height: 1.12; letter-spacing: -0.01em; max-width: 14em; }
+  .dl .body { font-size: clamp(14px, 1.2vw, 17px); line-height: 1.5; max-width: 34em; }
+  .dl .cap { font-size: 10px; letter-spacing: .22em; text-transform: uppercase; opacity: .55; line-height: 1.8; }
+  .dl .who { max-width: 30em; font-size: clamp(13px, 1.05vw, 15px); line-height: 1.55; }
+  .dl .who b { display: block; font-weight: 400; font-size: clamp(18px, 2vw, 26px); margin-bottom: .5em; }
+  .dl .big { font-size: clamp(20px, 3.4vw, 46px); letter-spacing: -0.01em; text-decoration: none; border-bottom: 1px solid var(--ink); }
+  .dl .list { font-size: clamp(16px, 1.7vw, 24px); line-height: 1.5; }
+  .dl .list span { display: block; }
+  .dl .list span:nth-child(2) { padding-left: 2.5em; }
+  .dl .list span:nth-child(3) { padding-left: 1.2em; }
+  .dl .list span:nth-child(4) { padding-left: 4em; }
+  .dl .list span:nth-child(5) { padding-left: .6em; }
+  .dl .mark-small { width: 56px; opacity: .9; }
+  .dl .mark-small svg { width: 100%; height: auto; display: block; }
   /* the hole, far ahead: you are always walking toward it */
-  .far { position: absolute; left: 50%; top: 72%; width: 120px; height: 44px; margin: -22px 0 0 -60px; border-radius: 50%; background: var(--ink); transform-origin: 50% 50%; opacity: .9; }
+  .far { position: absolute; left: 50%; top: 68%; width: 120px; height: 44px; margin: -22px 0 0 -60px; border-radius: 50%; background: var(--ink); transform-origin: 50% 50%; opacity: .9; }
 
   .hud { position: fixed; z-index: 28; font-size: 10px; letter-spacing: .2em; text-transform: uppercase; opacity: 0; transition: opacity .5s; pointer-events: none; }
   html.depth .hud { opacity: .55; }
-  .ticks { right: var(--gutter); top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 10px; align-items: flex-end; }
+  .ticks { right: var(--gutter); top: 50%; transform: translateY(-50%); display: flex; flex-direction: column-reverse; gap: 10px; align-items: flex-end; }
   .tick { width: 18px; height: 1px; background: var(--ink); opacity: .3; transition: width .35s cubic-bezier(.2,.8,.2,1), opacity .35s; }
   .tick.act { width: 38px; opacity: 1; }
   .hint { left: var(--gutter); bottom: 22px; }
   .hint-up { position: fixed; left: 0; right: 0; bottom: 22px; text-align: center; z-index: 5; font-size: 10px; letter-spacing: .2em; text-transform: uppercase; opacity: .35; transition: opacity .4s; pointer-events: none; }
   html.depth .hint-up, html.opening .hint-up, .scrolled .hint-up { opacity: 0; }
 
-  @media (max-width: 560px) { .hint { display: none; } .ticks { right: 10px; } }
-  @media (prefers-reduced-motion: reduce) { .portal { display: none; } }
+  @media (max-width: 760px) {
+    .hint { display: none; } .ticks { right: 10px; }
+    .pad { inset: 56px 20px 36px; }
+    .dl .h { max-width: 11em; }
+    .dl .body, .dl .who { max-width: 100%; }
+    .mr, .ml { top: auto; bottom: 0; transform: none; }
+  }
+  @media (prefers-reduced-motion: reduce) { .portal { display: none; } .grid .ch { transform: none !important; } .nest { color: inherit; } }
 </style>
 </head>
 <body>
@@ -75,9 +126,19 @@
   </section>
 
   <section class="layer-text">
-    <div class="column">
-      <p class="lead">Co-founded by Cyan Banister and Stephen Hamel, the company explores how technology can become more personal, intuitive and human.</p>
-      <p>We bring together ideas, technology and expertise to pursue opportunities that conventional approaches might overlook.</p>
+    <div class="column grid" id="grid">
+      <p class="lead p1" id="p1">Co-founded by Cyan Banister and Stephen Hamel, the company explores how technology can become more personal, intuitive and human.</p>
+      <div class="stack lead" id="stack" aria-label="Technologies, Companies, Products, Experiences, Original IP">
+        <p>Technologies</p>
+        <p>Companies</p>
+        <p>Products</p>
+        <p>Experiences</p>
+        <p>Original IP</p>
+      </div>
+      <p class="lead p2" id="p2">We bring together ideas, technology and expertise to pursue opportunities that conventional approaches might overlook.</p>
+    </div>
+    <div class="gap"></div>
+    <div class="column prose">
       <p>From emerging forms of AI and physical computing to new models for building companies, solving complex problems and creating original stories and worlds, we work with people and organizations who recognize what's becoming possible to transform ideas into meaningful products, businesses and experiences.</p>
     </div>
     <div class="doorways">
@@ -90,23 +151,60 @@
 
 <p class="hint-up" id="hint-up">Scroll up</p>
 
+<div class="veil" aria-hidden="true"></div>
+<div class="inside-space" id="inside" aria-hidden="true">
+  <div>
+    <h1>hello</h1>
+    <a href="#" id="inside-back">back</a>
+  </div>
+</div>
+
 <div class="portal" id="portal" aria-hidden="true"></div>
 
 <div class="scene" id="scene" aria-hidden="true">
   <div class="far" id="far"></div>
-  <section class="dl" data-c="0" data-span="1.1"><div class="box"><p class="defining">The Tomorrow Company builds at the edge of what is becoming possible.</p></div></section>
-  <section class="dl" data-c="1" data-span="1.05"><div class="box"><p class="lead">Co-founded by Cyan Banister and Stephen Hamel, the company explores how technology can become more personal, intuitive and human.</p></div></section>
-  <section class="dl" data-c="2" data-span="1.05"><div class="box"><p>We bring together ideas, technology and expertise to pursue opportunities that conventional approaches might overlook.</p></div></section>
-  <section class="dl" data-c="3" data-span="1.05"><div class="box"><p>From emerging forms of AI and physical computing to new models for building companies, solving complex problems and creating original stories and worlds, we work with people and organizations who recognize what's becoming possible to transform ideas into meaningful products, businesses and experiences.</p></div></section>
-  <section class="dl" data-c="4" data-span="1.1"><div class="box">
-    <p class="who"><b>Cyan Banister</b> is an entrepreneur and technology investor known for her independent thinking, unconventional instincts, and ability to recognize extraordinary potential long before it becomes obvious. Her early investments include SpaceX, Uber, DeepMind, Niantic, Postmates and Affirm.</p>
-    <p class="who"><b>Stephen Hamel</b> has spent much of his career developing and producing film, television and original intellectual property, including a longstanding creative partnership with Keanu Reeves.</p>
+
+  <!-- 0 — the statement stands top-left, the way a sentence stands on a wall; the number bottom-right -->
+  <section class="dl" data-c="0" data-span="1.1"><div class="pad">
+    <p class="h tl">The Tomorrow Company builds at the edge of what is becoming possible.</p>
+    <p class="cap br">01 / What we do<br>Technology · Entrepreneurship · Entertainment</p>
   </div></section>
-  <section class="dl" data-c="5" data-span="1.1"><div class="box"><a class="big" href="mailto:contact@tomorrowcompany.com">contact@tomorrowcompany.com</a><span class="cap">Tomorrow depends on what we make today</span></div></section>
+
+  <!-- 1 — the founders' sentence sits low and left; their names far away, top-right -->
+  <section class="dl" data-c="1" data-span="1.05"><div class="pad">
+    <p class="cap tr">Co-founded by<br>Cyan Banister<br>Stephen Hamel</p>
+    <p class="body bl">The company explores how technology can become more personal, intuitive and human.</p>
+  </div></section>
+
+  <!-- 2 — the five kinds of things, as a staggered list on the right; the claim small on the left -->
+  <section class="dl" data-c="2" data-span="1.05"><div class="pad">
+    <p class="cap tl">02 / Different by nature</p>
+    <p class="list mr"><span>Technologies</span><span>Companies</span><span>Products</span><span>Experiences</span><span>Original IP</span></p>
+    <p class="body bl">We bring together ideas, technology and expertise to pursue opportunities that conventional approaches might overlook.</p>
+  </div></section>
+
+  <!-- 3 — the long paragraph in the middle-left, where a paragraph is read; a caption top-right -->
+  <section class="dl" data-c="3" data-span="1.05"><div class="pad">
+    <p class="cap tr">03 / From AI and physical computing<br>to original stories and worlds</p>
+    <p class="body ml">From emerging forms of AI and physical computing to new models for building companies, solving complex problems and creating original stories and worlds, we work with people and organizations who recognize what's becoming possible to transform ideas into meaningful products, businesses and experiences.</p>
+  </div></section>
+
+  <!-- 4 — two people, diagonal: one top-left, one bottom-right -->
+  <section class="dl" data-c="4" data-span="1.1"><div class="pad">
+    <p class="who tl"><b>Cyan Banister</b>An entrepreneur and technology investor known for her independent thinking, unconventional instincts, and ability to recognize extraordinary potential long before it becomes obvious. Early investments include SpaceX, Uber, DeepMind, Niantic, Postmates and Affirm.</p>
+    <p class="who br"><b>Stephen Hamel</b>Has spent much of his career developing and producing film, television and original intellectual property, including a longstanding creative partnership with Keanu Reeves.</p>
+  </div></section>
+
+  <!-- 5 — the address low and left, large; the last line small, top-right; the mark bottom-right, where it was -->
+  <section class="dl" data-c="5" data-span="1.1"><div class="pad">
+    <p class="cap tr">Tomorrow depends on<br>what we make today</p>
+    <p class="bl"><a class="big" href="mailto:contact@tomorrowcompany.com">contact@tomorrowcompany.com</a></p>
+    <div class="mark-small br" id="mark-small" aria-hidden="true"></div>
+  </div></section>
 </div>
 
 <div class="hud ticks" id="ticks"></div>
-<div class="hud hint" id="hint">Scroll — forward · scroll back past the start to return</div>
+<div class="hud hint" id="hint">Scroll up — forward · scroll down past the start to return</div>
 
 <script type="module" src="js/portal.js"></script>
 </body>
