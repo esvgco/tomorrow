@@ -63,7 +63,7 @@
   .portal.on { opacity: 1; }
 
   /* ---- forward: the room ---- */
-  .scene { position: fixed; inset: 0; z-index: 25; background: var(--paper); overflow: hidden; visibility: hidden; opacity: 0; }
+  .scene { position: fixed; inset: 0; z-index: 25; background: #000; color: #fff; overflow: hidden; visibility: hidden; opacity: 0; }
   html.depth .scene, html.opening .scene { visibility: visible; }
   html.depth .scene { opacity: 1; }
   .dl { position: absolute; inset: 0; transform-origin: 50% 50%; opacity: 0; pointer-events: none; will-change: transform, opacity, filter; }
@@ -82,22 +82,25 @@
   .dl .cap { font-size: 10px; letter-spacing: .22em; text-transform: uppercase; opacity: .55; line-height: 1.8; }
   .dl .who { max-width: 30em; font-size: clamp(13px, 1.05vw, 15px); line-height: 1.55; }
   .dl .who b { display: block; font-weight: 400; font-size: clamp(18px, 2vw, 26px); margin-bottom: .5em; }
-  .dl .big { font-size: clamp(20px, 3.4vw, 46px); letter-spacing: -0.01em; text-decoration: none; border-bottom: 1px solid var(--ink); }
+  .dl .big { font-size: clamp(20px, 3.4vw, 46px); letter-spacing: -0.01em; text-decoration: none; border-bottom: 1px solid #fff; color: #fff; }
   .dl .list { font-size: clamp(16px, 1.7vw, 24px); line-height: 1.5; }
   .dl .list span { display: block; }
   .dl .list span:nth-child(2) { padding-left: 2.5em; }
   .dl .list span:nth-child(3) { padding-left: 1.2em; }
   .dl .list span:nth-child(4) { padding-left: 4em; }
   .dl .list span:nth-child(5) { padding-left: .6em; }
-  .dl .mark-small { width: 56px; opacity: .9; }
+  .dl .mark-small { width: 56px; opacity: .9; color: #fff; }
+  .dl .mark-small .mk-sunk { fill: #555; }
   .dl .mark-small svg { width: 100%; height: auto; display: block; }
   /* the hole, far ahead: you are always walking toward it */
-  .far { position: absolute; left: 50%; top: 68%; width: 120px; height: 44px; margin: -22px 0 0 -60px; border-radius: 50%; background: var(--ink); transform-origin: 50% 50%; opacity: .9; }
+  .far { position: absolute; left: 50%; top: 68%; width: 120px; height: 44px; margin: -22px 0 0 -60px; border-radius: 50%; background: #fff; transform-origin: 50% 50%; opacity: .95; }
+  .out { position: fixed; inset: 0; z-index: 31; background: #fff; opacity: 0; pointer-events: none; transition: opacity .6s ease; }
+  html.leaving .out { opacity: 1; }
 
   .hud { position: fixed; z-index: 28; font-size: 10px; letter-spacing: .2em; text-transform: uppercase; opacity: 0; transition: opacity .5s; pointer-events: none; }
-  html.depth .hud { opacity: .55; }
+  html.depth .hud { opacity: .6; color: #fff; }
   .ticks { right: var(--gutter); top: 50%; transform: translateY(-50%); display: flex; flex-direction: column-reverse; gap: 10px; align-items: flex-end; }
-  .tick { width: 18px; height: 1px; background: var(--ink); opacity: .3; transition: width .35s cubic-bezier(.2,.8,.2,1), opacity .35s; }
+  .tick { width: 18px; height: 1px; background: currentColor; opacity: .3; transition: width .35s cubic-bezier(.2,.8,.2,1), opacity .35s; }
   .tick.act { width: 38px; opacity: 1; }
   .hint { left: var(--gutter); bottom: 22px; }
   .hint-up { position: fixed; left: 0; right: 0; bottom: 22px; text-align: center; z-index: 5; font-size: 10px; letter-spacing: .2em; text-transform: uppercase; opacity: .35; transition: opacity .4s; pointer-events: none; }
@@ -205,6 +208,7 @@
 
 <div class="hud ticks" id="ticks"></div>
 <div class="hud hint" id="hint">Scroll up — forward · scroll down past the start to return</div>
+<div class="out" aria-hidden="true"></div>
 
 <script type="module" src="js/portal.js"></script>
 </body>

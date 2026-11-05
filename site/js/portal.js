@@ -110,7 +110,7 @@ document.getElementById('inside-back').addEventListener('click', e => { e.preven
 let mode = 'page';
 let up = 0, upSink = 0;         // accumulated upward intent at the top, 0..1
 const UP_NEED = 420;            // px of wheel/touch intent to go through
-const COLORS = [[0, 0, 0], [12, 24, 74], [242, 107, 29], [216, 200, 239], [255, 255, 255]];
+const COLORS = [[0, 0, 0], [12, 24, 74], [242, 107, 29], [216, 200, 239], [0, 0, 0]];
 const STOPS_T = [0, 0.3, 0.55, 0.8, 1];
 function colorAt(t) {
   t = clamp(t, 0, 1);
@@ -175,8 +175,9 @@ function closePortal() {
   })(t0);
 }
 
+let cooldownUntil = 0;
 function pushUp(d) {                      // d > 0 means "up"
-  if (mode !== 'page' || scrollY > 2 || reduced) { up = 0; upSink = 0; return; }
+  if (mode !== 'page' || scrollY > 2 || reduced || performance.now() < cooldownUntil) { up = 0; upSink = 0; return; }
   up = clamp(up + d, 0, UP_NEED);
   upSink = ease(up / UP_NEED);
   mark.set(Math.max(sinkDown(), upSink), 0, 1);
@@ -209,9 +210,26 @@ const nearestStop = v => STOPS.reduce((b, s) => Math.abs(s - v) < Math.abs(b - v
 
 // d > 0 means forward. Up is forward: the same direction that opened the portal.
 function pushDepth(d) {
-  target = clamp(target + d, -0.6, MAX);
+  target = clamp(target + d, -0.6, MAX + 0.7);
   lastInput = performance.now();
   if (target <= -0.45) { target = 0; p = 0; closePortal(); }
+  else if (target >= MAX + 0.55) { leaveThroughTheWhite(); }
+}
+// past the last room the white hole has filled the screen: you are out. For now, out means
+// back on the first screen, the head over the hole. What is really out there is undecided.
+function leaveThroughTheWhite() {
+  if (mode !== 'depth') return;
+  mode = 'leaving';
+  html.classList.add('leaving');
+  setTimeout(() => {
+    html.classList.remove('depth');
+    scrollTo(0, 0);
+    mode = 'page'; up = 0; upSink = 0; target = 0; p = 0;
+    mark.set(0, 0, 1);
+    renderDepth();
+    html.classList.remove('leaving');
+    cooldownUntil = performance.now() + 1200;
+  }, 700);
 }
 function renderDepth() {
   for (const L of layers) {
@@ -226,20 +244,21 @@ function renderDepth() {
     L.el.style.opacity = o.toFixed(3);
     L.el.style.filter = a > 0.55 ? `blur(${((a - 0.55) * 14).toFixed(1)}px)` : '';
   }
-  // the hole ahead grows as you go: by the last stop it is the size of the screen
-  const k = clamp(p / MAX, 0, 1);
-  far.style.transform = `scale(${lerp(0.2, 1.6, ease(k)).toFixed(3)})`;
-  far.style.opacity = (0.85 * (1 - seg(0.9, 1, k)) * seg(-0.3, 0.05, p)).toFixed(3);
+  // the white hole ahead grows as you go; past the last room it fills the screen
+  const k = clamp(p / (MAX + 0.55), 0, 1);
+  const need = Math.hypot(innerWidth, innerHeight) / 44;
+  // slow at first, most of the growth in the last stretch: exponential in k^3
+  far.style.transform = `scale(${(0.18 * Math.pow(need / 0.18, Math.pow(k, 3))).toFixed(3)})`;
+  far.style.opacity = (0.95 * seg(-0.3, 0.05, p)).toFixed(3);
   const near = nearestStop(p);
   tickEls.forEach((t, i) => t.classList.toggle('act', STOPS[i] === near));
 }
 function depthFrame() {
   depthRaf = null;
   if (mode !== 'depth') return;
-  if (performance.now() - lastInput > 240) target = lerp(target, nearestStop(target), 0.12);
-  p = lerp(p, target, 0.085);
+  p = lerp(p, target, 0.3);                 // tied to the hand, with a short lag so it does not jitter
   renderDepth();
-  if (Math.abs(p - target) > 0.0005 || performance.now() - lastInput < 400) depthRaf = requestAnimationFrame(depthFrame);
+  if (Math.abs(p - target) > 0.0005) depthRaf = requestAnimationFrame(depthFrame);
 }
 function kickDepth() { if (!depthRaf) depthRaf = requestAnimationFrame(depthFrame); }
 
@@ -261,15 +280,15 @@ addEventListener('touchstart', e => { touchY = e.touches[0].clientY; if (mode ==
 addEventListener('touchmove', e => {
   if (touchY === null || insideState !== 'out') return;
   const y = e.touches[0].clientY, dy = touchY - y; touchY = y;
-  if (mode === 'depth') { pushDepth(-dy / 420); kickDepth(); }
+  if (mode === 'depth') { pushDepth(-dy / 520); kickDepth(); }
   else if (mode === 'page' && dy < 0 && scrollY <= 2) { pushUp(-dy * 1.6); decayUp(); }
 }, { passive: true });
 addEventListener('touchend', () => { touchY = null; });
 
 addEventListener('keydown', e => {
   if (mode === 'depth') {
-    if (e.key === 'ArrowUp' || e.key === 'PageUp') { e.preventDefault(); const i = STOPS.indexOf(nearestStop(target)); target = STOPS[clamp(i + 1, 0, STOPS.length - 1)]; lastInput = 0; kickDepth(); }
-    else if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') { e.preventDefault(); const i = STOPS.indexOf(nearestStop(target)); if (i === 0) closePortal(); else { target = STOPS[i - 1]; lastInput = 0; kickDepth(); } }
+    if (e.key === 'ArrowUp' || e.key === 'PageUp') { e.preventDefault(); pushDepth(e.key === 'PageUp' ? 1 : 0.25); kickDepth(); }
+    else if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') { e.preventDefault(); pushDepth(e.key === 'ArrowDown' ? -0.25 : -1); kickDepth(); }
     else if (e.key === 'Escape') closePortal();
   } else if (insideState === 'in' && e.key === 'Escape') { flyOut(); }
   else if (mode === 'page' && insideState === 'out' && scrollY <= 2 && (e.key === 'ArrowUp' || e.key === 'PageUp')) { pushUp(UP_NEED); }

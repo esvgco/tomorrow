@@ -104,6 +104,17 @@ mid-left; the two people on a diagonal; the address low and large with the last 
 top-right and the mark where it was. Layers scale as 2^d from the centre and blur with
 distance (xholding's depth mechanic), so edges fly past and the middle stays readable.
 
+**Inside it is black.** You flew into the hole, so the room is black with white text; the
+colour flash passes through blue, orange and lilac and settles on black. Ahead, a **white**
+hole: the way out. It grows slowly, then fast in the last stretch (exponential in k³), and
+past the last room it fills the screen. What is out there is undecided; for now, out means
+the first screen again, the head over the hole (with a short cooldown so the same scroll
+does not pull you straight back in).
+
+**The scroll is continuous.** No stops, no snapping: the position follows the wheel, the
+finger or the arrow keys with a short lag only. The ticks on the right still show which
+room you are nearest.
+
 **Directions never flip.** Up opened the portal, so up is forward inside it; down is back.
 Scroll down past the first stop, ↓ at the first stop, or Esc: the portal plays in reverse
 and the head comes back up. Let go before the threshold and the head simply returns.
