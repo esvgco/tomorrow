@@ -18,7 +18,7 @@ function placeWall(){
 }
 const mark=mountMark($('#wall-rabbit')),fall=mountFall($('[data-fall]'));
 let roomEntering=false,roomFlight=null;
-let step=0,targetStep=0,retreat=0,yaw=0,targetYaw=0,side=0,lookX=0,lookY=0,reading=false,roomOpen=false,hoverLast=false,lastTime=performance.now(),velocity=0,lastScroll=0;
+let step=0,targetStep=0,retreat=0,yaw=0,targetYaw=0,side=0,lookX=0,lookY=0,reading=false,roomOpen=false,hoverLast=false,lastTime=performance.now(),velocity=0,scrollTilt=0,lastScroll=0;
 let focal=1000,fit=1,segment=1100,drag=null,suppressClick=false;
 function layout(){placeWall();focal=Math.max(650,innerHeight*1.25);fit=Math.min((innerWidth-(innerWidth<650?40:100))/(innerWidth<650?700:1100),(innerHeight-160)/650);fit=Math.max(.3,fit);viewport.style.perspective=focal+'px';$('#rear-hole').style.transform=`translate3d(0,${floor+22}px,${focal/fit+2950}px) rotateX(75deg)`;segment=Math.max(850,innerHeight*1.3);$('#scroll-track').style.height=(segment*5+innerHeight)+'px'}
 let returning=false;
@@ -49,8 +49,8 @@ viewport.addEventListener('touchend',()=>touch=null);
 addEventListener('keydown',e=>{if(document.querySelector('dialog[open]'))return;if(roomOpen){if(e.key==='Escape'){leaveRoom();e.preventDefault()}return}if(reading||e.metaKey||e.ctrlKey||e.target.closest('input,textarea'))return;if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();targetYaw+=(e.key==='ArrowLeft'?-1:1)*Math.PI/4}else if(e.key==='Escape'){targetYaw=0;side=0;retreat=0}else if(targetStep>4.9){if(e.key.toLowerCase()==='a'){side-=120;e.preventDefault()}if(e.key.toLowerCase()==='d'){side+=120;e.preventDefault()}if(e.key.toLowerCase()==='w'){travel(-130);e.preventDefault()}if(e.key.toLowerCase()==='s'){travel(130);e.preventDefault()}if(['ArrowDown','ArrowUp','PageDown','PageUp',' '].includes(e.key)){e.preventDefault();travel(['ArrowUp','PageUp'].includes(e.key)?-120:120)}}});
 mountGaps(()=>{setDay(getDay()+1);go(Math.min(5,Math.floor(targetStep)+1))});
 onDay(n=>{$('#rear-hole').style.width=600*(1+n*.01)+'px'});
-function frame(now){const dt=Math.min(.05,(now-lastTime)/1000);lastTime=now;const lerp=1-Math.exp(-dt*9);step=targetStep;yaw+=(targetYaw-yaw)*lerp;velocity*=.9;
-if(!reading&&!roomOpen){const i=Math.min(4,Math.floor(step)),t=step-i;const scale=Math.exp(Math.log(scales[i])*(1-t)+Math.log(scales[i+1])*t);const cy=centres[i]+(centres[i+1]-centres[i])*t;const z=focal*scale/fit+retreat;const breath=1;const pitch=-.012-clamp(velocity/100)*.018+(retreat>0?(.23*ease(retreat/1500)*Math.max(0,Math.cos(yaw))-.04*Math.max(0,-Math.cos(yaw))):0);const turnLook=retreat?lookX*.18:0;
+function frame(now){const dt=Math.min(.05,(now-lastTime)/1000);lastTime=now;const lerp=1-Math.exp(-dt*9);step=targetStep;yaw+=(targetYaw-yaw)*lerp;velocity*=Math.exp(-dt*5);scrollTilt+=(-clamp(velocity/100)*.018-scrollTilt)*(1-Math.exp(-dt*8));if(velocity<.01&&Math.abs(scrollTilt)<.00001)scrollTilt=0;
+if(!reading&&!roomOpen){const i=Math.min(4,Math.floor(step)),t=step-i;const scale=Math.exp(Math.log(scales[i])*(1-t)+Math.log(scales[i+1])*t);const cy=centres[i]+(centres[i+1]-centres[i])*t;const z=focal*scale/fit+retreat;const breath=1;const pitch=scrollTilt+(retreat>0?(.23*ease(retreat/1500)*Math.max(0,Math.cos(yaw))-.04*Math.max(0,-Math.cos(yaw))):0);const turnLook=retreat?lookX*.18:0;
 camera.style.transform=`translateZ(${focal}px) rotateX(${pitch}rad) rotateY(${yaw+turnLook}rad) scale(${breath})`;
 world.style.transform=`translate3d(${-side}px,${-cy}px,${-z}px)`;
 mark.set(ease(step/.7),ease((step-.45)/.3)*.98,1);fall(clamp((step-.72)/.62));watchEdit();updateTeasers();const index=Math.min(5,Math.round(step));$('#position-label').textContent=retreat>10?'06 — Another perspective':`${String(index+1).padStart(2,'0')} — ${['A beginning','Possibility','Human','People','In the making','A small beginning'][index]}`;$('#progress').style.width=(step/5*100)+'%';$('#turn-button').hidden=step<4.8;

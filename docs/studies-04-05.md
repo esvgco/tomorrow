@@ -150,3 +150,8 @@ distant layer, then advances the date in place. Text selection and dragging do n
 trigger flight. Escape/resize cancels; reduced motion changes the day without flight.
 Selecting a word or paragraph scales main content to 1.15 around the selection;
 clearing selection restores it. The header stays fixed. Original routes unchanged.
+
+Wall 2 reading tilt now only responds to scrolling (maximum 0.018 radians, about
+1 degree). A time-based envelope gently returns it to exactly zero at rest; there
+is no permanent reading-plane tilt. Footer exploration keeps its separate camera
+orientation. Original wall study unchanged.
