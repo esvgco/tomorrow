@@ -40,3 +40,13 @@ python3 -m http.server 8000 --directory site
 
 `wrangler.toml` serves `./site` as static assets. Cloudflare's Git integration runs
 `npx wrangler deploy` on push; locally: `npx wrangler deploy`.
+
+## New homepage studies (04–05)
+
+- `/wall.html` — **The wall**: a spatial homepage, shrinking camera, rear and hidden
+  burrows, letter interior, text rearrangement, undoable editing and tomorrow loop.
+- `/ahead.html` — **A little ahead**: an editorial homepage with entrances in the
+  punctuation, project holes, photographic reveals and interventions in the copy.
+- `/studies.html` — comparison index, including all previous studies.
+
+Behavior, coverage and prototype limits: [studies-04-05.md](docs/studies-04-05.md).
