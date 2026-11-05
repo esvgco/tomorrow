@@ -28,3 +28,7 @@
 .return-room{z-index:3;position:absolute;top:30px;left:32px}.room-caption{bottom:25px;font-size:12px}
 
 .wall-boot .viewport{visibility:hidden}
+
+#room{display:none!important}.volume-ready .room-letter{color:transparent;transform:none!important;transition:none}.volume-ready .letter-depth{display:none}.volume-ready{perspective:none!important}
+
+.reading .volume-ready .room-letter{color:inherit}

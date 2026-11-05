@@ -1,0 +1,12 @@
+/* Local Areal superfamily. MONO changes spacing, not a CSS scale. */
+@font-face{font-family:'ABC Areal';src:url('assets/fonts/areal/ABCArealSuperfamilyVariable.woff2') format('woff2');font-weight:400 700;font-style:normal;font-display:swap}
+@font-face{font-family:'ABC Areal';src:url('assets/fonts/areal/ABCArealSuperfamilyVariable.woff2') format('woff2');font-weight:400 700;font-style:italic;font-variation-settings:'slnt' -12;font-display:swap}
+@font-face{font-family:'ABC Areal Mono';src:url('assets/fonts/areal/ABCArealSuperfamilyVariable.woff2') format('woff2');font-weight:400 700;font-style:normal;font-variation-settings:'MONO' 100;font-display:swap}
+@font-face{font-family:'ABC Areal Mono';src:url('assets/fonts/areal/ABCArealSuperfamilyVariable.woff2') format('woff2');font-weight:400 700;font-style:italic;font-variation-settings:'MONO' 100,'slnt' -12;font-display:swap}
+.wall-page,.ahead-page{--sans:'ABC Areal',Arial,sans-serif;--mono:'ABC Areal Mono',Courier,monospace;font-synthesis:none}
+.wall-page .full-stop,.wall-page .human h2 em,.ahead-page .theory-layout em,.ahead-page .italic-line,.ahead-page .foreign-word{font-family:var(--sans)}
+/* Areal's sidebearings need less compression than the previous display face. */
+.wall-page .wall-panel h1{letter-spacing:-.04em}
+.wall-page .wall-panel h2{letter-spacing:-.035em}
+.ahead-page .ahead-hero h1{letter-spacing:-.04em}
+.wall-page .wordmark,.ahead-page .wordmark{letter-spacing:-.025em}

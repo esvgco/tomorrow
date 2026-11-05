@@ -183,3 +183,49 @@ reading remains available. Ahead 2 waits until pointer release and 350ms without
 selection changes before zooming; pointer drag cancels pending focus. Selection
 clearing restores scale immediately. Browser regression covers held selection,
 release delay, initial/first-scroll scale, moving pitch and return to zero.
+
+### Real open glyph volumes (local iteration)
+
+Replaced the wall2 room overlay with a persistent WebGL renderer. Each glyph uses
+extruded Helvetiker font contours (including counters), with front-cap triangles
+removed, inward-facing matte side walls and the back cap retained. Raycasting picks
+a point inside the glyph stroke. Camera position approaches that point inside the
+extrusion; vector copy is geometry on its back wall. Scroll back / Escape exits.
+The final heading uses Helvetiker geometry fitted to the existing heading layout;
+it is not yet an outline conversion of DM Sans. Three.js and font assets are local.
+Scrolling upward now reverses wall pitch. Local preview: http://localhost:8000/wall2.html.
+
+### Cavities versus solid type — local iteration
+
+Wall 2 uses a stencil aperture in a depth-writing white-wall plane. Only glyph
+openings admit a view of the extruded interior; external surfaces are occluded.
+The back wall has a localized grey emission-like shader around its vector lettering,
+which becomes visible as the camera approaches. Geometry and camera remain in one scene.
+
+Ahead 2 uses the actual local font outlines, parsed by OpenType.js, and per-character
+DOM Range positions to preserve tracking. Local static OFL font instances: DM Sans
+400 / optical size 14, Courier Prime Regular, a static Lora-derived italic renamed TomorrowSerif under OFL (the serif accents now
+use Lora instead of system Georgia so their outlines are available consistently).
+Native HTML remains the document; WebGL is a temporary presentation of its visible
+text. First frame is orthographic; perspective FOV opens to 65°, then 75° as the
+camera traverses solid glyphs toward flat text 2000 units behind them. The remote
+text retains the atmospheric fade. Escape/resize cancels without changing the day.
+
+Font geometry is cached in a bounded 320-glyph CPU cache and warmed in idle slices
+for visible content. Only the visible viewport is batched into foreground caps,
+sides and flat distant text; GPU resources are disposed after each flight. Existing
+photographs/rabbit remain flat planes. Chrome desktop measurements for tested body,
+italic and project sections: approximately 53–163ms preparation on first/warm paths,
+82k–234k submitted triangles, tested at 1440px and 390px. These are local desktop
+measurements, not a guarantee for physical mobile GPUs. Real-device profiling remains.
+
+### One perspective for the whole wall
+
+Scroll tilt now rotates the whole world around the document origin before camera
+translation. Camera Y follows the projected reading position; accumulated Z depth
+is deliberately retained. Later sections therefore continue the same converging
+edges and become smaller while moving, rather than resetting their width at each
+viewport. When tilt relaxes to zero, all sections recover their ordinary scale.
+Reverse scroll reverses the same global angle. Footer exploration keeps its own
+camera pitch. `tests/wall-sheet.cjs` verifies progressively narrower sections during
+motion and recovery of normal size at rest.
