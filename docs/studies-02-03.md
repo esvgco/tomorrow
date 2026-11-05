@@ -79,3 +79,19 @@ Ideas and principles: [ideas-02.md](ideas-02.md).
 - The portrait reveal (rotoscope, rack focus) is not built: no source photos yet.
 - On touch there is no cursor tilt, no drag-turn, no fly-through by tap (taps on text are
   accidental); the core — sink, fall, teaser, edit, turn, dive — works.
+
+## Study 06 — the portal (`portal.html`, `js/portal.js`)
+
+Elisey's brief, built as asked. The first screen is theirs: the head over the hole, no header.
+**Down:** their sink, then one column of their text. **Up from the top** (wheel, trackpad, or
+pull down on touch; ← ↑ key too): the head goes into the hole as well; at ~420 px of intent
+the hole opens from an ellipse into a circle, the circle grows past the screen, and its colour
+runs black → dark blue → orange → light lilac → white in about 1.25 s. Behind it the same
+content is already there, in **depth**: fixed layers at stops 0…5 (statement, lead, two
+paragraphs, the two bios, the e-mail), scrolled forward with a virtual position that eases
+and snaps to the nearest stop — the mechanic of xholding's `/x-holding/depth` (layers scale as
+2^d and fade/blur with distance). A small hole sits ahead and grows as you go. Ticks on the
+right show the stop. **Back:** scroll back past the first stop, ↑ at the first stop, or Esc:
+the portal plays in reverse, white → lilac → orange → blue → black, circle → ellipse, and the
+head comes back up. Let go of the upward intent before the threshold and the head just
+comes back. `?debug` exposes `window.__portal` for tests.
