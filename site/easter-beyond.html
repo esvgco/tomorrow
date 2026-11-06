@@ -47,19 +47,26 @@ if(!matchMedia('(prefers-reduced-motion: reduce)').matches){
   const tunnel=document.createElement('div');tunnel.className='mission-tunnel';tunnel.setAttribute('aria-hidden','true');
   const lines=Array.from({length:16},()=>{const line=document.createElement('i');tunnel.append(line);return line});document.body.append(tunnel);
   document.body.classList.add('flight');blocks.forEach(block=>block.classList.add('flight-block'));
-  let offsets=[],pending=false;
+  let offsets=[],pending=false,position=scrollY*.7;
   function draw(){
-    pending=false;
-    blocks.forEach((block,i)=>{block.style.transform=`translate(-50%,${innerHeight*.38+scrollY-offsets[i]}px)`});
+    const target=scrollY*.7;
+    position+=(target-position)*.16;
+    if(Math.abs(target-position)<.15)position=target;
+    blocks.forEach((block,i)=>{
+      const y=innerHeight*.33+offsets[i]-position;
+      block.style.transform=`translate(-50%,${y}px)`;
+      block.style.opacity=Math.max(0,Math.min(1,(innerHeight-y)/(innerHeight*.25),(y+block.offsetHeight)/(innerHeight*.18)));
+    });
     lines.forEach((line,i)=>{
-      const laneX=(i%8+.5)/8,slope=(laneX-.5)*.24,span=innerHeight*1.45;
-      const y=((i*173-scrollY*(.75+(i%3)*.22))%span+span)%span-innerHeight*.18;
+      const laneX=(i%8+.5)/8,slope=(laneX-.5)*.08,span=innerHeight*1.45;
+      const y=((i*173-position*(.2+(i%3)*.06))%span+span)%span-innerHeight*.18;
       const depth=Math.max(0,Math.min(1,(y+innerHeight*.18)/span));
-      line.style.height=(65+depth*230)+'px';line.style.opacity=.14+depth*.28;
+      line.style.height=(40+depth*100)+'px';line.style.opacity=.05+depth*.08;
       line.style.transform=`translate(${innerWidth*laneX+slope*(y-innerHeight*.5)}px,${y}px) rotate(${-Math.atan(slope)}rad)`;
     });
+    pending=position!==target;if(pending)requestAnimationFrame(draw);
   }
-  function layout(){let offset=0;offsets=blocks.map((block,i)=>{if(i)offset+=Math.max(innerHeight*.85,block.offsetHeight+innerHeight*.35);return offset});document.body.style.height=(offset+innerHeight*1.2)+'px';draw()}
+  function layout(){let offset=0;offsets=blocks.map((block,i)=>{if(i)offset+=Math.max(innerHeight*.85,block.offsetHeight+innerHeight*.35);return offset});document.body.style.height=(offset/.7+innerHeight)+'px';draw()}
   addEventListener('scroll',()=>{if(!pending){pending=true;requestAnimationFrame(draw)}},{passive:true});
   addEventListener('resize',layout);document.fonts.ready.then(layout);layout();
 }
