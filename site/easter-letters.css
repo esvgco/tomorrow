@@ -94,3 +94,8 @@ body[data-burrow-flip]:not(.reading) .burrow-cards{visibility:hidden}
 .final-return-hole{position:fixed;left:50%;transform:translateX(-50%);z-index:102;padding:0;border:0;background:none;color:white;cursor:pointer}
 .final-return-hole[hidden]{display:none}
 .final-return-hole svg{display:block;width:100%;height:100%}
+
+.flip-centred-title{position:absolute;left:50%;top:50%;width:min(1000px,90vw);text-align:center;color:white;z-index:8;pointer-events:none}
+.flip-centred-title[hidden]{display:none}
+.flip-centred-title .letter-entry{color:inherit}
+.inside-burrow #contact{visibility:hidden}

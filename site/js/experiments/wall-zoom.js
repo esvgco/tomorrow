@@ -20,7 +20,7 @@ const panels=[...document.querySelectorAll('[data-panel]')],N=panels.length,LAST
 const TOP=body.classList.contains('rabbit-top');
 const FLIP=body.hasAttribute('data-burrow-flip');
 let flipScreen,projectFlight,tunnelLines=[],bootFontsReady=!FLIP;
-let flipHoldUntil=0,flipHeld=false;
+let flipHoldUntil=0,flipHeld=false,flipTitle=null;
 let tunnelTravel=0,tunnelSpeed=170,tunnelLastTime=performance.now(),tunnelLastScroll=scrollY;
 if(FLIP)document.fonts.ready.then(()=>{bootFontsReady=true;scrollTo(0,0);layout();lastKey=''});
 if(FLIP){
@@ -48,7 +48,7 @@ if(FLIP){
 }
 
 // In 04.7 the camera stops at the hole's chapter (HOLD): the rabbit dives, then the projects come.
-const RATIO=.34,scales=panels.map((_,i)=>RATIO**i),centres=[0],BACK=1.6,START=BACK*.7,SINK=TOP?0:.7,HOLD=TOP?1.1:0,TOTAL=START+SINK+2+HOLD+(FLIP?6.26875:0);
+const RATIO=.34,scales=panels.map((_,i)=>RATIO**i),centres=[0],BACK=1.6,START=BACK*.7,SINK=TOP?0:.45,HOLD=TOP?1.1:0,TOTAL=START+SINK+2+HOLD+(FLIP?6.26875:0);
 const surface=$('#wall-surface'),dock=$('#rabbit-dock'),hole6=$('.burrow-hole'),cards=[...document.querySelectorAll('.burrow-card')];
 let Yr=0,tStar=0,dockX=0,dockY=0,dockDepth=0,floor=0,origins=[],lastKey='',lastMark='',lastFall=-1,fit=1,segment=1100,mobile=false,lower=0,spacing=830;
 let up=0,warming=!reduced,roomEntering=false,roomFlight=null,reading=false,roomOpen=false,hoverLast=false,u=0,cardBase=[];
@@ -212,7 +212,7 @@ if(!reading&&!roomOpen){
     const threshold=START+SINK,now=performance.now();
     if(scrollY/segment<threshold-.1)flipHeld=false;
     if(!flipHeld&&scrollY/segment>=threshold){flipHeld=true;flipHoldUntil=now+1212}
-    if(now<flipHoldUntil)scrollTo({top:threshold*segment,behavior:'instant'});
+    if(now<flipHoldUntil)scrollTo({top:Math.ceil(threshold*segment),behavior:'instant'});
   }
   u=clamp(scrollY/segment,0,TOTAL);window.__u=u;
   if(finalHole){
@@ -242,6 +242,21 @@ if(!reading&&!roomOpen){
       const inside=inHole&&up===0;
       hole6.style.visibility='hidden';flipScreen.classList.toggle('flipped',inside);body.classList.toggle('inside-burrow',inside);
       const flightTime=u-START-SINK;
+      if(!flipTitle){
+        flipTitle=document.createElement('div');flipTitle.className='flip-centred-title';
+        for(const source of panels[LAST].querySelectorAll('#last-heading,.contact-link')){
+          const copy=source.cloneNode(true);copy.removeAttribute('id');copy.removeAttribute('data-letter-portals');
+          copy.querySelectorAll('[id]').forEach(el=>el.removeAttribute('id'));
+          const cs=getComputedStyle(source);
+          Object.assign(copy.style,{fontFamily:cs.fontFamily,fontSize:parseFloat(cs.fontSize)*fit+'px',lineHeight:cs.lineHeight==='normal'?'1.2':parseFloat(cs.lineHeight)*fit+'px',letterSpacing:cs.letterSpacing,margin:source.matches('h2')?'0 0 40px':'0',display:'block',transform:'none'});
+          flipTitle.append(copy);
+        }
+        flipScreen.append(flipTitle);
+      }
+      flipTitle.hidden=!inside;
+      flipTitle.style.transform=`translate(-50%,-50%) translateY(${clamp(flightTime/.65)*innerHeight}px)`;
+      flipTitle.style.opacity=1-ease(clamp((flightTime-.15)/.5));
+
       panels[LAST].style.opacity=1-ease(clamp((flightTime-.25)/.4));
       projectFlight.hidden=!inside;
       [...projectFlight.children].forEach((card,i)=>{
