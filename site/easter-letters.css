@@ -60,3 +60,6 @@
 @media(prefers-reduced-motion:reduce){.burrow-flip-screen{transition:none}}
 
 #last-heading[data-letter-portals] .letter-entry{display:inline-block;overflow:visible}
+
+/* Keep the hole during the dive, then remove it from the flipped scene. */
+.burrow-flip-screen.flipped #rabbit-dock{visibility:hidden!important}
