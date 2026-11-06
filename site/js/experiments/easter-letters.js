@@ -102,7 +102,8 @@ function init(){
 function pose(a){
  // First explore only the arc joining the three entrances. Once approached,
  // orbit the easel on a smaller ellipse, with enough clearance behind the tripod.
- const roomX=Math.sin(a)*5.4,roomZ=Math.cos(a)*5.4;
+ const roomRadius=camera.aspect<.8?5.8:5.4;
+ const roomX=Math.sin(a)*roomRadius,roomZ=Math.cos(a)*roomRadius;
  const nearX=easel.position.x+Math.sin(a)*4.3,nearZ=easel.position.z+Math.cos(a)*(Math.cos(a)>=0?4.8:3.3);
  camera.position.set(THREE.MathUtils.lerp(roomX,nearX,approach),2.23,THREE.MathUtils.lerp(roomZ,nearZ,approach));
  camera.lookAt(0,2.23,easel.position.z);
@@ -114,7 +115,7 @@ function pose(a){
 }
 function limitAngle(a){return closeMode?a:THREE.MathUtils.clamp(a,-Math.PI/2,Math.PI/2)}
 function approachEasel(){if(busy||closeMode)return;closeMode=true;approachTarget=1;approachButton.hidden=true;wake()}
-function resize(){if(!renderer||!dialog.open)return;const w=host.clientWidth,h=host.clientHeight;renderer.setSize(w,h);camera.aspect=w/h;camera.userData.baseFov=w/h<.65?60:49;camera.updateProjectionMatrix();pose(angle);draw()}
+function resize(){if(!renderer||!dialog.open)return;const w=host.clientWidth,h=host.clientHeight;renderer.setSize(w,h);camera.aspect=w/h;camera.userData.baseFov=w/h<.8?78:49;camera.updateProjectionMatrix();pose(angle);draw()}
 function draw(){if(renderer&&dialog.open)renderer.render(scene,camera)}
 function animate(){
  if(!dialog.open){raf=0;return}
@@ -239,7 +240,11 @@ entries.forEach((button,index)=>{
  function tick(now){
   const dt=Math.min((now-last)/1000,.05);last=now;phase+=dt*letterWaveSpeed;
   const idle=mobileLetters.matches&&!reduced.matches;
-  strength+=((reduced.matches?0:idle?.32:active?1:0)-strength)*(1-Math.exp(-dt/ .45));
+  // Three gentle pulses, then a pause; all letters share the same clock.
+  const slot=index<3?index:(index-3)%3;
+  const local=(now/1000)%7.2-slot*1.8;
+  const pulse=local>=0&&local<1.8?Math.pow(Math.sin(Math.PI*local/1.8),2)*.32:0;
+  strength+=((reduced.matches?0:idle?pulse:active?1:0)-strength)*(1-Math.exp(-dt/.3));
   const smooth=finalHeading?.6:1;
   turbulence.setAttribute('baseFrequency',`${(.018+Math.sin(phase*.65)*.004)*smooth} ${(.025+Math.cos(phase*.5)*.005)*smooth}`);
   displacement.setAttribute('scale',String(strength*(8+Math.sin(phase*1.1)*2)));
