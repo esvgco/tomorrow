@@ -85,12 +85,24 @@ if(FLIP){
         clip.append(glyph);
         const dx=targetX-box.left-box.width/2,dy=targetY-box.top;
         const side=dx>0?1:-1;
+        // Mobile: Contact's N/T lead, then O/A, then the outer letters.
+        const centre=node.textContent.trim().toLowerCase()==='contact'?2.5:(node.textContent.length-1)/2;
+        const mobileOrder=Math.floor(Math.abs(i-centre));
         const keys=Array.from({length:25},(_,j)=>{
           const t=j/24,curve=4*t*(1-t);
+          if(mobile){
+            // Gather between the ears, then descend along the same vertical axis.
+            const gather=Math.min(1,t/.65),q=1-gather;
+            const earY=r.top+r.height*.28;
+            const controlX=mobileOrder===0?dx:dx*.15;
+            const x=2*q*gather*controlX+gather*gather*dx;
+            const y=t<=.65?(earY-box.top)*(gather*gather):earY-box.top+(targetY-earY)*((t-.65)/.35);
+            return {transform:`translate(${x}px,${y}px) scale(${1-.92*t*t})`,opacity:1-Math.pow(t,8)};
+          }
           return {transform:`translate(${dx*t+side*55*curve}px,${dy*t-120*curve}px) rotate(${side*70*t*t}deg) scale(${1-.92*t*t})`,opacity:1-Math.pow(t,8)};
         });
-        const order=mobile?Math.abs(i-(node.textContent.length-1)/2):(side>0?node.textContent.length-1-i:i);
-        flights.push(glyph.animate(keys,{duration:reduced?1:1000/1.3,delay:reduced?0:order*65/1.3,easing:'cubic-bezier(.45,0,.8,.35)',fill:'forwards'}).finished);
+        const order=mobile?mobileOrder:(side>0?node.textContent.length-1-i:i);
+        flights.push(glyph.animate(keys,{duration:reduced?1:1000/1.3,delay:reduced?0:order*(mobile?140:65)/1.3,easing:'cubic-bezier(.45,0,.8,.35)',fill:'forwards'}).finished);
       });
       link.style.visibility='hidden';
     });
