@@ -43,3 +43,9 @@
 }
 
 .letter-entry[data-entry="3"].rippling{filter:url(#letter-wave-3)}
+
+/* Let the wall content emerge gently from white at the bottom of the screen. */
+.wall-zoom .viewport{
+ -webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 78%,rgba(0,0,0,.94) 83%,rgba(0,0,0,.64) 90%,rgba(0,0,0,.2) 96%,transparent 100%);
+ mask-image:linear-gradient(to bottom,#000 0%,#000 78%,rgba(0,0,0,.94) 83%,rgba(0,0,0,.64) 90%,rgba(0,0,0,.2) 96%,transparent 100%);
+}
