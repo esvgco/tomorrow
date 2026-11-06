@@ -220,7 +220,7 @@ if(!reading&&!roomOpen){
     if(!settled){finalSettledAt=0;finalHole.hidden=true}
     else{
       if(!finalSettledAt)finalSettledAt=performance.now();
-      if(finalHole.hidden&&!returningHome&&performance.now()-finalSettledAt>=3000){
+      if(finalHole.hidden&&!returningHome&&performance.now()-finalSettledAt>=2000){
         finalHole.hidden=false;
         finalHole.animate([
           {transform:'translate(-50%,calc(5vh + 100%))',opacity:0},
