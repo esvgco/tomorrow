@@ -1,0 +1,76 @@
+/* Isolated overrides for study 04.8. */
+.wall-open .site-header{display:flex;pointer-events:none;background:transparent}
+.wall-open .site-header a{pointer-events:auto;min-height:44px;display:inline-flex;align-items:center}
+.wall-open .date-block{display:none}
+.wall-open .wordmark{font-size:12px;line-height:1.05}
+.wall-open .header-links{gap:24px;font-size:12px}
+.wall-open .page-tools{display:flex;align-items:center;pointer-events:none;background:transparent}
+.wall-open .page-tools button{pointer-events:auto;min-height:44px}
+.wall-open .progress-line{display:none}
+.wall-open #position-label{font-size:10px;color:#666}
+.wall-open .wall-panel h1{font-size:86px;line-height:.98;margin-top:135px}
+.wall-open .opening .eyebrow{visibility:visible!important;font-size:14px;position:absolute;top:95px;left:0;right:0}
+.wall-open .edge-note{display:none}
+.wall-open .wall-panel h2.studio-line{font-size:64px;line-height:1.08}
+.wall-open .wall-panel.people{text-align:center}
+.wall-open .people-grid{margin:0 auto!important;text-align:left;max-width:800px}
+.wall-open .people-grid h3{font-size:28px}
+.wall-open .people-grid p{font-size:19px}
+.wall-open .wall-panel .panel-copy{margin:auto}
+.wall-open .wall-panel .letter-fall{font-size:20px}
+.wall-open .rabbit-dock{background:#fff}
+.wall-open .mk-sunk{fill:#999}
+.wall-open .room{background:white;color:#080808}
+.wall-open .room-space{animation:none;border:0}
+.wall-open .room-space>div{background:#fff!important}
+.wall-open .room-end{transform:none;outline:0}
+.wall-open .room-ceiling,.wall-open .room-floor,.wall-open .room-left,.wall-open .room-right{display:none}
+.wall-open .room-caption{color:#666;font-size:12px}
+.wall-open .contents-links{display:flex;flex-direction:column;align-items:flex-start;gap:12px}
+.wall-open .contents-links button{min-height:44px;font-size:28px;letter-spacing:-.03em}
+.wall-open dialog{max-height:85svh;overflow:auto}
+.wall-open .burrow-card{white-space:normal;min-width:44px;min-height:44px}
+.wall-open .burrow-card strong{font-size:32px}
+.wall-open .quiet-button{font-size:11px}
+.wall-open :focus-visible{outline:1px solid #111;outline-offset:6px}
+@media(max-width:650px){
+ .wall-open .site-header{padding:14px 20px}
+ .wall-open .wordmark{display:none!important}
+ .wall-open .header-links{justify-content:space-between;width:100%;font-size:11px;gap:12px}
+ .wall-open .page-tools{padding:8px 18px calc(8px + env(safe-area-inset-bottom))}
+ .wall-open .tool-group{gap:16px}
+ .wall-open .wall-panel h1{font-size:88px;margin-top:305px}
+ .wall-open .opening .eyebrow{top:250px;font-size:25px}
+ .wall-open .wall-panel h2.studio-line{font-size:70px;margin-top:180px}
+ .wall-open .wall-panel .letter-fall{font-size:32px}
+ .wall-open .human h2{margin-top:140px;font-size:82px}
+ .wall-open .panel-copy{font-size:32px!important}
+ .wall-open .people-grid{display:block;max-width:620px}
+ .wall-open .people-grid article{margin:30px 0}
+ .wall-open .people-grid h3{font-size:40px;margin:0 0 12px}
+ .wall-open .people-grid p{font-size:32px;margin:0}
+ .wall-open .people h2{font-size:75px;margin-top:120px;margin-bottom:50px}
+ .wall-open .project-lines strong{font-size:42px}
+ .wall-open .project-lines span:last-child{font-size:28px}
+ .wall-open .burrow-card strong{font-size:46px}
+ .wall-open .burrow-card span{font-size:28px}
+ .wall-open .ending h2{font-size:68px}
+ .wall-open .contact-link{font-size:29px}
+ .wall-open .room-space{inset:18% 8%}
+ .wall-open.reading .wall-panel h1{font-size:46px;margin:60px 0 30px}
+ .wall-open.reading .opening .eyebrow{position:static;font-size:12px}
+ .wall-open.reading .wall-panel h2,.wall-open.reading .wall-panel h2.studio-line{font-size:36px;margin:30px 0}
+ .wall-open.reading .wall-panel .panel-copy,.wall-open.reading .wall-panel .letter-fall{font-size:17px!important}
+ .wall-open.reading .people-grid h3{font-size:25px}
+ .wall-open.reading .people-grid p{font-size:17px}
+ .wall-open.reading .project-lines strong,.wall-open.reading .burrow-card strong{font-size:23px}
+ .wall-open.reading .project-lines span:last-child,.wall-open.reading .burrow-card span{font-size:14px}
+ .wall-open.reading .contact-link{font-size:14px;overflow-wrap:anywhere}
+}
+.wall-open .wall-panel[hidden-far] *{visibility:hidden!important}
+.wall-open .return-room{color:#080808;min-height:44px}
+.wall-open .page-tools{bottom:0;left:0;right:0;padding:8px var(--gutter);background:#fff}
+.wall-open.reading #position-label{visibility:hidden}
+.wall-open.reading .wall-panel{scroll-margin-top:90px}
+.wall-open.reading .viewport{padding-bottom:65px}
+@media(max-width:650px){.wall-open .page-tools{padding:8px 20px calc(8px + env(safe-area-inset-bottom))}}
