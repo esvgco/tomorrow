@@ -48,7 +48,7 @@ if(FLIP){
 }
 
 // In 04.7 the camera stops at the hole's chapter (HOLD): the rabbit dives, then the projects come.
-const RATIO=.34,scales=panels.map((_,i)=>RATIO**i),centres=[0],BACK=1.6,START=BACK*.7,SINK=TOP?0:.45,HOLD=TOP?1.1:0,TOTAL=START+SINK+2+HOLD+(FLIP?6.26875:0);
+const RATIO=.34,scales=panels.map((_,i)=>RATIO**i),centres=[0],BACK=1.6,START=BACK*.7,SINK=TOP?0:.45,HOLD=TOP?1.1:0,TOTAL=START+SINK+2+HOLD+(FLIP?5.165625:0);
 const surface=$('#wall-surface'),dock=$('#rabbit-dock'),hole6=$('.burrow-hole'),cards=[...document.querySelectorAll('.burrow-card')];
 let Yr=0,tStar=0,dockX=0,dockY=0,dockDepth=0,floor=0,origins=[],lastKey='',lastMark='',lastFall=-1,fit=1,segment=1100,mobile=false,lower=0,spacing=830;
 let up=0,warming=!reduced,roomEntering=false,roomFlight=null,reading=false,roomOpen=false,hoverLast=false,u=0,cardBase=[];
@@ -200,7 +200,7 @@ function camera(u=window.__u??0){
     return [1/((1-v)/Z5+v/Zend),centres[LAST]+(centres[0]-centres[LAST])*v];
   }
   let t=Math.max(0,u-START-SINK);if(t<=0)return [fit/scales[LAST],centres[LAST]];
-  if(FLIP)t=t<=7.26875?t/7.26875:t-6.26875;
+  if(FLIP)t=t<=6.165625?t/6.165625:t-5.165625;
   if(HOLD)t=t<=1?t:t<=1+HOLD?1:t-HOLD;
   const i=Math.min(6,LAST+Math.floor(t)),f=LAST+t-i;
   const scale=Math.exp(Math.log(scales[i])*(1-f)+Math.log(scales[i+1])*f);return [fit/scale,centres[i]+(centres[i+1]-centres[i])*f];
@@ -241,7 +241,8 @@ if(!reading&&!roomOpen){
     if(FLIP){
       const inside=inHole&&up===0;
       hole6.style.visibility='hidden';flipScreen.classList.toggle('flipped',inside);body.classList.toggle('inside-burrow',inside);
-      const flightTime=u-START-SINK;
+      const rawFlightTime=u-START-SINK;
+      const flightTime=rawFlightTime<=.65?rawFlightTime:.65+(rawFlightTime-.65)*1.2;
       if(!flipTitle){
         flipTitle=document.createElement('div');flipTitle.className='flip-centred-title';
         for(const source of panels[LAST].querySelectorAll('#last-heading,.contact-link')){

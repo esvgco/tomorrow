@@ -99,3 +99,10 @@ body[data-burrow-flip]:not(.reading) .burrow-cards{visibility:hidden}
 .flip-centred-title[hidden]{display:none}
 .flip-centred-title .letter-entry{color:inherit}
 .inside-burrow #contact{visibility:hidden}
+
+@media(max-width:650px){
+  .links-panel{grid-template-columns:1fr 1fr;grid-template-rows:auto auto;column-gap:24px;row-gap:80px;align-content:center}
+  .links-panel #about-link{grid-column:1;grid-row:1}
+  .links-panel a.big-link{grid-column:2;grid-row:1}
+  .links-panel .final-rabbit{grid-column:1 / -1;grid-row:2;justify-self:center}
+}
