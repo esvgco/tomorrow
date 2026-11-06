@@ -173,14 +173,24 @@ if(!reading&&!roomOpen){
         const active=inside&&phase>=0&&phase<1.2;
         card.hidden=!active;card.inert=!active;
         if(active){
-          const entrance=ease(clamp(phase/.35)),exit=ease(clamp((phase-.85)/.35));
-          const y=innerHeight*(.34-(1-entrance)*.9+exit*.95);
+          const progress=phase/1.2;
+          const y=-card.offsetHeight+(innerHeight+card.offsetHeight)*progress;
           const x=mobile?50:[31,68,46][i];
-          card.style.left=x+'%';card.style.transform=`translate(-50%,${y}px) scale(${.8+entrance*.2+exit*.12})`;
-          card.style.opacity=Math.min(entrance*2,(1-exit)*2,1);
+          card.style.left=x+'%';card.style.transform=`translate(-50%,${y}px) scale(${.9+progress*.15})`;
+          card.style.opacity=Math.min(clamp(progress/.12),clamp((1-progress)/.12));
         }
       });
-      const distance=Math.max(0,u-START-SINK)*segment;
+
+    }
+    lookUp();
+    const sink=TOP?ease(clamp((u-START-1)/.45)):u>0?ease(clamp((u-START)/SINK)):ease(clamp(up/.35)),m=sink.toFixed(4);if(m!==lastMark){lastMark=m;mark.set(sink,0,1);if(TOP){dock.style.visibility=sink>=1?'hidden':''}else dock.style.transform=`translate(${dockX}px,${dockY+dockDepth*sink}px)`}
+    const fa=Math.round(clamp((u/START-.15)/.4)*1000)/1000;if(fa!==lastFall){lastFall=fa;fall(fa)}
+    // Projects come up from below and out of nothing, one after another, once the rabbit is in.
+    const t=u-START-SINK;
+    cards.forEach((c,k)=>{const l=ease(clamp((t-(TOP?1.5:.12)-k*.17)/.45)),dy=(1-l)*(mobile?260:170);c.style.transform=`translate(${-cardBase[k].w/2+cardBase[k].dx}px,${dy}px)`;c.style.opacity=l.toFixed(3)});
+  }
+  if(FLIP&&!reduced&&u>=START+SINK&&up===0){
+      const distance=performance.now()*.09;
       tunnelLines.forEach((line,i)=>{
         // Shared vanishing point: streaks travel upwards along the tunnel walls.
         const lane=i%8,laneX=(lane+.5)/8;
@@ -194,13 +204,6 @@ if(!reading&&!roomOpen){
         line.style.opacity=(.14+depth*.28).toFixed(3);
         line.style.transform=`translate(${x}px,${y}px) rotate(${-Math.atan(slope)}rad)`;
       });
-    }
-    lookUp();
-    const sink=TOP?ease(clamp((u-START-1)/.45)):u>0?ease(clamp((u-START)/SINK)):ease(clamp(up/.35)),m=sink.toFixed(4);if(m!==lastMark){lastMark=m;mark.set(sink,0,1);if(TOP){dock.style.visibility=sink>=1?'hidden':''}else dock.style.transform=`translate(${dockX}px,${dockY+dockDepth*sink}px)`}
-    const fa=Math.round(clamp((u/START-.15)/.4)*1000)/1000;if(fa!==lastFall){lastFall=fa;fall(fa)}
-    // Projects come up from below and out of nothing, one after another, once the rabbit is in.
-    const t=u-START-SINK;
-    cards.forEach((c,k)=>{const l=ease(clamp((t-(TOP?1.5:.12)-k*.17)/.45)),dy=(1-l)*(mobile?260:170);c.style.transform=`translate(${-cardBase[k].w/2+cardBase[k].dx}px,${dy}px)`;c.style.opacity=l.toFixed(3)});
   }
   watchEdit();
 }else if(reading){watchEdit();panels.forEach(p=>{p.inert=false;p.removeAttribute('hidden-far')})}document.documentElement.classList.remove('hero-loading');requestAnimationFrame(frame)}
