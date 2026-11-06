@@ -11,6 +11,14 @@ function setLetters(text){
  }));
 }
 setLetters('Not everything\nfits a category');
+// Measure the original text independently so the hole stays put after rewriting.
+const heading=copy.parentElement;
+const reference=document.createElement('span');
+reference.className='spoon-reference';reference.setAttribute('aria-hidden','true');
+reference.innerHTML='Not everything<br>fits a category';heading.append(reference);
+const positionSpoon=()=>heading.style.setProperty('--spoon-text-width',reference.offsetWidth+'px');
+new ResizeObserver(positionSpoon).observe(reference);
+document.fonts.ready.then(positionSpoon);positionSpoon();
 async function transform(){
  if(busy)return;busy=true;open=!open;
  section.classList.toggle('spoon-open',open);
