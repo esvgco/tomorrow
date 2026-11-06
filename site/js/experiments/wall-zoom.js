@@ -41,7 +41,7 @@ if(FLIP){
   ['flair','Flair','An end-to-end clothing manufacturing platform.','https://www.melengo.com/'],
   ['numeric','Numeric','AI-powered accounting automation.','https://www.numeric.io/']
  ];
- projectFlight.innerHTML=projects.map(([id,name,description,url],i)=>`<article class="project-flyby"><img src="assets/projects/${id}.svg?v=original" alt="${name} logo"><div class="project-copy"><h2>${name}</h2><p>${description}</p><a href="${url}" target="_blank" rel="noopener">Explore ${name} ↗</a></div></article>`).join('');
+ projectFlight.innerHTML=projects.map(([id,name,description,url],i)=>`<article class="project-flyby"><img src="assets/projects/${id}.svg?v=icon-only" alt="${name} logo"><div class="project-copy"><h2>${name}</h2><p>${description}</p><a href="${url}" target="_blank" rel="noopener">Explore ${name} ↗</a></div></article>`).join('');
  body.append(projectFlight);
  for(const element of [$('#viewport'),$('#rabbit-dock'),$('#above')])flipScreen.append(element);
 }
@@ -173,16 +173,16 @@ if(!reading&&!roomOpen){
       panels[LAST].style.opacity=1-ease(clamp((flightTime-.25)/.4));
       projectFlight.hidden=!inside;
       [...projectFlight.children].forEach((card,i)=>{
-        const phase=flightTime-.65-i*1.25;
-        const active=inside&&phase>=0&&phase<1.2;
+        const phase=flightTime-.65-i*1.05;
+        const active=inside&&phase>=0&&phase<2.4;
         card.hidden=!active;card.inert=!active;
         if(active){
-          const progress=phase/1.2;
+          const progress=phase/2.4;
           const y=innerHeight*.94-progress*(innerHeight*.94+card.offsetHeight*1.35);
-          const scale=progress<.55?.45+.55*(progress/.55):1+.18*((progress-.55)/.45);
+          const scale=progress<.55?.45+.55*(progress/.55):1+.65*((progress-.55)/.45);
           const x=50;
           card.style.left=x+'%';card.style.transform=`translate(-50%,${y}px) scale(${scale})`;
-          card.style.opacity=ease(clamp(progress/.28))*(1-.3*ease(clamp((progress-.65)/.35)));
+          card.style.opacity=ease(clamp(progress/.18))*(1-.3*ease(clamp((progress-.65)/.35)));
         }
       });
 
