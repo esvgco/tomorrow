@@ -170,9 +170,23 @@ function close(){if(busy||!dialog.open)return;returnEntry=entry;if(historyActive
 addEventListener('popstate',()=>{if(dialog.open){historyActive=false;finishClose()}});
 async function through(){
  if(busy||!dialog.open||!closeMode||camera.position.z>=easel.position.z-.12)return;busy=true;
- const center=backPortal.getWorldPosition(new THREE.Vector3()).project(camera);host.style.transformOrigin=`${(center.x+1)*50}% ${(1-center.y)*50}%`;
- const animation=host.animate([{transform:'scale(1)',opacity:1},{transform:'scale(7)',opacity:0}],{duration:reduced.matches?1:850,easing:'cubic-bezier(.6,0,.8,.3)',fill:'forwards'});
- await animation.finished;animation.cancel();busy=false;
+ cancelAnimationFrame(raf);raf=0;
+ const destination=backPortal.getWorldPosition(new THREE.Vector3());
+ const start=camera.position.clone(),end=destination.clone();end.z-=.018;
+ camera.near=.005;camera.updateProjectionMatrix();
+ const duration=reduced.matches?1:1100,started=performance.now();
+ await new Promise(resolve=>{
+  function dive(now){
+   const t=Math.min(1,(now-started)/duration),progress=t*t*(3-2*t);
+   camera.position.lerpVectors(start,end,progress);camera.lookAt(destination);camera.updateMatrixWorld();draw();
+   if(t<1)requestAnimationFrame(dive);else resolve();
+  }
+  requestAnimationFrame(dive);
+ });
+ // Keep the fully black portal on screen until the next black page has loaded.
+ const black=document.createElement('div');
+ Object.assign(black.style,{position:'fixed',inset:'0',background:'#000',zIndex:'9999'});
+ dialog.append(black);document.documentElement.style.background='#000';
  location.href='easter-beyond.html';
 }
 function wallPortalHit(){
