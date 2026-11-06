@@ -106,3 +106,5 @@ body[data-burrow-flip]:not(.reading) .burrow-cards{visibility:hidden}
   .links-panel a.big-link{grid-column:1;grid-row:2}
   .links-panel .final-rabbit{grid-column:1;grid-row:3;justify-self:center;margin-top:40px}
 }
+
+.project-flyby img[src*="/vultron.svg"]{transform:scale(.6666667)}
