@@ -85,3 +85,8 @@ body[data-burrow-flip]:not(.reading) .burrow-cards{visibility:hidden}
 .project-flyby a{font:15.6px/1.5 var(--mono);color:#fff;text-decoration:none}
 .project-flyby a:hover{text-decoration:underline;text-underline-offset:5px}
 @media(max-width:650px){.project-index{margin-bottom:18px}.project-flyby{grid-template-columns:151.8px minmax(0,1fr);gap:20px}.project-flyby img{width:151.8px;height:151.8px;margin:0}.project-flyby h2{font-size:30px}.project-flyby p{font-size:15px;margin-bottom:20px}}
+
+/* The final rabbit shares the links panel’s scroll flight. */
+.links-panel{grid-template-columns:1fr auto 1fr}
+.final-rabbit{display:block;width:120px;height:auto;pointer-events:none}
+@media(max-width:650px){.final-rabbit{width:100px}}
