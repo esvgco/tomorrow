@@ -82,6 +82,7 @@ function layout(){
   const iw=innerWidth,ih=innerHeight;mobile=iw<650;
   if(finalHole){const w=mobile?Math.min(iw*.24,100):Math.min(iw*.11,150);Object.assign(finalHole.style,{width:w+'px',height:(w*hb.height/hb.width)+'px',bottom:'5vh'})}
   fit=Math.max(.3,Math.min((iw-(mobile?40:100))/(mobile?700:1100),(ih-60)/650));
+  if(FLIP){const heroHoleWidth=mobile?Math.min(iw*.24,100):Math.min(iw*.11,150);$('.final-rabbit').style.width=(840*heroHoleWidth/hb.width/fit)+'px'}
   segment=Math.max(850,ih*1.3);$('#scroll-track').style.height=(segment*TOTAL+ih)+'px';
   lower=ih*.1;spacing=(mobile?1280:830)*.8;
   for(let i=1;i<=LAST;i++)centres[i]=centres[i-1]+spacing*scales[i-1];
