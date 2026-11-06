@@ -19,7 +19,8 @@ const panels=[...document.querySelectorAll('[data-panel]')],N=panels.length,LAST
 // hole is simply on the wall after the last screen; it dives as the hole passes under it.
 const TOP=body.classList.contains('rabbit-top');
 const FLIP=body.hasAttribute('data-burrow-flip');
-let flipScreen,tunnelLines=[];
+let flipScreen,tunnelLines=[],bootFontsReady=!FLIP;
+if(FLIP)document.fonts.ready.then(()=>{bootFontsReady=true;scrollTo(0,0);layout();lastKey=''});
 if(FLIP){
  flipScreen=document.createElement('div');flipScreen.className='burrow-flip-screen';
  body.append(flipScreen);
@@ -140,7 +141,7 @@ function camera(u=window.__u??0){
   const scale=Math.exp(Math.log(scales[i])*(1-f)+Math.log(scales[i+1])*f);return [fit/scale,centres[i]+(centres[i+1]-centres[i])*f];
 }
 function frame(){
-if(warming){requestAnimationFrame(frame);return}
+if(warming||!bootFontsReady){requestAnimationFrame(frame);return}
 if(!reading&&!roomOpen){
   u=clamp(scrollY/segment,0,TOTAL);window.__u=u;
   const key=`${u}|${up}|${innerWidth}|${innerHeight}`;
@@ -178,10 +179,10 @@ if(!reading&&!roomOpen){
     cards.forEach((c,k)=>{const l=ease(clamp((t-(TOP?1.5:.12)-k*.17)/.45)),dy=(1-l)*(mobile?260:170);c.style.transform=`translate(${-cardBase[k].w/2+cardBase[k].dx}px,${dy}px)`;c.style.opacity=l.toFixed(3)});
   }
   watchEdit();
-}else if(reading){watchEdit();panels.forEach(p=>{p.inert=false;p.removeAttribute('hidden-far')})}requestAnimationFrame(frame)}
+}else if(reading){watchEdit();panels.forEach(p=>{p.inert=false;p.removeAttribute('hidden-far')})}document.documentElement.classList.remove('hero-loading');requestAnimationFrame(frame)}
 document.fonts.ready.then(layout);addEventListener("resize",layout);body.classList.remove('reading');body.classList.add('flat');layout();if(reduced)toggleReading(true);requestAnimationFrame(frame);
 // Safari rasters a layer at the scale it is first shown and redraws it each time that scale
 // grows; draw every chapter once at full size, invisibly, before showing the far view.
-if(warming){viewport.style.opacity='.01';panels.forEach(p=>{p.removeAttribute('hidden-far');p.style.transform=`scale(${fit})`});let n=0;const tick=()=>{if(++n<4)requestAnimationFrame(tick);else{warming=false;lastKey='';requestAnimationFrame(()=>viewport.style.opacity='')}};requestAnimationFrame(tick)}
+if(warming){viewport.style.opacity=FLIP?'0':'.01';panels.forEach(p=>{p.removeAttribute('hidden-far');p.style.transform=`scale(${fit})`});let n=0;const tick=()=>{if(++n<4)requestAnimationFrame(tick);else{warming=false;lastKey='';requestAnimationFrame(()=>viewport.style.opacity='')}};requestAnimationFrame(tick)}
 if(location.hash){const target=document.querySelector(location.hash);if(target?.dataset.panel)setTimeout(()=>go(+target.dataset.panel),50)}
 $('.skip-link').onclick=e=>{e.preventDefault();go(7)};
