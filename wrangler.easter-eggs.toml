@@ -1,0 +1,7 @@
+# Separate preview; never deploys to the main tomorrow worker.
+name = "tomorrow-easter-eggs"
+compatibility_date = "2025-01-01"
+workers_dev = true
+
+[assets]
+directory = "./site"

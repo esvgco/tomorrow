@@ -50,3 +50,14 @@ python3 -m http.server 8000 --directory site
 - `/studies.html` — comparison index, including all previous studies.
 
 Behavior, coverage and prototype limits: [studies-04-05.md](docs/studies-04-05.md).
+
+## Easter egg preview (separate deployment)
+
+Branch: `easter-eggs`. Prototype: `/easter-letters.html`; notes: `docs/easter-eggs.md`.
+Deploy independently of the main site with:
+
+```bash
+npx wrangler deploy --config wrangler.easter-eggs.toml
+```
+
+This publishes the separate `tomorrow-easter-eggs` Worker and does not update `tomorrow`.
