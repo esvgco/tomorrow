@@ -192,21 +192,29 @@ host.addEventListener('pointercancel',()=>drag=null);
 addEventListener('resize',resize);
 
 // A travelling distortion in the actual glyph, with a normal pointer (no zoom icon).
+const mobileLetters=matchMedia('(hover: none), (pointer: coarse), (max-width: 600px)');
 const letterWaveSpeed=1.5; // Time multiplier; easing and distortion size stay independent.
 entries.forEach((button,index)=>{
  const turbulence=document.querySelector(`#letter-wave-${index} feTurbulence`);
  const displacement=document.querySelector(`#letter-wave-${index} feDisplacementMap`);
- let active=false,frame=0,last=0,phase=0,strength=0;
+ let active=false,frame=0,last=0,phase=index*1.7,strength=0;
  function tick(now){
   const dt=Math.min((now-last)/1000,.05);last=now;phase+=dt*letterWaveSpeed;
-  strength+=((active?1:0)-strength)*(1-Math.exp(-dt/ .45));
+  const idle=mobileLetters.matches&&!reduced.matches;
+  strength+=((reduced.matches?0:idle?.32:active?1:0)-strength)*(1-Math.exp(-dt/ .45));
   turbulence.setAttribute('baseFrequency',`${.018+Math.sin(phase*.65)*.004} ${.025+Math.cos(phase*.5)*.005}`);
   displacement.setAttribute('scale',String(strength*(8+Math.sin(phase*1.1)*2)));
-  if(active||strength>.002)frame=requestAnimationFrame(tick);
+  if((!reduced.matches&&(active||idle))||strength>.002)frame=requestAnimationFrame(tick);
   else{frame=0;strength=0;button.classList.remove('rippling')}
  }
  function begin(){if(reduced.matches)return;active=true;button.classList.add('rippling');if(!frame){last=performance.now();frame=requestAnimationFrame(tick)}}
  function end(){active=false}
+ function syncMotion(){
+  if(reduced.matches)active=false;
+  if(!frame){last=performance.now();button.classList.add('rippling');frame=requestAnimationFrame(tick)}
+ }
+ mobileLetters.addEventListener('change',syncMotion);reduced.addEventListener('change',syncMotion);
+ if(mobileLetters.matches&&!reduced.matches)syncMotion();
  button.addEventListener('pointerenter',begin);button.addEventListener('pointerleave',end);button.addEventListener('focus',begin);button.addEventListener('blur',end);button.addEventListener('click',end);
 });
 if(new URLSearchParams(location.search).get('room')==='back'){

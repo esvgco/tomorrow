@@ -35,3 +35,9 @@
 .letter-flight .flight-entry .letter-counter{opacity:1;transition:none}
 /* Keep Tomorrow on one line even though its o glyphs are separate buttons. */
 #opening h1{white-space:nowrap}
+
+/* Touch screens hint at the entrance through motion, without a sticky hover fill. */
+@media (hover:none), (pointer:coarse), (max-width:600px){
+ .letter-entry:hover .letter-counter,.letter-entry:focus-visible .letter-counter{opacity:0}
+ .letter-flight .flight-entry .letter-counter{opacity:1}
+}
