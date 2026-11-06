@@ -242,8 +242,8 @@ entries.forEach((button,index)=>{
   const idle=mobileLetters.matches&&!reduced.matches;
   // Three gentle pulses, then a pause; all letters share the same clock.
   const slot=index<3?index:(index-3)%3;
-  const local=(now/1000)%7.2-slot*1.8;
-  const pulse=local>=0&&local<1.8?Math.pow(Math.sin(Math.PI*local/1.8),2)*.32:0;
+  const local=(now/1000)%5-slot*1.4;
+  const pulse=local>=0&&local<1.4?Math.pow(Math.sin(Math.PI*local/1.4),2)*.7:0;
   strength+=((reduced.matches?0:idle?pulse:active?1:0)-strength)*(1-Math.exp(-dt/.3));
   const smooth=finalHeading?.6:1;
   turbulence.setAttribute('baseFrequency',`${(.018+Math.sin(phase*.65)*.004)*smooth} ${(.025+Math.cos(phase*.5)*.005)*smooth}`);

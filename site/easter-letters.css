@@ -108,3 +108,5 @@ body[data-burrow-flip]:not(.reading) .burrow-cards{visibility:hidden}
 }
 
 .project-flyby img[src*="/vultron.svg"]{transform:scale(.6666667)}
+
+@media(max-width:650px){#opening h1{font-size:174px}}
