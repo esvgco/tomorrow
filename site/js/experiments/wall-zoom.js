@@ -178,10 +178,11 @@ if(!reading&&!roomOpen){
         card.hidden=!active;card.inert=!active;
         if(active){
           const progress=phase/1.2;
-          const y=innerHeight*.5-card.offsetHeight*.5+(1-progress)*innerHeight*.12-progress*innerHeight*.12;
+          const y=innerHeight*.94-progress*(innerHeight*.94+card.offsetHeight*1.35);
+          const scale=progress<.55?.45+.55*(progress/.55):1+.18*((progress-.55)/.45);
           const x=mobile?50:[36,64,46,62,37,54][i];
-          card.style.left=x+'%';card.style.transform=`translate(-50%,${y}px) scale(${.55+progress*.55})`;
-          card.style.opacity=Math.min(ease(clamp(progress/.3)),ease(clamp((1-progress)/.22)));
+          card.style.left=x+'%';card.style.transform=`translate(-50%,${y}px) scale(${scale})`;
+          card.style.opacity=ease(clamp(progress/.28))*(1-.3*ease(clamp((progress-.65)/.35)));
         }
       });
 
