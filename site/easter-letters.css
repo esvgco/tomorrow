@@ -54,3 +54,7 @@
 .letter-entry[data-entry="6"].rippling{filter:url(#letter-wave-6)}
 .letter-entry[data-entry="7"].rippling{filter:url(#letter-wave-7)}
 .letter-entry[data-entry="8"].rippling{filter:url(#letter-wave-8)}
+
+.burrow-flip-screen{position:fixed;inset:0;transform:rotate(0deg);transform-origin:50% 50%;transition:transform 260ms cubic-bezier(.76,0,.24,1)}
+.burrow-flip-screen.flipped{transform:rotate(180deg)}
+@media(prefers-reduced-motion:reduce){.burrow-flip-screen{transition:none}}

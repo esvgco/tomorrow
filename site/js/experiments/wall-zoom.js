@@ -18,6 +18,14 @@ const panels=[...document.querySelectorAll('[data-panel]')],N=panels.length,LAST
 // 04.7 (body.rabbit-top): the rabbit is fixed just above the first heading instead, and the
 // hole is simply on the wall after the last screen; it dives as the hole passes under it.
 const TOP=body.classList.contains('rabbit-top');
+const FLIP=body.hasAttribute('data-burrow-flip');
+let flipScreen;
+if(FLIP){
+ flipScreen=document.createElement('div');flipScreen.className='burrow-flip-screen';
+ body.append(flipScreen);
+ for(const element of [$('#viewport'),$('#rabbit-dock'),$('#above')])flipScreen.append(element);
+}
+
 // In 04.7 the camera stops at the hole's chapter (HOLD): the rabbit dives, then the projects come.
 const RATIO=.34,scales=panels.map((_,i)=>RATIO**i),centres=[0],BACK=1.6,START=BACK*.7,SINK=TOP?0:.7,HOLD=TOP?1.1:0,TOTAL=START+SINK+2+HOLD;
 const surface=$('#wall-surface'),dock=$('#rabbit-dock'),hole6=$('.burrow-hole'),cards=[...document.querySelectorAll('.burrow-card')];
@@ -135,7 +143,8 @@ if(!reading&&!roomOpen){
       const far=k<.004||bottom<-half||top>half||(j>LAST&&!inHole);if(far!==p.hasAttribute('hidden-far'))far?p.setAttribute('hidden-far',''):p.removeAttribute('hidden-far');
       if(!far)p.style.transform=`translate3d(${Z*ox-ox}px,${y-oy}px,0) scale(${k})`;if(p.inert!==far)p.inert=far});
     // The dock until the rabbit is gone; from then on, the hole belongs to the wall.
-    if(!TOP)dock.style.visibility=inHole?'hidden':'';
+    if(!TOP)dock.style.visibility=inHole&&!FLIP?'hidden':'';
+    if(FLIP){hole6.style.visibility='hidden';flipScreen.classList.toggle('flipped',inHole&&up===0);}
     lookUp();
     const sink=TOP?ease(clamp((u-START-1)/.45)):u>0?ease(clamp((u-START)/SINK)):ease(clamp(up/.35)),m=sink.toFixed(4);if(m!==lastMark){lastMark=m;mark.set(sink,0,1);if(TOP){dock.style.visibility=sink>=1?'hidden':''}else dock.style.transform=`translate(${dockX}px,${dockY+dockDepth*sink}px)`}
     const fa=Math.round(clamp((u/START-.15)/.4)*1000)/1000;if(fa!==lastFall){lastFall=fa;fall(fa)}
