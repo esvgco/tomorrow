@@ -157,11 +157,11 @@ if(!reading&&!roomOpen){
       hole6.style.visibility='hidden';flipScreen.classList.toggle('flipped',inside);body.classList.toggle('inside-burrow',inside);
       const distance=Math.max(0,u-START-SINK)*segment;
       tunnelLines.forEach((line,i)=>{
-        // Shared vanishing point: streaks travel outwards along the tunnel walls.
+        // Shared vanishing point: streaks travel upwards along the tunnel walls.
         const lane=i%8,side=lane<4?-1:1;
         const slope=side*(.24+(lane%4)*.17)*innerWidth/innerHeight;
         const span=innerHeight*1.45;
-        const y=((i*173+distance*(.75+(i%3)*.22))%span+span)%span-innerHeight*.18;
+        const y=((i*173-distance*(.75+(i%3)*.22))%span+span)%span-innerHeight*.18;
         const x=innerWidth*.5+slope*(y+innerHeight*.48);
         const depth=clamp((y+innerHeight*.18)/span);
         line.style.left='0';line.style.transformOrigin='top center';
