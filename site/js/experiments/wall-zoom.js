@@ -35,15 +35,18 @@ if(FLIP){
  const projects=[
   ['rainmaker','Rainmaker','Water for farms, watersheds, and ecosystems.','https://www.rainmaker.com/'],
   ['truemed','TrueMed','A marketplace for HSA/FSA health spending.','https://www.truemed.com/'],
-  ['vultron','Vultron','AI for federal proposal development.','https://www.vultron.ai/']
+  ['vultron','Vultron','AI for federal proposal development.','https://www.vultron.ai/'],
+  ['abel','Abel','Automated police report generation.','https://abelpolice.com/'],
+  ['flair','Flair','An end-to-end clothing manufacturing platform.','https://www.melengo.com/'],
+  ['numeric','Numeric','AI-powered accounting automation.','https://www.numeric.io/']
  ];
- projectFlight.innerHTML=projects.map(([id,name,description,url],i)=>`<article class="project-flyby"><span class="project-index">0${i+1} / SELECTED PROJECT</span><img src="assets/projects/${id}.svg" alt="${name} logo"><h2>${name}</h2><p>${description}</p><a href="${url}" target="_blank" rel="noopener">Explore ${name} ↗</a></article>`).join('');
+ projectFlight.innerHTML=projects.map(([id,name,description,url],i)=>`<article class="project-flyby"><img src="assets/projects/${id}.svg?v=original" alt="${name} logo"><h2>${name}</h2><p>${description}</p><a href="${url}" target="_blank" rel="noopener">Explore ${name} ↗</a></article>`).join('');
  body.append(projectFlight);
  for(const element of [$('#viewport'),$('#rabbit-dock'),$('#above')])flipScreen.append(element);
 }
 
 // In 04.7 the camera stops at the hole's chapter (HOLD): the rabbit dives, then the projects come.
-const RATIO=.34,scales=panels.map((_,i)=>RATIO**i),centres=[0],BACK=1.6,START=BACK*.7,SINK=TOP?0:.7,HOLD=TOP?1.1:0,TOTAL=START+SINK+2+HOLD+(FLIP?3:0);
+const RATIO=.34,scales=panels.map((_,i)=>RATIO**i),centres=[0],BACK=1.6,START=BACK*.7,SINK=TOP?0:.7,HOLD=TOP?1.1:0,TOTAL=START+SINK+2+HOLD+(FLIP?6.75:0);
 const surface=$('#wall-surface'),dock=$('#rabbit-dock'),hole6=$('.burrow-hole'),cards=[...document.querySelectorAll('.burrow-card')];
 let Yr=0,tStar=0,dockX=0,dockY=0,dockDepth=0,floor=0,origins=[],lastKey='',lastMark='',lastFall=-1,fit=1,segment=1100,mobile=false,lower=0,spacing=830;
 let up=0,warming=!reduced,roomEntering=false,roomFlight=null,reading=false,roomOpen=false,hoverLast=false,u=0,cardBase=[];
@@ -144,7 +147,7 @@ function camera(u=window.__u??0){
     return [1/((1-v)/Z5+v/Zend),centres[LAST]+(centres[0]-centres[LAST])*v];
   }
   let t=Math.max(0,u-START-SINK);if(t<=0)return [fit/scales[LAST],centres[LAST]];
-  if(FLIP)t=t<=4?t/4:t-3;
+  if(FLIP)t=t<=7.75?t/7.75:t-6.75;
   if(HOLD)t=t<=1?t:t<=1+HOLD?1:t-HOLD;
   const i=Math.min(6,LAST+Math.floor(t)),f=LAST+t-i;
   const scale=Math.exp(Math.log(scales[i])*(1-f)+Math.log(scales[i+1])*f);return [fit/scale,centres[i]+(centres[i+1]-centres[i])*f];
@@ -175,7 +178,7 @@ if(!reading&&!roomOpen){
         if(active){
           const progress=phase/1.2;
           const y=-card.offsetHeight+(innerHeight+card.offsetHeight)*progress;
-          const x=mobile?50:[31,68,46][i];
+          const x=mobile?50:[31,68,46,65,33,54][i];
           card.style.left=x+'%';card.style.transform=`translate(-50%,${y}px) scale(${.9+progress*.15})`;
           card.style.opacity=Math.min(clamp(progress/.12),clamp((1-progress)/.12));
         }
