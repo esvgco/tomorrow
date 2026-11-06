@@ -90,7 +90,7 @@ function init(){
  beam([-.86,.52,.105],[.86,.52,.105],.085,.07);
  beam([-1.3,.85,.08],[1.3,.85,.08],.09,.23);
  beam([-.32,2.64,-.15],[.32,2.64,-.15],.11,.14);
- beam([0,1.55,-.10],[0,1.35,-.66],.045,.055);
+ beam([0,1.57,-.04],[0,1.35,-.66],.045,.055);
  painting=new THREE.Mesh(new THREE.PlaneGeometry(2.3,2.7),new THREE.MeshBasicMaterial({map:rabbitTexture}));painting.position.set(0,2.23,.16);easel.add(painting);
  const edge=new THREE.Mesh(new THREE.BoxGeometry(2.34,2.74,.09),material(0xd6d6d6));edge.position.set(0,2.23,.10);easel.add(edge);
  const reverse=new THREE.Mesh(new THREE.PlaneGeometry(2.22,2.62),new THREE.MeshBasicMaterial({color:0xe5e5e5}));reverse.position.set(0,2.23,.049);reverse.rotation.y=Math.PI;easel.add(reverse);
@@ -221,7 +221,7 @@ entries.forEach((button,index)=>{
  const displacement=document.querySelector(`#letter-wave-${index} feDisplacementMap`);
  let active=false,frame=0,last=0,phase=index*1.7,strength=0;
  function tick(now){
-  const dt=Math.min((now-last)/1000,.05);last=now;phase+=dt*letterWaveSpeed*(mobileLetters.matches?1:1.3);
+  const dt=Math.min((now-last)/1000,.05);last=now;phase+=dt*letterWaveSpeed;
   const idle=mobileLetters.matches&&!reduced.matches;
   strength+=((reduced.matches?0:idle?.32:active?1:0)-strength)*(1-Math.exp(-dt/ .45));
   turbulence.setAttribute('baseFrequency',`${.018+Math.sin(phase*.65)*.004} ${.025+Math.cos(phase*.5)*.005}`);
