@@ -1,0 +1,35 @@
+/* The title keeps 04.7's typesetting. Only its three counters become entrances. */
+.letter-entry{display:inline;padding:0;margin:0;border:0;background:none;color:inherit;font:inherit;letter-spacing:inherit;line-height:inherit;position:relative;cursor:default}
+.letter-entry:focus-visible{outline:1px dotted #888;outline-offset:4px}
+.letter-entry[data-entry="0"].rippling{filter:url(#letter-wave-0)}
+.letter-entry[data-entry="1"].rippling{filter:url(#letter-wave-1)}
+.letter-entry[data-entry="2"].rippling{filter:url(#letter-wave-2)}
+.wave-filters{position:absolute;pointer-events:none}
+.letter-gallery{position:fixed;inset:0;width:100%;height:100%;max-width:none;max-height:none;margin:0;padding:0;border:0;background:#f5f5f5;color:#181818;overflow:hidden;overscroll-behavior:contain;font-family:var(--sans)}
+.letter-gallery::backdrop{background:#fff}
+.gallery-canvas{position:absolute;inset:0;touch-action:none;cursor:grab}
+.gallery-canvas:active{cursor:grabbing}
+.gallery-canvas canvas{display:block;width:100%;height:100%}
+.gallery-back{position:absolute;top:28px;left:32px;z-index:2;padding:12px;font:12px var(--mono);background:#f5f5f5d9;border-radius:2px}
+
+.gallery-footer{position:absolute;bottom:30px;left:24px;right:24px;display:flex;flex-direction:column;align-items:center;gap:12px;pointer-events:none;text-align:center}
+
+.gallery-controls{display:flex;gap:18px;pointer-events:auto}
+.gallery-controls button{font:11px var(--mono);min-width:44px;min-height:44px;border:1px solid #c4c4c4;border-radius:50%;background:#f5f5f5c9}
+.gallery-controls button[aria-pressed=true]{color:white;background:#222;border-color:#222}
+
+
+.letter-flight{display:none;position:fixed;inset:0;z-index:1000;background:#fff;pointer-events:none;transform-origin:0 0}
+.letter-flight.active{display:block}
+.letter-flight .flight-title{position:absolute;margin:0;white-space:nowrap;font-family:var(--sans);line-height:.92;letter-spacing:-.04em;text-align:center;color:#000}
+
+@media(max-width:600px){.gallery-back{top:14px;left:12px}.gallery-footer{bottom:22px;gap:8px}}
+@media(prefers-reduced-motion:reduce){.letter-entry{transition:none}}
+
+.back-portal-access:focus-visible,.approach-easel:focus-visible{position:absolute;width:auto;height:auto;clip:auto;clip-path:none;top:28px;right:28px;padding:12px;background:white;z-index:3}
+
+.letter-counter{position:absolute;left:0;top:50%;transform:translateY(-50%);pointer-events:none;opacity:0;transition:opacity .28s;color:#000;overflow:visible}
+.letter-entry:hover .letter-counter,.letter-entry:focus-visible .letter-counter{opacity:1}
+@media(prefers-reduced-motion:reduce){.letter-counter{transition:none}}
+
+.letter-flight .flight-entry .letter-counter{opacity:1;transition:none}
