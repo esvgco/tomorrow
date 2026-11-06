@@ -41,3 +41,5 @@
  .letter-entry:hover .letter-counter,.letter-entry:focus-visible .letter-counter{opacity:0}
  .letter-flight .flight-entry .letter-counter{opacity:1}
 }
+
+.letter-entry[data-entry="3"].rippling{filter:url(#letter-wave-3)}

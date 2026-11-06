@@ -154,11 +154,12 @@ function prepareFlight(n){
  return `translate(${innerWidth/2-cx}px,${innerHeight/2-cy}px) scale(${zoom})`;
 }
 async function enter(n){
+ const viewIndex=n===3?1:n;
  if(busy||dialog.open)return;busy=true;entry=n;returnEntry=n;scrollBefore=scrollY;oldOverflow=document.documentElement.style.overflow;
  const zoomTransform=prepareFlight(n);
  const animation=flight.animate([{transform:'scale(1)',opacity:1},{transform:zoomTransform,opacity:1}],{duration:reduced.matches?1:1100,easing:'cubic-bezier(.7,0,.6,1)',fill:'forwards'});
  document.documentElement.style.overflow='hidden';
- try{const [,fonts]=await Promise.all([animation.finished,arealFonts,loadRabbit()]);portalFont=fonts[0];portalGeometry??=makePortalGeometry(fonts[0]);closeMode=false;approach=approachTarget=0;portalHover=false;hoverAmount=0;dialog.showModal();init();angle=target=angles[n];resize();setView(n);history.pushState({...history.state,letterGallery:true},'',location.href);historyActive=true;entries[n].classList.add('visited');dialog.querySelector('.gallery-back').focus();}
+ try{const [,fonts]=await Promise.all([animation.finished,arealFonts,loadRabbit()]);portalFont=fonts[0];portalGeometry??=makePortalGeometry(fonts[0]);closeMode=false;approach=approachTarget=0;portalHover=false;hoverAmount=0;dialog.showModal();init();angle=target=angles[viewIndex];resize();setView(viewIndex);history.pushState({...history.state,letterGallery:true},'',location.href);historyActive=true;entries[n].classList.add('visited');dialog.querySelector('.gallery-back').focus();}
  catch(error){console.error('Letter room could not open',error);dialog.close();document.documentElement.style.overflow=oldOverflow;}
  finally{animation.cancel();flight.classList.remove('active');flight.replaceChildren();busy=false}
 }
