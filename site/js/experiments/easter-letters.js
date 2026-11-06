@@ -53,9 +53,9 @@ function makeBackPortal(font){
  function tex(hover){const c=document.createElement('canvas');c.width=width;c.height=height;const ctx=c.getContext('2d');ctx.fillStyle='#111';if(hover)ctx.filter='blur(5px)';ctx.fill(outline);const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return t}
  const geometry=new THREE.PlaneGeometry(1.25*w/h*width/(width-pad*2),1.25*height/(height-pad*2));
  const material=new THREE.ShaderMaterial({
-  uniforms:{sharp:{value:tex(false)},soft:{value:tex(true)},hover:{value:0}},
+  uniforms:{sharp:{value:tex(false)},soft:{value:tex(true)},hover:{value:0},time:{value:0},wave:{value:0}},
   vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',
-  fragmentShader:'uniform sampler2D sharp;uniform sampler2D soft;uniform float hover;varying vec2 vUv;void main(){float alpha=mix(texture2D(sharp,vUv).a,texture2D(soft,vUv).a,hover);gl_FragColor=vec4(vec3(0.067),alpha);}',
+  fragmentShader:'uniform sampler2D sharp;uniform sampler2D soft;uniform float hover;uniform float time;uniform float wave;varying vec2 vUv;void main(){vec2 uv=vUv+wave*vec2(0.012*sin(vUv.y*8.0+time*1.7),0.010*sin(vUv.x*9.0-time*1.3));float alpha=mix(texture2D(sharp,uv).a,texture2D(soft,uv).a,hover);gl_FragColor=vec4(vec3(0.067),alpha);}',
   transparent:true,depthTest:true,depthWrite:false
  });
  const normal=new THREE.Mesh(geometry,material);
@@ -121,9 +121,9 @@ function animate(){
  const k=reduced.matches?1:.09;
  angle+=(target-angle)*k;approach+=(approachTarget-approach)*k;
  hoverAmount+=((portalHover?1:0)-hoverAmount)*(reduced.matches?1:.16);
- if(portalFill)portalFill.material.uniforms.hover.value=hoverAmount;
+ if(portalFill){const u=portalFill.material.uniforms;u.hover.value=hoverAmount;u.wave.value=reduced.matches?0:hoverAmount;u.time.value=performance.now()/1000*1.3;}
  let wallMoving=false;
- const time=performance.now()/1000;
+ const time=performance.now()/1000*1.3;
  for(const wall of wallPortals){
   const goal=wall===hoveredWall&&!reduced.matches?1:0;
   wall.userData.wave+=(goal-wall.userData.wave)*.09;
@@ -137,7 +137,7 @@ function animate(){
   wallMoving ||= goal>0||strength>.001;
  }
  pose(angle);draw();
- if(wallMoving||Math.abs(target-angle)>.0001||Math.abs(approachTarget-approach)>.0001||Math.abs((portalHover?1:0)-hoverAmount)>.001)raf=requestAnimationFrame(animate);else raf=0;
+ if((portalHover&&!reduced.matches)||wallMoving||Math.abs(target-angle)>.0001||Math.abs(approachTarget-approach)>.0001||Math.abs((portalHover?1:0)-hoverAmount)>.001)raf=requestAnimationFrame(animate);else raf=0;
 }
 function wake(){if(!raf)raf=requestAnimationFrame(animate)}
 function setView(n){hoveredWall=null;closeMode=false;approachTarget=0;portalHover=false;angle=Math.atan2(Math.sin(angle),Math.cos(angle));target=angles[n];views.forEach((v,i)=>v.setAttribute('aria-pressed',String(i===n)));wake()}
@@ -221,7 +221,7 @@ entries.forEach((button,index)=>{
  const displacement=document.querySelector(`#letter-wave-${index} feDisplacementMap`);
  let active=false,frame=0,last=0,phase=index*1.7,strength=0;
  function tick(now){
-  const dt=Math.min((now-last)/1000,.05);last=now;phase+=dt*letterWaveSpeed;
+  const dt=Math.min((now-last)/1000,.05);last=now;phase+=dt*letterWaveSpeed*(mobileLetters.matches?1:1.3);
   const idle=mobileLetters.matches&&!reduced.matches;
   strength+=((reduced.matches?0:idle?.32:active?1:0)-strength)*(1-Math.exp(-dt/ .45));
   turbulence.setAttribute('baseFrequency',`${.018+Math.sin(phase*.65)*.004} ${.025+Math.cos(phase*.5)*.005}`);
