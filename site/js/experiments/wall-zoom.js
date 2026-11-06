@@ -156,7 +156,19 @@ if(!reading&&!roomOpen){
       const inside=inHole&&up===0;
       hole6.style.visibility='hidden';flipScreen.classList.toggle('flipped',inside);body.classList.toggle('inside-burrow',inside);
       const distance=Math.max(0,u-START-SINK)*segment;
-      tunnelLines.forEach((line,i)=>{const span=innerHeight+260;const y=((i*173-distance*(.6+(i%3)*.3))%span+span)%span-220;line.style.transform=`translateY(${y}px)`});
+      tunnelLines.forEach((line,i)=>{
+        // Shared vanishing point: streaks travel outwards along the tunnel walls.
+        const lane=i%8,side=lane<4?-1:1;
+        const slope=side*(.24+(lane%4)*.17)*innerWidth/innerHeight;
+        const span=innerHeight*1.45;
+        const y=((i*173+distance*(.75+(i%3)*.22))%span+span)%span-innerHeight*.18;
+        const x=innerWidth*.5+slope*(y+innerHeight*.48);
+        const depth=clamp((y+innerHeight*.18)/span);
+        line.style.left='0';line.style.transformOrigin='top center';
+        line.style.height=(65+depth*230)+'px';
+        line.style.opacity=(.14+depth*.28).toFixed(3);
+        line.style.transform=`translate(${x}px,${y}px) rotate(${-Math.atan(slope)}rad)`;
+      });
     }
     lookUp();
     const sink=TOP?ease(clamp((u-START-1)/.45)):u>0?ease(clamp((u-START)/SINK)):ease(clamp(up/.35)),m=sink.toFixed(4);if(m!==lastMark){lastMark=m;mark.set(sink,0,1);if(TOP){dock.style.visibility=sink>=1?'hidden':''}else dock.style.transform=`translate(${dockX}px,${dockY+dockDepth*sink}px)`}
