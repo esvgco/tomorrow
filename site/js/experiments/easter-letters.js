@@ -219,12 +219,15 @@ const letterWaveSpeed=1.5; // Time multiplier; easing and distortion size stay i
 entries.forEach((button,index)=>{
  const turbulence=document.querySelector(`#letter-wave-${index} feTurbulence`);
  const displacement=document.querySelector(`#letter-wave-${index} feDisplacementMap`);
+ const finalHeading=button.closest('#last-heading')!==null;
+ if(finalHeading)turbulence.setAttribute('numOctaves','1');
  let active=false,frame=0,last=0,phase=index*1.7,strength=0;
  function tick(now){
   const dt=Math.min((now-last)/1000,.05);last=now;phase+=dt*letterWaveSpeed;
   const idle=mobileLetters.matches&&!reduced.matches;
   strength+=((reduced.matches?0:idle?.32:active?1:0)-strength)*(1-Math.exp(-dt/ .45));
-  turbulence.setAttribute('baseFrequency',`${.018+Math.sin(phase*.65)*.004} ${.025+Math.cos(phase*.5)*.005}`);
+  const smooth=finalHeading?.6:1;
+  turbulence.setAttribute('baseFrequency',`${(.018+Math.sin(phase*.65)*.004)*smooth} ${(.025+Math.cos(phase*.5)*.005)*smooth}`);
   displacement.setAttribute('scale',String(strength*(8+Math.sin(phase*1.1)*2)));
   if((!reduced.matches&&(active||idle))||strength>.002)frame=requestAnimationFrame(tick);
   else{frame=0;strength=0;button.classList.remove('rippling')}
