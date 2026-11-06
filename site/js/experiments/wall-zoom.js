@@ -19,10 +19,17 @@ const panels=[...document.querySelectorAll('[data-panel]')],N=panels.length,LAST
 // hole is simply on the wall after the last screen; it dives as the hole passes under it.
 const TOP=body.classList.contains('rabbit-top');
 const FLIP=body.hasAttribute('data-burrow-flip');
-let flipScreen;
+let flipScreen,tunnelLines=[];
 if(FLIP){
  flipScreen=document.createElement('div');flipScreen.className='burrow-flip-screen';
  body.append(flipScreen);
+ const tunnel=document.createElement('div');tunnel.className='burrow-tunnel';tunnel.setAttribute('aria-hidden','true');
+ for(let i=0;i<16;i++){
+  const line=document.createElement('i');line.style.left=((i+.5)/16*100)+'%';
+  line.style.height=(45+(i*47)%150)+'px';line.style.opacity=(.12+(i%4)*.07).toString();
+  tunnel.append(line);tunnelLines.push(line);
+ }
+ body.append(tunnel);
  for(const element of [$('#viewport'),$('#rabbit-dock'),$('#above')])flipScreen.append(element);
 }
 
@@ -142,10 +149,15 @@ if(!reading&&!roomOpen){
     panels.forEach((p,j)=>{const [ox,oy,h,oyo]=origins[j],k=Z*scales[j],y=Z*(oy+centres[j]-cy)+lower;const top=y-oyo*k,bottom=y+(h-oyo)*k;
       const far=k<.004||bottom<-half||top>half||(j>LAST&&!inHole);if(far!==p.hasAttribute('hidden-far'))far?p.setAttribute('hidden-far',''):p.removeAttribute('hidden-far');
       if(!far&&j===LAST&&p.querySelector('[data-letter-portals]'))p.querySelector('[data-letter-portals]').style.transform=`translateY(${-60/k}px)`;
-      if(!far)p.style.transform=`translate3d(${Z*ox-ox}px,${y-oy}px,0) scale(${k})`;if(p.inert!==far)p.inert=far});
+      if(!far)p.style.transform=`translate3d(${Z*ox-ox}px,${y-oy}px,0) scale(${k})${FLIP&&inHole&&j>LAST?' rotate(180deg)':''}`;if(p.inert!==far)p.inert=far});
     // The dock until the rabbit is gone; from then on, the hole belongs to the wall.
     if(!TOP)dock.style.visibility=inHole&&!FLIP?'hidden':'';
-    if(FLIP){hole6.style.visibility='hidden';flipScreen.classList.toggle('flipped',inHole&&up===0);}
+    if(FLIP){
+      const inside=inHole&&up===0;
+      hole6.style.visibility='hidden';flipScreen.classList.toggle('flipped',inside);body.classList.toggle('inside-burrow',inside);
+      const distance=Math.max(0,u-START-SINK)*segment;
+      tunnelLines.forEach((line,i)=>{const span=innerHeight+260;const y=((i*173-distance*(.6+(i%3)*.3))%span+span)%span-220;line.style.transform=`translateY(${y}px)`});
+    }
     lookUp();
     const sink=TOP?ease(clamp((u-START-1)/.45)):u>0?ease(clamp((u-START)/SINK)):ease(clamp(up/.35)),m=sink.toFixed(4);if(m!==lastMark){lastMark=m;mark.set(sink,0,1);if(TOP){dock.style.visibility=sink>=1?'hidden':''}else dock.style.transform=`translate(${dockX}px,${dockY+dockDepth*sink}px)`}
     const fa=Math.round(clamp((u/START-.15)/.4)*1000)/1000;if(fa!==lastFall){lastFall=fa;fall(fa)}

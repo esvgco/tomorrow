@@ -63,3 +63,12 @@
 
 /* Keep the hole during the dive, then remove it from the flipped scene. */
 .burrow-flip-screen.flipped #rabbit-dock{visibility:hidden!important}
+
+body[data-burrow-flip]{transition:background-color 260ms ease}
+body.inside-burrow{background:#000}
+.inside-burrow .burrow-flip-screen{background:#000}
+.inside-burrow #viewport{filter:invert(1)}
+.burrow-tunnel{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:6;opacity:0;transition:opacity 260ms ease;mask-image:linear-gradient(to right,#000,transparent 34%,transparent 66%,#000)}
+.inside-burrow .burrow-tunnel{opacity:1}
+.burrow-tunnel i{position:absolute;top:0;width:1px;background:linear-gradient(transparent,#fff 25%,#fff 75%,transparent);will-change:transform}
+@media(prefers-reduced-motion:reduce){.burrow-tunnel{display:none}body[data-burrow-flip]{transition:none}}
