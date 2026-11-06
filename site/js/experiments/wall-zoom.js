@@ -206,6 +206,7 @@ function camera(u=window.__u??0){
   const scale=Math.exp(Math.log(scales[i])*(1-f)+Math.log(scales[i+1])*f);return [fit/scale,centres[i]+(centres[i+1]-centres[i])*f];
 }
 function frame(){
+if(document.querySelector('#letter-gallery[open]')){requestAnimationFrame(frame);return}
 if(warming||!bootFontsReady){requestAnimationFrame(frame);return}
 if(!reading&&!roomOpen){
   if(FLIP){

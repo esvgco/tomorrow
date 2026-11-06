@@ -64,13 +64,16 @@ function makeBackPortal(font){
 }
 function init(){
  if(renderer)return;
- renderer=new THREE.WebGLRenderer({antialias:true,alpha:false});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setClearColor(0xf5f5f5);renderer.outputColorSpace=THREE.SRGBColorSpace;
+ renderer=new THREE.WebGLRenderer({antialias:true,alpha:false});renderer.setPixelRatio(Math.min(devicePixelRatio,2.5));renderer.setClearColor(0xf5f5f5);renderer.outputColorSpace=THREE.SRGBColorSpace;
+ rabbitTexture.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());
  host.append(renderer.domElement);scene=new THREE.Scene();scene.background=new THREE.Color(0xf5f5f5);
  camera=new THREE.PerspectiveCamera(49,1,.1,50);
  scene.add(new THREE.HemisphereLight(0xffffff,0xb8b8b8,2.5));const light=new THREE.DirectionalLight(0xffffff,2);light.position.set(-4,8,5);scene.add(light);
  box(12,.12,12,0,-.06,0,0xe5e5e5);
- box(12,8,.12,0,4,-6.1,0xf3f3f3);box(12,8,.12,0,4,6.1,0xf3f3f3);
- box(.12,8,12,-6.1,4,0,0xededed);box(.12,8,12,6.1,4,0,0xededed);
+ const wallHeight=host.clientWidth/host.clientHeight<.8?22:8;
+ box(12,wallHeight,.12,0,wallHeight/2,-6.1,0xf3f3f3);box(12,wallHeight,.12,0,wallHeight/2,6.1,0xf3f3f3);
+ box(.12,wallHeight,12,-6.1,wallHeight/2,0,0xededed);box(.12,wallHeight,12,6.1,wallHeight/2,0,0xededed);
+ box(12,.12,12,0,wallHeight,0,0xededed);
  // Three entrances: left, front and right. All meet the easel at the same eye level.
  portal(-6.02,2.23,0,Math.PI/2);portal(0,2.23,6.02,Math.PI);portal(6.02,2.23,0,-Math.PI/2);
  for(const x of [-4,-2,0,2,4])box(.008,.002,12,x,.002,0,0xd3d3d3);
@@ -102,7 +105,7 @@ function init(){
 function pose(a){
  // First explore only the arc joining the three entrances. Once approached,
  // orbit the easel on a smaller ellipse, with enough clearance behind the tripod.
- const roomRadius=camera.aspect<.8?5.8:5.4;
+ const roomRadius=camera.aspect<.8?5.42:5.4;
  const roomX=Math.sin(a)*roomRadius,roomZ=Math.cos(a)*roomRadius;
  const nearX=easel.position.x+Math.sin(a)*4.3,nearZ=easel.position.z+Math.cos(a)*(Math.cos(a)>=0?4.8:3.3);
  camera.position.set(THREE.MathUtils.lerp(roomX,nearX,approach),2.23,THREE.MathUtils.lerp(roomZ,nearZ,approach));
@@ -129,6 +132,7 @@ function animate(){
   const goal=wall===hoveredWall&&!reduced.matches?1:0;
   wall.userData.wave+=(goal-wall.userData.wave)*.09;
   const strength=wall.userData.wave;
+  if(goal===0&&strength<.0001)continue;
   const positions=wall.geometry.attributes.position,rest=wall.userData.rest;
   for(let i=0;i<positions.count;i++){
    const x=rest[i*3],y=rest[i*3+1];
@@ -238,6 +242,7 @@ entries.forEach((button,index)=>{
  if(finalHeading)turbulence.setAttribute('numOctaves','1');
  let active=false,frame=0,last=0,phase=index*1.7,strength=0;
  function tick(now){
+  if(dialog.open){frame=0;button.classList.remove('rippling');return}
   const dt=Math.min((now-last)/1000,.05);last=now;phase+=dt*letterWaveSpeed;
   const idle=mobileLetters.matches&&!reduced.matches;
   // Mobile cycle: first O, Company O, first O, third O; 3s + 0.3s pause.
@@ -257,6 +262,7 @@ entries.forEach((button,index)=>{
   if(reduced.matches)active=false;
   if(!frame){last=performance.now();button.classList.add('rippling');frame=requestAnimationFrame(tick)}
  }
+ dialog.addEventListener('close',syncMotion);
  mobileLetters.addEventListener('change',syncMotion);reduced.addEventListener('change',syncMotion);
  if(mobileLetters.matches&&!reduced.matches)syncMotion();
  button.addEventListener('pointerenter',begin);button.addEventListener('pointerleave',end);button.addEventListener('focus',begin);button.addEventListener('blur',end);button.addEventListener('click',end);
