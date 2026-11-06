@@ -174,15 +174,19 @@ if(!reading&&!roomOpen){
       projectFlight.hidden=!inside;
       [...projectFlight.children].forEach((card,i)=>{
         const phase=flightTime-.65-i*1.05;
-        const active=inside&&phase>=0&&phase<2.4;
+        const active=inside&&phase>=0&&phase<1.8;
         card.hidden=!active;card.inert=!active;
         if(active){
-          const progress=phase/2.4;
-          const y=innerHeight*.94-progress*(innerHeight*.94+card.offsetHeight*1.35);
-          const scale=progress<.55?.45+.55*(progress/.55):1+.65*((progress-.55)/.45);
-          const x=50;
-          card.style.left=x+'%';card.style.transform=`translate(-50%,${y}px) scale(${scale})`;
-          card.style.opacity=ease(clamp(progress/.18))*(1-.3*ease(clamp((progress-.65)/.35)));
+          // Arrive at the centre over 1.2 units, then leave in half that time.
+          const entry=clamp(phase/1.2),exit=clamp((phase-1.2)/.6);
+          const centreY=(innerHeight-card.offsetHeight)/2;
+          const y=phase<=1.2
+            ?innerHeight*.98+(centreY-innerHeight*.98)*entry
+            :centreY+(-card.offsetHeight*1.9-centreY)*exit;
+          const scale=phase<=1.2?.4+.6*entry:1+.65*exit;
+          card.style.left='50%';
+          card.style.transform=`translate(-50%,${y}px) scale(${scale})`;
+          card.style.opacity=(.12+.88*ease(entry))*(1-ease(exit));
         }
       });
 
