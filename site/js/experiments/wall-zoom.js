@@ -20,12 +20,13 @@ const panels=[...document.querySelectorAll('[data-panel]')],N=panels.length,LAST
 const TOP=body.classList.contains('rabbit-top');
 const FLIP=body.hasAttribute('data-burrow-flip');
 let flipScreen,projectFlight,tunnelLines=[],bootFontsReady=!FLIP;
+let tunnelTravel=0,tunnelSpeed=85,tunnelLastTime=performance.now(),tunnelLastScroll=scrollY;
 if(FLIP)document.fonts.ready.then(()=>{bootFontsReady=true;scrollTo(0,0);layout();lastKey=''});
 if(FLIP){
  flipScreen=document.createElement('div');flipScreen.className='burrow-flip-screen';
  body.append(flipScreen);
  const tunnel=document.createElement('div');tunnel.className='burrow-tunnel';tunnel.setAttribute('aria-hidden','true');
- for(let i=0;i<16;i++){
+ for(let i=0;i<24;i++){
   const line=document.createElement('i');line.style.left=((i+.5)/16*100)+'%';
   line.style.height=(45+(i*47)%150)+'px';line.style.opacity=(.12+(i%4)*.07).toString();
   tunnel.append(line);tunnelLines.push(line);
@@ -46,7 +47,7 @@ if(FLIP){
 }
 
 // In 04.7 the camera stops at the hole's chapter (HOLD): the rabbit dives, then the projects come.
-const RATIO=.34,scales=panels.map((_,i)=>RATIO**i),centres=[0],BACK=1.6,START=BACK*.7,SINK=TOP?0:.7,HOLD=TOP?1.1:0,TOTAL=START+SINK+2+HOLD+(FLIP?6.75:0);
+const RATIO=.34,scales=panels.map((_,i)=>RATIO**i),centres=[0],BACK=1.6,START=BACK*.7,SINK=TOP?0:.7,HOLD=TOP?1.1:0,TOTAL=START+SINK+2+HOLD+(FLIP?7.25:0);
 const surface=$('#wall-surface'),dock=$('#rabbit-dock'),hole6=$('.burrow-hole'),cards=[...document.querySelectorAll('.burrow-card')];
 let Yr=0,tStar=0,dockX=0,dockY=0,dockDepth=0,floor=0,origins=[],lastKey='',lastMark='',lastFall=-1,fit=1,segment=1100,mobile=false,lower=0,spacing=830;
 let up=0,warming=!reduced,roomEntering=false,roomFlight=null,reading=false,roomOpen=false,hoverLast=false,u=0,cardBase=[];
@@ -147,7 +148,7 @@ function camera(u=window.__u??0){
     return [1/((1-v)/Z5+v/Zend),centres[LAST]+(centres[0]-centres[LAST])*v];
   }
   let t=Math.max(0,u-START-SINK);if(t<=0)return [fit/scales[LAST],centres[LAST]];
-  if(FLIP)t=t<=7.75?t/7.75:t-6.75;
+  if(FLIP)t=t<=8.25?t/8.25:t-7.25;
   if(HOLD)t=t<=1?t:t<=1+HOLD?1:t-HOLD;
   const i=Math.min(6,LAST+Math.floor(t)),f=LAST+t-i;
   const scale=Math.exp(Math.log(scales[i])*(1-f)+Math.log(scales[i+1])*f);return [fit/scale,centres[i]+(centres[i+1]-centres[i])*f];
@@ -162,22 +163,22 @@ if(!reading&&!roomOpen){
     panels.forEach((p,j)=>{const [ox,oy,h,oyo]=origins[j],k=Z*scales[j],y=Z*(oy+centres[j]-cy)+lower;const top=y-oyo*k,bottom=y+(h-oyo)*k;
       const far=k<.004||bottom<-half||top>half||(j>LAST&&!inHole);if(far!==p.hasAttribute('hidden-far'))far?p.setAttribute('hidden-far',''):p.removeAttribute('hidden-far');
       if(!far&&j===LAST&&p.querySelector('[data-letter-portals]'))p.querySelectorAll('[data-letter-portals], .contact-link').forEach(element=>{element.style.transform=`translateY(${-60/k}px)`});
-      if(!far)p.style.transform=`translate3d(${Z*ox-ox}px,${y-oy}px,0) scale(${k})${FLIP&&inHole&&j>LAST?' rotate(180deg)':''}`;if(p.inert!==far)p.inert=far});
+      if(!far)p.style.transform=`translate3d(${Z*ox-ox}px,${y-oy-(FLIP&&j===LAST?clamp((u-START-SINK)/.65)*innerHeight*.95:0)}px,0) scale(${k})${FLIP&&inHole&&j>LAST?' rotate(180deg)':''}`;if(p.inert!==far)p.inert=far});
     // The dock until the rabbit is gone; from then on, the hole belongs to the wall.
     if(!TOP)dock.style.visibility=inHole&&!FLIP?'hidden':'';
     if(FLIP){
       const inside=inHole&&up===0;
       hole6.style.visibility='hidden';flipScreen.classList.toggle('flipped',inside);body.classList.toggle('inside-burrow',inside);
       const flightTime=u-START-SINK;
-      panels[LAST].style.opacity=clamp(1-flightTime/.15);
+      panels[LAST].style.opacity=1-ease(clamp((flightTime-.25)/.4));
       projectFlight.hidden=!inside;
       [...projectFlight.children].forEach((card,i)=>{
-        const phase=flightTime-.15-i*1.25;
+        const phase=flightTime-.65-i*1.25;
         const active=inside&&phase>=0&&phase<1.2;
         card.hidden=!active;card.inert=!active;
         if(active){
           const progress=phase/1.2;
-          const y=-card.offsetHeight+(innerHeight+card.offsetHeight)*progress;
+          const y=innerHeight-(innerHeight+card.offsetHeight)*progress;
           const x=mobile?50:[31,68,46,65,33,54][i];
           card.style.left=x+'%';card.style.transform=`translate(-50%,${y}px) scale(${.9+progress*.15})`;
           card.style.opacity=Math.min(clamp(progress/.12),clamp((1-progress)/.12));
@@ -193,21 +194,28 @@ if(!reading&&!roomOpen){
     cards.forEach((c,k)=>{const l=ease(clamp((t-(TOP?1.5:.12)-k*.17)/.45)),dy=(1-l)*(mobile?260:170);c.style.transform=`translate(${-cardBase[k].w/2+cardBase[k].dx}px,${dy}px)`;c.style.opacity=l.toFixed(3)});
   }
   if(FLIP&&!reduced&&u>=START+SINK&&up===0){
-      const distance=performance.now()*.09;
+      const now=performance.now(),dt=Math.min(.05,(now-tunnelLastTime)/1000);
+      const scrollSpeed=Math.abs(scrollY-tunnelLastScroll)/Math.max(.001,dt);
+      tunnelSpeed+=(85+Math.min(1800,scrollSpeed*.75)-tunnelSpeed)*(1-Math.exp(-dt*8));
+      tunnelTravel+=tunnelSpeed*dt;
+      const distance=tunnelTravel;
       tunnelLines.forEach((line,i)=>{
         // Shared vanishing point: streaks travel upwards along the tunnel walls.
-        const lane=i%8,laneX=(lane+.5)/8;
-        const slope=(laneX-.5)*.24;
+        const lane=i%12,angle=(lane+.5)/12*Math.PI;
+        const laneX=.5-Math.cos(angle)*.47;
+        const wallDepth=.35+.65*Math.abs(Math.cos(angle));
+        const slope=(laneX-.5)*.16;
         const span=innerHeight*1.45;
-        const y=((i*173-distance*(.75+(i%3)*.22))%span+span)%span-innerHeight*.18;
+        const y=((i*173-distance*(.45+wallDepth*.9))%span+span)%span-innerHeight*.18;
         const x=innerWidth*laneX+slope*(y-innerHeight*.5);
         const depth=clamp((y+innerHeight*.18)/span);
         line.style.left='0';line.style.transformOrigin='top center';
-        line.style.height=(65+depth*230)+'px';
-        line.style.opacity=(.14+depth*.28).toFixed(3);
+        line.style.height=(45+depth*180*wallDepth+Math.min(80,tunnelSpeed*.035))+'px';
+        line.style.opacity=(.08+depth*.28*wallDepth).toFixed(3);
         line.style.transform=`translate(${x}px,${y}px) rotate(${-Math.atan(slope)}rad)`;
       });
   }
+  tunnelLastTime=performance.now();tunnelLastScroll=scrollY;
   watchEdit();
 }else if(reading){watchEdit();panels.forEach(p=>{p.inert=false;p.removeAttribute('hidden-far')})}document.documentElement.classList.remove('hero-loading');requestAnimationFrame(frame)}
 document.fonts.ready.then(layout);addEventListener("resize",layout);body.classList.remove('reading');body.classList.add('flat');layout();if(reduced)toggleReading(true);requestAnimationFrame(frame);
