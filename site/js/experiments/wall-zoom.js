@@ -70,10 +70,33 @@ if(FLIP){
     const clone=rabbit.cloneNode(true);
     Object.assign(clone.style,{position:'absolute',left:r.left+'px',top:r.top+'px',width:r.width+'px',height:r.height+'px',color:'#fff'});
     clip.append(clone);body.append(clip);rabbit.style.visibility='hidden';
-    await clone.animate([{transform:'translateY(0)'},{transform:`translateY(${h.top+h.height-r.top}px)`}],{duration:reduced?1:850,easing:'cubic-bezier(.55,0,.9,.5)',fill:'forwards'}).finished;
+    const flights=[clone.animate([{transform:'translateY(0)'},{transform:`translateY(${h.top+h.height-r.top}px)`}],{duration:reduced?1:850,easing:'cubic-bezier(.55,0,.9,.5)',fill:'forwards'}).finished];
+    const links=[...panels[7].querySelectorAll('.big-link')];
+    const targetX=h.left+h.width/2,targetY=h.top+h.height/2;
+    links.forEach(link=>{
+      const node=link.firstChild,style=getComputedStyle(link);
+      const ratio=link.getBoundingClientRect().width/link.offsetWidth;
+      [...node.textContent].forEach((letter,i)=>{
+        const range=document.createRange();range.setStart(node,i);range.setEnd(node,i+1);
+        const box=range.getBoundingClientRect(),glyph=document.createElement('span');
+        glyph.textContent=letter;
+        Object.assign(glyph.style,{position:'absolute',left:box.left+'px',top:box.top+'px',color:'#fff',fontFamily:style.fontFamily,fontWeight:style.fontWeight,fontSize:(parseFloat(style.fontSize)*ratio)+'px',lineHeight:'1',transformOrigin:'50% 50%'});
+        clip.append(glyph);
+        const dx=targetX-box.left-box.width/2,dy=targetY-box.top;
+        const side=dx>0?1:-1;
+        const keys=Array.from({length:25},(_,j)=>{
+          const t=j/24,curve=4*t*(1-t);
+          return {transform:`translate(${dx*t+side*55*curve}px,${dy*t-120*curve}px) rotate(${side*70*t*t}deg) scale(${1-.92*t*t})`,opacity:1-Math.pow(t,8)};
+        });
+        const order=side>0?node.textContent.length-1-i:i;
+        flights.push(glyph.animate(keys,{duration:reduced?1:1000,delay:reduced?0:order*65,easing:'cubic-bezier(.45,0,.8,.35)',fill:'forwards'}).finished);
+      });
+      link.style.visibility='hidden';
+    });
+    await Promise.all(flights);
     flipScreen.style.transition='none';
     up=0;scrollTo({top:0,behavior:'instant'});lastKey='';lastMark='';
-    clip.remove();rabbit.style.visibility='';finalHole.hidden=true;
+    clip.remove();rabbit.style.visibility='';links.forEach(link=>link.style.visibility='');finalHole.hidden=true;
     requestAnimationFrame(()=>requestAnimationFrame(()=>{flipScreen.style.transition='';returningHome=false}));
   };
 }
