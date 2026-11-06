@@ -214,8 +214,7 @@ if(!reading&&!roomOpen){
         const depth=clamp((y+innerHeight*.18)/span);
         line.style.left='0';line.style.transformOrigin='top center';
         line.style.height=(45+depth*180*wallDepth+speedStretch*innerHeight*.95*(.6+wallDepth*.4))+'px';
-        const restingOpacity=.08+depth*.28*wallDepth;
-        line.style.opacity=((restingOpacity+(.95-restingOpacity)*speedStretch)*density).toFixed(3);
+        line.style.opacity=((.08+depth*.28*wallDepth)*density).toFixed(3);
         line.style.transform=`translate(${x}px,${y}px) rotate(${-Math.atan(slope)}rad)`;
       });
   }
