@@ -55,8 +55,32 @@ const mark=mountMark($('#wall-rabbit')),fall=mountFall($('[data-fall]'),{center:
 const hb=mark.holeBox,bb=mark.bunBox,depth=hb.y+hb.height-bb.y;
 hole6.setAttribute('viewBox',`${hb.x} ${hb.y} ${hb.width} ${hb.height}`);
 
+let finalHole=null,returningHome=false;
+if(FLIP){
+  finalHole=document.createElement('button');
+  finalHole.className='final-return-hole';finalHole.hidden=true;
+  finalHole.setAttribute('aria-label','Return to Tomorrow');
+  finalHole.innerHTML=`<svg viewBox="${hb.x} ${hb.y} ${hb.width} ${hb.height}" fill="currentColor" aria-hidden="true"><use href="#tc-holeshape"/></svg>`;
+  body.append(finalHole);
+  finalHole.onclick=async()=>{
+    if(returningHome)return;returningHome=true;
+    const rabbit=$('.final-rabbit'),r=rabbit.getBoundingClientRect(),h=finalHole.getBoundingClientRect();
+    const clip=document.createElement('div');
+    Object.assign(clip.style,{position:'fixed',inset:`0 0 ${innerHeight-h.top-h.height/2}px`,overflow:'hidden',pointerEvents:'none',zIndex:101});
+    const clone=rabbit.cloneNode(true);
+    Object.assign(clone.style,{position:'absolute',left:r.left+'px',top:r.top+'px',width:r.width+'px',height:r.height+'px',color:'#fff'});
+    clip.append(clone);body.append(clip);rabbit.style.visibility='hidden';
+    await clone.animate([{transform:'translateY(0)'},{transform:`translateY(${h.top+h.height-r.top}px)`}],{duration:reduced?1:850,easing:'cubic-bezier(.55,0,.9,.5)',fill:'forwards'}).finished;
+    flipScreen.style.transition='none';
+    up=0;scrollTo({top:0,behavior:'instant'});lastKey='';lastMark='';
+    clip.remove();rabbit.style.visibility='';finalHole.hidden=true;
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{flipScreen.style.transition='';returningHome=false}));
+  };
+}
+
 function layout(){
   const iw=innerWidth,ih=innerHeight;mobile=iw<650;
+  if(finalHole){const w=mobile?Math.min(iw*.24,100):Math.min(iw*.11,150);Object.assign(finalHole.style,{width:w+'px',height:(w*hb.height/hb.width)+'px',bottom:'5vh'})}
   fit=Math.max(.3,Math.min((iw-(mobile?40:100))/(mobile?700:1100),(ih-60)/650));
   segment=Math.max(850,ih*1.3);$('#scroll-track').style.height=(segment*TOTAL+ih)+'px';
   lower=ih*.1;spacing=(mobile?1280:830)*.8;
@@ -157,6 +181,7 @@ function frame(){
 if(warming||!bootFontsReady){requestAnimationFrame(frame);return}
 if(!reading&&!roomOpen){
   u=clamp(scrollY/segment,0,TOTAL);window.__u=u;
+  if(finalHole)finalHole.hidden=u<TOTAL-.85;
   const key=`${u}|${up}|${innerWidth}|${innerHeight}`;
   if(key!==lastKey){lastKey=key;
     const [Z,cy]=camera(),half=innerHeight/2+80,inHole=TOP||u>=START+SINK;
