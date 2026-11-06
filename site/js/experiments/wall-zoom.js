@@ -48,7 +48,7 @@ if(FLIP){
 }
 
 // In 04.7 the camera stops at the hole's chapter (HOLD): the rabbit dives, then the projects come.
-const RATIO=.34,scales=panels.map((_,i)=>RATIO**i),centres=[0],BACK=1.6,START=BACK*.7,SINK=TOP?0:.7,HOLD=TOP?1.1:0,TOTAL=START+SINK+2+HOLD+(FLIP?6.975:0);
+const RATIO=.34,scales=panels.map((_,i)=>RATIO**i),centres=[0],BACK=1.6,START=BACK*.7,SINK=TOP?0:.7,HOLD=TOP?1.1:0,TOTAL=START+SINK+2+HOLD+(FLIP?6.26875:0);
 const surface=$('#wall-surface'),dock=$('#rabbit-dock'),hole6=$('.burrow-hole'),cards=[...document.querySelectorAll('.burrow-card')];
 let Yr=0,tStar=0,dockX=0,dockY=0,dockDepth=0,floor=0,origins=[],lastKey='',lastMark='',lastFall=-1,fit=1,segment=1100,mobile=false,lower=0,spacing=830;
 let up=0,warming=!reduced,roomEntering=false,roomFlight=null,reading=false,roomOpen=false,hoverLast=false,u=0,cardBase=[];
@@ -200,7 +200,7 @@ function camera(u=window.__u??0){
     return [1/((1-v)/Z5+v/Zend),centres[LAST]+(centres[0]-centres[LAST])*v];
   }
   let t=Math.max(0,u-START-SINK);if(t<=0)return [fit/scales[LAST],centres[LAST]];
-  if(FLIP)t=t<=7.975?t/7.975:t-6.975;
+  if(FLIP)t=t<=7.26875?t/7.26875:t-6.26875;
   if(HOLD)t=t<=1?t:t<=1+HOLD?1:t-HOLD;
   const i=Math.min(6,LAST+Math.floor(t)),f=LAST+t-i;
   const scale=Math.exp(Math.log(scales[i])*(1-f)+Math.log(scales[i+1])*f);return [fit/scale,centres[i]+(centres[i+1]-centres[i])*f];
@@ -245,20 +245,19 @@ if(!reading&&!roomOpen){
       panels[LAST].style.opacity=1-ease(clamp((flightTime-.25)/.4));
       projectFlight.hidden=!inside;
       [...projectFlight.children].forEach((card,i)=>{
-        const phase=flightTime-.65-i*1.05;
+        const phase=flightTime-.65-i*.95;
         const active=inside&&phase>=0&&phase<1.8;
         card.hidden=!active;card.inert=!active;
         if(active){
-          // Arrive at the centre over 1.2 units, then leave in half that time.
-          const entry=clamp(phase/1.2),exit=clamp((phase-1.2)/.6);
-          const centreY=(innerHeight-card.offsetHeight)/2-card.offsetHeight/30;
-          const y=phase<=1.2
-            ?(innerHeight*.98-23)+(centreY-(innerHeight*.98-23))*entry
-            :centreY+(-card.offsetHeight*1.9-centreY)*exit;
-          const scale=(phase<=1.2?.4+.6*entry:1+.65*exit)/1.2;
+          // One continuous flight curve, with no centre breakpoint.
+          const progress=clamp(phase/1.8);
+          const travel=progress*progress;
+          const startY=innerHeight*.98-23,endY=-card.offsetHeight*1.9;
+          const y=startY+(endY-startY)*travel;
+          const scale=(.4+1.25*travel)/1.2;
           card.style.left='50%';
           card.style.transform=`translate(-50%,${y}px) scale(${scale})`;
-          card.style.opacity=(.12+.88*ease(entry))*(1-ease(exit));
+          card.style.opacity=(.12+.88*ease(clamp(progress/.55)))*(1-ease(clamp((progress-.65)/.35)));
         }
       });
 
