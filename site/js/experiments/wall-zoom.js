@@ -26,7 +26,7 @@ if(FLIP){
  flipScreen=document.createElement('div');flipScreen.className='burrow-flip-screen';
  body.append(flipScreen);
  const tunnel=document.createElement('div');tunnel.className='burrow-tunnel';tunnel.setAttribute('aria-hidden','true');
- for(let i=0;i<24;i++){
+ for(let i=0;i<60;i++){
   const line=document.createElement('i');line.style.left=((i+.5)/16*100)+'%';
   line.style.height=(45+(i*47)%150)+'px';line.style.opacity=(.12+(i%4)*.07).toString();
   tunnel.append(line);tunnelLines.push(line);
@@ -180,7 +180,7 @@ if(!reading&&!roomOpen){
           const progress=phase/1.2;
           const y=innerHeight*.94-progress*(innerHeight*.94+card.offsetHeight*1.35);
           const scale=progress<.55?.45+.55*(progress/.55):1+.18*((progress-.55)/.45);
-          const x=mobile?50:[36,64,46,62,37,54][i];
+          const x=50;
           card.style.left=x+'%';card.style.transform=`translate(-50%,${y}px) scale(${scale})`;
           card.style.opacity=ease(clamp(progress/.28))*(1-.3*ease(clamp((progress-.65)/.35)));
         }
@@ -203,17 +203,18 @@ if(!reading&&!roomOpen){
       const speedStretch=Math.pow(clamp((tunnelSpeed-170)/1500),.8);
       tunnelLines.forEach((line,i)=>{
         // Shared vanishing point: streaks travel upwards along the tunnel walls.
-        const lane=i%12,angle=(lane+.5)/12*Math.PI;
-        const laneX=.5-Math.cos(angle)*.47;
-        const wallDepth=.35+.65*Math.abs(Math.cos(angle));
-        const slope=(laneX-.5)*.16;
+        const laneX=((i*.61803398875+.025)%1)*.94+.03;
+        const wallDepth=.35+.65*Math.abs(laneX-.5)*2;
+        // Converge below the viewport; central streaks remain almost vertical.
+        const slope=(.5-laneX)*innerWidth/(innerHeight*4);
+        const density=i<24?1:clamp((speedStretch-(i-24)/48)*3);
         const span=innerHeight*1.45;
         const y=((i*173-distance*(.45+wallDepth*.9))%span+span)%span-innerHeight*.18;
         const x=innerWidth*laneX+slope*(y-innerHeight*.5);
         const depth=clamp((y+innerHeight*.18)/span);
         line.style.left='0';line.style.transformOrigin='top center';
         line.style.height=(45+depth*180*wallDepth+speedStretch*innerHeight*.95*(.6+wallDepth*.4))+'px';
-        line.style.opacity=(.08+depth*.28*wallDepth).toFixed(3);
+        line.style.opacity=((.08+depth*.28*wallDepth)*density).toFixed(3);
         line.style.transform=`translate(${x}px,${y}px) rotate(${-Math.atan(slope)}rad)`;
       });
   }
