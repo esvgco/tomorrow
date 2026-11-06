@@ -102,7 +102,7 @@ body[data-burrow-flip]:not(.reading) .burrow-cards{visibility:hidden}
 
 @media(max-width:650px){
   .links-panel{grid-template-columns:1fr;grid-template-rows:auto auto auto;row-gap:40px;align-content:center}
-  .links-panel #about-link{grid-column:1;grid-row:1}
+  .links-panel #about-link{grid-column:1;grid-row:1;margin-bottom:20px}
   .links-panel a.big-link{grid-column:1;grid-row:2}
   .links-panel .final-rabbit{grid-column:1;grid-row:3;justify-self:center;margin-top:40px}
 }

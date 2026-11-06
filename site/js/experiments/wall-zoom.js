@@ -107,7 +107,7 @@ function layout(){
   if(finalHole){const w=mobile?Math.min(iw*.24,100):Math.min(iw*.11,150);Object.assign(finalHole.style,{width:w+'px',height:(w*hb.height/hb.width)+'px',bottom:'5vh'})}
   fit=Math.max(.3,Math.min((iw-(mobile?40:100))/(mobile?700:1100),(ih-60)/650));
   if(FLIP){const heroHoleWidth=mobile?Math.min(iw*.24,100):Math.min(iw*.11,150);$('.final-rabbit').style.width=(840*heroHoleWidth/hb.width/fit)+'px'}
-  segment=Math.max(850,ih*1.3);$('#scroll-track').style.height=(segment*TOTAL+ih)+'px';
+  segment=Math.max(850,ih*1.3);$('#scroll-track').style.height=(segment*(TOTAL-(FLIP&&mobile?1.3*2/3:0))+ih)+'px';
   lower=ih*.1;spacing=(mobile?1280:830)*.8;
   for(let i=1;i<=LAST;i++)centres[i]=centres[i-1]+spacing*scales[i-1];
   floor=centres[LAST]+6;
@@ -150,7 +150,7 @@ function layoutTop(iw,ih){
   Object.assign(hole6.style,{width:W6+'px',height:H6+'px',left:PW/2-W6/2+'px',top:hy-H6/2+'px'});
 }
 function reset(){scrollTo(0,0);leaveRoom()}
-const at=v=>v*segment;
+const at=v=>{const start=START+SINK,d=Math.max(0,v-start);return (FLIP&&mobile&&d>0?start+(d<=1.3?d/3:d-1.3*2/3):v)*segment};
 function go(i){if(reading){panels[i].scrollIntoView({behavior:reduced?'instant':'smooth'});return}scrollTo({top:at(i<=LAST?START:i===6?START+SINK+1+HOLD:TOTAL),behavior:reduced?'instant':'smooth'})}
 document.querySelectorAll('[data-stop]').forEach(b=>b.onclick=e=>{e.preventDefault();go(+b.dataset.stop)});
 $('#little-door').onclick=()=>scrollTo({top:at(START+SINK),behavior:reduced?'instant':'smooth'});
@@ -214,7 +214,9 @@ if(!reading&&!roomOpen){
     if(!flipHeld&&scrollY/segment>=threshold){flipHeld=true;flipHoldUntil=now+1212}
     if(now<flipHoldUntil)scrollTo({top:Math.ceil(threshold*segment),behavior:'instant'});
   }
-  u=clamp(scrollY/segment,0,TOTAL);window.__u=u;
+  u=clamp(scrollY/segment,0,TOTAL);
+  if(FLIP&&mobile&&u>START+SINK){const d=u-START-SINK;u=clamp(START+SINK+(d<=1.3/3?d*3:d+1.3*2/3),0,TOTAL)}
+  window.__u=u;
   if(finalHole){
     const settled=u>=TOTAL-.015&&up===0;
     if(!settled){finalSettledAt=0;finalHole.hidden=true}
@@ -232,7 +234,7 @@ if(!reading&&!roomOpen){
   const key=`${u}|${up}|${innerWidth}|${innerHeight}`;
   if(key!==lastKey){lastKey=key;
     const [Z,cy]=camera(),half=innerHeight/2+80,inHole=TOP||u>=START+SINK;
-    panels.forEach((p,j)=>{const [ox,oy,h,oyo]=origins[j],k=Z*scales[j],y=Z*(oy+(FLIP&&j===7?cy-centres[j]:centres[j]-cy))+lower;const top=y-oyo*k,bottom=y+(h-oyo)*k;
+    panels.forEach((p,j)=>{const [ox,oy,h,oyo]=origins[j],k=Z*scales[j],y=Z*(oy+(FLIP&&j===7?cy-centres[j]:centres[j]-cy))+lower-(FLIP&&mobile&&j===7?innerHeight*.12:0);const top=y-oyo*k,bottom=y+(h-oyo)*k;
       const far=k<.004||bottom<-half||top>half||(j>LAST&&!inHole);if(far!==p.hasAttribute('hidden-far'))far?p.setAttribute('hidden-far',''):p.removeAttribute('hidden-far');
       if(!far&&j===LAST&&p.querySelector('[data-letter-portals]'))p.querySelectorAll('[data-letter-portals], .contact-link').forEach(element=>{element.style.transform=`translateY(${-60/k}px)`});
       if(!far)p.style.transform=`translate3d(${Z*ox-ox}px,${y-oy+(FLIP&&j===LAST?clamp((u-START-SINK)/.65)*innerHeight*.95:0)}px,0) scale(${k})${FLIP&&inHole&&j>LAST?' rotate(180deg)':''}`;if(p.inert!==far)p.inert=far});
