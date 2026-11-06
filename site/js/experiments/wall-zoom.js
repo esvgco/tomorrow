@@ -89,7 +89,7 @@ if(FLIP){
           const t=j/24,curve=4*t*(1-t);
           return {transform:`translate(${dx*t+side*55*curve}px,${dy*t-120*curve}px) rotate(${side*70*t*t}deg) scale(${1-.92*t*t})`,opacity:1-Math.pow(t,8)};
         });
-        const order=side>0?node.textContent.length-1-i:i;
+        const order=mobile?Math.abs(i-(node.textContent.length-1)/2):(side>0?node.textContent.length-1-i:i);
         flights.push(glyph.animate(keys,{duration:reduced?1:1000/1.3,delay:reduced?0:order*65/1.3,easing:'cubic-bezier(.45,0,.8,.35)',fill:'forwards'}).finished);
       });
       link.style.visibility='hidden';
