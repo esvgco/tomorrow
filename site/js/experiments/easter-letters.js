@@ -89,7 +89,7 @@ function init(){
  beam([0,.65,-.04],[0,3.68,-.04],.075,.07);
  beam([-.86,.52,.105],[.86,.52,.105],.085,.07);
  beam([-1.3,.85,.08],[1.3,.85,.08],.09,.23);
- beam([-.32,2.64,-.15],[.32,2.64,-.15],.11,.14);
+ beam([-.40,2.64,-.15],[.40,2.64,-.15],.11,.14);
  beam([0,1.57,-.04],[0,1.35,-.66],.045,.055);
  painting=new THREE.Mesh(new THREE.PlaneGeometry(2.3,2.7),new THREE.MeshBasicMaterial({map:rabbitTexture}));painting.position.set(0,2.23,.16);easel.add(painting);
  const edge=new THREE.Mesh(new THREE.BoxGeometry(2.34,2.74,.09),material(0xd6d6d6));edge.position.set(0,2.23,.10);easel.add(edge);
