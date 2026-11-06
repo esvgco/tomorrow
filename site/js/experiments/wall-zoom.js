@@ -148,7 +148,7 @@ if(!reading&&!roomOpen){
     const [Z,cy]=camera(),half=innerHeight/2+80,inHole=TOP||u>=START+SINK;
     panels.forEach((p,j)=>{const [ox,oy,h,oyo]=origins[j],k=Z*scales[j],y=Z*(oy+centres[j]-cy)+lower;const top=y-oyo*k,bottom=y+(h-oyo)*k;
       const far=k<.004||bottom<-half||top>half||(j>LAST&&!inHole);if(far!==p.hasAttribute('hidden-far'))far?p.setAttribute('hidden-far',''):p.removeAttribute('hidden-far');
-      if(!far&&j===LAST&&p.querySelector('[data-letter-portals]'))p.querySelector('[data-letter-portals]').style.transform=`translateY(${-60/k}px)`;
+      if(!far&&j===LAST&&p.querySelector('[data-letter-portals]'))p.querySelectorAll('[data-letter-portals], .contact-link').forEach(element=>{element.style.transform=`translateY(${-60/k}px)`});
       if(!far)p.style.transform=`translate3d(${Z*ox-ox}px,${y-oy}px,0) scale(${k})${FLIP&&inHole&&j>LAST?' rotate(180deg)':''}`;if(p.inert!==far)p.inert=far});
     // The dock until the rabbit is gone; from then on, the hole belongs to the wall.
     if(!TOP)dock.style.visibility=inHole&&!FLIP?'hidden':'';
