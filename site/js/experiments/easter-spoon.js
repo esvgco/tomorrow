@@ -1,31 +1,28 @@
 const section=document.querySelector('#projects');
 const button=section.querySelector('.spoon-trigger');
-const line=section.querySelector('.spoon-line');
-const story=section.querySelector('.spoon-story');
+const copy=section.querySelector('.spoon-copy');
 const reduced=matchMedia('(prefers-reduced-motion:reduce)');
 const touch=matchMedia('(hover:none), (pointer:coarse)');
-const letters=[...line.textContent].map(char=>{const span=document.createElement('span');span.textContent=char===' '?'\u00a0':char;return span});
-line.replaceChildren(...letters);
-let open=false,dragging=false;
-function bend(amount){
- letters.forEach((letter,i)=>{
-  const t=i/(letters.length-1),arc=Math.sin(t*Math.PI);
-  letter.style.transform=`translateY(${-amount*arc}px) rotate(${-amount*.07*Math.cos(t*Math.PI)}deg)`;
- });
+let open=false,busy=false;
+function setLetters(text){
+ copy.replaceChildren(...[...text].map(char=>{
+  if(char==='\n')return document.createElement('br');
+  const span=document.createElement('span');span.textContent=char===' '?'\u00a0':char;return span;
+ }));
 }
-function activate(){open=true;section.classList.add('spoon-open');button.setAttribute('aria-expanded','true');story.hidden=false;bend(reduced.matches?0:55)}
-function close(){open=false;dragging=false;section.classList.remove('spoon-open','spoon-revealed');button.setAttribute('aria-expanded','false');story.hidden=true;bend(0);button.focus({preventScroll:true})}
+setLetters('Not everything\nfits a category');
+async function transform(){
+ if(busy)return;busy=true;open=!open;
+ section.classList.toggle('spoon-open',open);
+ section.classList.remove('spoon-revealed');
+ button.setAttribute('aria-pressed',String(open));
+ const spin=button.querySelector('svg').animate([{transform:'rotate(0deg)'},{transform:'rotate(180deg)'},{transform:'rotate(360deg)'}],{duration:reduced.matches?1:850,easing:'ease-in-out'});
+ await Promise.all([...copy.querySelectorAll('span')].map((letter,i)=>letter.animate([{opacity:1,transform:'translateY(0)'},{opacity:0,transform:'translateY(-14px) scale(.8)'}],{duration:reduced.matches?1:240,delay:reduced.matches?0:i*12,fill:'forwards'}).finished));
+ setLetters(open?'There is\nno spoon.':'Not everything\nfits a category');
+ await Promise.all([...copy.querySelectorAll('span')].map((letter,i)=>letter.animate([{opacity:0,transform:'translateY(14px) scale(.8)'},{opacity:1,transform:'translateY(0) scale(1)'}],{duration:reduced.matches?1:340,delay:reduced.matches?0:i*22,fill:'both'}).finished));
+ await spin.finished;busy=false;
+}
 button.addEventListener('click',()=>{
- if(touch.matches&&!section.classList.contains('spoon-revealed')){section.classList.add('spoon-revealed');return}
- if(!open)activate();
+ if(touch.matches&&!open&&!section.classList.contains('spoon-revealed')){section.classList.add('spoon-revealed');return}
+ transform();
 });
-button.addEventListener('pointerdown',e=>{if(!open)return;dragging=true;button.setPointerCapture(e.pointerId)});
-button.addEventListener('pointermove',e=>{
- if(!open||reduced.matches||touch.matches&&!dragging)return;
- const box=button.getBoundingClientRect();
- bend(Math.max(20,Math.min(100,55+(box.top+box.height/2-e.clientY)*.5)));
-});
-button.addEventListener('pointerup',()=>dragging=false);
-button.addEventListener('pointercancel',()=>dragging=false);
-section.querySelector('.spoon-close').addEventListener('click',close);
-addEventListener('keydown',e=>{if(open&&e.key==='Escape'){e.preventDefault();close()}});
