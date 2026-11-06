@@ -240,10 +240,10 @@ entries.forEach((button,index)=>{
  function tick(now){
   const dt=Math.min((now-last)/1000,.05);last=now;phase+=dt*letterWaveSpeed;
   const idle=mobileLetters.matches&&!reduced.matches;
-  // Mobile cycle: first O, Company O, first O, third O; 2.5s + 0.5s pause.
-  const cycleTime=(now/1000)%12;
-  const sequence=[0,3,0,2],step=Math.floor(cycleTime/3),local=cycleTime%3;
-  const pulse=index===sequence[step]&&local<2.5?Math.pow(Math.sin(Math.PI*local/2.5),2)*.7:0;
+  // Mobile cycle: first O, Company O, first O, third O; 3s + 0.3s pause.
+  const cycleTime=(now/1000)%13.2;
+  const sequence=[0,3,0,2],step=Math.floor(cycleTime/3.3),local=cycleTime%3.3;
+  const pulse=index===sequence[step]&&local<3?Math.pow(Math.sin(Math.PI*local/3),2)*.7:0;
   strength+=((reduced.matches?0:idle?pulse:active?1:0)-strength)*(1-Math.exp(-dt/.3));
   const smooth=finalHeading?.6:1;
   turbulence.setAttribute('baseFrequency',`${(.018+Math.sin(phase*.65)*.004)*smooth} ${(.025+Math.cos(phase*.5)*.005)*smooth}`);
