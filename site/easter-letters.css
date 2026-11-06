@@ -47,3 +47,10 @@
 
 
 .gallery-back:focus,.gallery-back:focus-visible{outline:none;box-shadow:none}
+
+#last-heading[data-letter-portals]{cursor:default}
+.letter-entry[data-entry="4"].rippling{filter:url(#letter-wave-4)}
+.letter-entry[data-entry="5"].rippling{filter:url(#letter-wave-5)}
+.letter-entry[data-entry="6"].rippling{filter:url(#letter-wave-6)}
+.letter-entry[data-entry="7"].rippling{filter:url(#letter-wave-7)}
+.letter-entry[data-entry="8"].rippling{filter:url(#letter-wave-8)}

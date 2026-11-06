@@ -142,19 +142,19 @@ function animate(){
 function wake(){if(!raf)raf=requestAnimationFrame(animate)}
 function setView(n){hoveredWall=null;closeMode=false;approachTarget=0;portalHover=false;angle=Math.atan2(Math.sin(angle),Math.cos(angle));target=angles[n];views.forEach((v,i)=>v.setAttribute('aria-pressed',String(i===n)));wake()}
 function prepareFlight(n){
- const b=entries[n].getBoundingClientRect(),h=document.querySelector('#opening h1'),r=h.getBoundingClientRect();
+ const b=entries[n].getBoundingClientRect(),h=entries[n].closest('h1,h2'),r=h.getBoundingClientRect();
  // A screen-space copy avoids disturbing the existing scroll camera while we cross the letter.
  const title=document.createElement('div');title.className='flight-title';title.innerHTML=h.innerHTML;
- title.querySelectorAll('.letter-entry').forEach((letter,i)=>{letter.classList.remove('rippling');letter.tabIndex=-1;if(i===n)letter.classList.add('flight-entry')});
+ title.querySelectorAll('.letter-entry').forEach((letter,i)=>{letter.classList.remove('rippling');letter.tabIndex=-1;if(letter.dataset.entry===entries[n].dataset.entry)letter.classList.add('flight-entry')});
  const hStyle=getComputedStyle(h),scale=r.width/h.offsetWidth;
- Object.assign(title.style,{left:r.left+'px',top:r.top+'px',width:r.width+'px',fontSize:parseFloat(hStyle.fontSize)*scale+'px',fontWeight:hStyle.fontWeight});flight.replaceChildren(title);flight.classList.add('active');
+ Object.assign(title.style,{left:r.left+'px',top:r.top+'px',width:r.width+'px',fontSize:parseFloat(hStyle.fontSize)*scale+'px',fontWeight:hStyle.fontWeight,lineHeight:hStyle.lineHeight==='normal'?'normal':parseFloat(hStyle.lineHeight)*scale+'px',letterSpacing:hStyle.letterSpacing==='normal'?'normal':parseFloat(hStyle.letterSpacing)*scale+'px'});flight.replaceChildren(title);flight.classList.add('active');
  const cx=b.left+b.width/2,cy=b.top+b.height*.57;
  flight.style.transformOrigin=`${cx}px ${cy}px`;
  const zoom=Math.max(innerWidth/b.width,innerHeight/(b.height*.42))*2.8;
  return `translate(${innerWidth/2-cx}px,${innerHeight/2-cy}px) scale(${zoom})`;
 }
 async function enter(n,{fly=true}={}){
- const viewIndex=n===3?1:n;
+ const viewIndex=[0,1,2,1,0,1,2,1,1][n]??1;
  if(busy||dialog.open)return;busy=true;entry=n;returnEntry=n;scrollBefore=scrollY;oldOverflow=document.documentElement.style.overflow;
  const zoomTransform=fly?prepareFlight(n):null;
  const animation=fly?flight.animate([{transform:'scale(1)',opacity:1},{transform:zoomTransform,opacity:1}],{duration:reduced.matches?1:1100,easing:'cubic-bezier(.7,0,.6,1)',fill:'forwards'}):{finished:Promise.resolve(),cancel(){}};
