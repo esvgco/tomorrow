@@ -19,7 +19,7 @@ const panels=[...document.querySelectorAll('[data-panel]')],N=panels.length,LAST
 // hole is simply on the wall after the last screen; it dives as the hole passes under it.
 const TOP=body.classList.contains('rabbit-top');
 const FLIP=body.hasAttribute('data-burrow-flip');
-let flipScreen,tunnelLines=[],bootFontsReady=!FLIP;
+let flipScreen,projectFlight,tunnelLines=[],bootFontsReady=!FLIP;
 if(FLIP)document.fonts.ready.then(()=>{bootFontsReady=true;scrollTo(0,0);layout();lastKey=''});
 if(FLIP){
  flipScreen=document.createElement('div');flipScreen.className='burrow-flip-screen';
@@ -31,11 +31,19 @@ if(FLIP){
   tunnel.append(line);tunnelLines.push(line);
  }
  body.append(tunnel);
+ projectFlight=document.createElement('div');projectFlight.className='project-flight';projectFlight.hidden=true;projectFlight.setAttribute('aria-label','Selected projects');
+ const projects=[
+  ['rainmaker','Rainmaker','Water for farms, watersheds, and ecosystems.','https://www.rainmaker.com/'],
+  ['truemed','TrueMed','A marketplace for HSA/FSA health spending.','https://www.truemed.com/'],
+  ['vultron','Vultron','AI for federal proposal development.','https://www.vultron.ai/']
+ ];
+ projectFlight.innerHTML=projects.map(([id,name,description,url],i)=>`<article class="project-flyby"><span class="project-index">0${i+1} / SELECTED PROJECT</span><img src="assets/projects/${id}.svg" alt="${name} logo"><h2>${name}</h2><p>${description}</p><a href="${url}" target="_blank" rel="noopener">Explore ${name} ↗</a></article>`).join('');
+ body.append(projectFlight);
  for(const element of [$('#viewport'),$('#rabbit-dock'),$('#above')])flipScreen.append(element);
 }
 
 // In 04.7 the camera stops at the hole's chapter (HOLD): the rabbit dives, then the projects come.
-const RATIO=.34,scales=panels.map((_,i)=>RATIO**i),centres=[0],BACK=1.6,START=BACK*.7,SINK=TOP?0:.7,HOLD=TOP?1.1:0,TOTAL=START+SINK+2+HOLD;
+const RATIO=.34,scales=panels.map((_,i)=>RATIO**i),centres=[0],BACK=1.6,START=BACK*.7,SINK=TOP?0:.7,HOLD=TOP?1.1:0,TOTAL=START+SINK+2+HOLD+(FLIP?3:0);
 const surface=$('#wall-surface'),dock=$('#rabbit-dock'),hole6=$('.burrow-hole'),cards=[...document.querySelectorAll('.burrow-card')];
 let Yr=0,tStar=0,dockX=0,dockY=0,dockDepth=0,floor=0,origins=[],lastKey='',lastMark='',lastFall=-1,fit=1,segment=1100,mobile=false,lower=0,spacing=830;
 let up=0,warming=!reduced,roomEntering=false,roomFlight=null,reading=false,roomOpen=false,hoverLast=false,u=0,cardBase=[];
@@ -136,6 +144,7 @@ function camera(u=window.__u??0){
     return [1/((1-v)/Z5+v/Zend),centres[LAST]+(centres[0]-centres[LAST])*v];
   }
   let t=Math.max(0,u-START-SINK);if(t<=0)return [fit/scales[LAST],centres[LAST]];
+  if(FLIP)t=t<=4?t/4:t-3;
   if(HOLD)t=t<=1?t:t<=1+HOLD?1:t-HOLD;
   const i=Math.min(6,LAST+Math.floor(t)),f=LAST+t-i;
   const scale=Math.exp(Math.log(scales[i])*(1-f)+Math.log(scales[i+1])*f);return [fit/scale,centres[i]+(centres[i+1]-centres[i])*f];
@@ -156,6 +165,21 @@ if(!reading&&!roomOpen){
     if(FLIP){
       const inside=inHole&&up===0;
       hole6.style.visibility='hidden';flipScreen.classList.toggle('flipped',inside);body.classList.toggle('inside-burrow',inside);
+      const flightTime=u-START-SINK;
+      panels[LAST].style.opacity=clamp(1-flightTime/.15);
+      projectFlight.hidden=!inside;
+      [...projectFlight.children].forEach((card,i)=>{
+        const phase=flightTime-.15-i*1.25;
+        const active=inside&&phase>=0&&phase<1.2;
+        card.hidden=!active;card.inert=!active;
+        if(active){
+          const entrance=ease(clamp(phase/.35)),exit=ease(clamp((phase-.85)/.35));
+          const y=innerHeight*(.34-(1-entrance)*.9+exit*.95);
+          const x=mobile?50:[31,68,46][i];
+          card.style.left=x+'%';card.style.transform=`translate(-50%,${y}px) scale(${.8+entrance*.2+exit*.12})`;
+          card.style.opacity=Math.min(entrance*2,(1-exit)*2,1);
+        }
+      });
       const distance=Math.max(0,u-START-SINK)*segment;
       tunnelLines.forEach((line,i)=>{
         // Shared vanishing point: streaks travel upwards along the tunnel walls.
