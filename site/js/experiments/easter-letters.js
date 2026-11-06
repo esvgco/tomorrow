@@ -247,7 +247,7 @@ entries.forEach((button,index)=>{
   strength+=((reduced.matches?0:idle?pulse:active?1:0)-strength)*(1-Math.exp(-dt/.3));
   const smooth=finalHeading?.6:1;
   turbulence.setAttribute('baseFrequency',`${(.018+Math.sin(phase*.65)*.004)*smooth} ${(.025+Math.cos(phase*.5)*.005)*smooth}`);
-  displacement.setAttribute('scale',String(strength*(8+Math.sin(phase*1.1)*2)));
+  displacement.setAttribute('scale',String(strength*(8+Math.sin(phase*1.1)*2)*(idle?5:1)));
   if((!reduced.matches&&(active||idle))||strength>.002)frame=requestAnimationFrame(tick);
   else{frame=0;strength=0;button.classList.remove('rippling')}
  }
