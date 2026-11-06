@@ -55,7 +55,7 @@ const mark=mountMark($('#wall-rabbit')),fall=mountFall($('[data-fall]'),{center:
 const hb=mark.holeBox,bb=mark.bunBox,depth=hb.y+hb.height-bb.y;
 hole6.setAttribute('viewBox',`${hb.x} ${hb.y} ${hb.width} ${hb.height}`);
 
-let finalHole=null,returningHome=false;
+let finalHole=null,returningHome=false,finalSettledAt=0;
 if(FLIP){
   finalHole=document.createElement('button');
   finalHole.className='final-return-hole';finalHole.hidden=true;
@@ -182,7 +182,20 @@ function frame(){
 if(warming||!bootFontsReady){requestAnimationFrame(frame);return}
 if(!reading&&!roomOpen){
   u=clamp(scrollY/segment,0,TOTAL);window.__u=u;
-  if(finalHole)finalHole.hidden=u<TOTAL-.85;
+  if(finalHole){
+    const settled=u>=TOTAL-.015&&up===0;
+    if(!settled){finalSettledAt=0;finalHole.hidden=true}
+    else{
+      if(!finalSettledAt)finalSettledAt=performance.now();
+      if(finalHole.hidden&&!returningHome&&performance.now()-finalSettledAt>=3000){
+        finalHole.hidden=false;
+        finalHole.animate([
+          {transform:'translate(-50%,calc(5vh + 100%))',opacity:0},
+          {transform:'translate(-50%,0)',opacity:1}
+        ],{duration:reduced?1:650,easing:'cubic-bezier(.22,1,.36,1)'});
+      }
+    }
+  }
   const key=`${u}|${up}|${innerWidth}|${innerHeight}`;
   if(key!==lastKey){lastKey=key;
     const [Z,cy]=camera(),half=innerHeight/2+80,inHole=TOP||u>=START+SINK;
