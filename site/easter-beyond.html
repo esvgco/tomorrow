@@ -18,14 +18,22 @@ h1{max-width:18em;margin:0 auto;font-size:clamp(22.8px,3.36vw,42px);font-weight:
 .intro .detail{margin:clamp(140px,34vh,300px) 0 0;font-size:inherit;line-height:1.55}
 .mission-back{position:absolute;top:28px;left:32px;padding:12px 18px;background:#f5f5f5;color:#171717;border-radius:2px;text-decoration:none;font:16px/1.3 'ABC Areal',Arial,sans-serif}.mission-back:hover{background:#ddd}.mission-back:focus-visible{outline:1px solid #fff;outline-offset:5px}
 @media(max-width:600px){.mission-back{top:20px;left:20px}}
+
+.mission-tunnel{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:2;mask-image:linear-gradient(to right,#000,rgba(0,0,0,.45) 40%,rgba(0,0,0,.45) 60%,#000)}
+.mission-tunnel i{position:absolute;top:0;left:0;width:1px;transform-origin:top center;background:linear-gradient(transparent,#fff 25%,#fff 75%,transparent)}
+body.flight main{position:fixed;inset:0;padding:0;overflow:hidden}
+body.flight .intro{display:contents}
+body.flight main .flight-block{position:absolute;top:0;left:50%;width:calc(100% - 2 * var(--gutter));max-width:46ch;margin:0;text-align:center;will-change:transform}
+body.flight main .mission-title{max-width:800px}
+body.flight .mission-back{position:fixed;z-index:3}
 </style>
 </head>
 <body>
 <a class="mission-back" href="easter-letters.html">← Back to Tomorrow</a>
 
 <main>
-<p class="label">OUR MISSION</p>
-<h1>Make room for what comes next.</h1>
+<div class="mission-title"><p class="label">OUR MISSION</p>
+<h1>Make room for what comes next.</h1></div>
 <div class="intro">
 <p>We bring technology, entrepreneurship and storytelling together to create companies, products and original worlds.</p>
 <p class="detail">Our work explores AI, physical computing and new ways for people to interact with technology. Sometimes it becomes a product. Sometimes a company. Sometimes something that doesn’t fit an existing category.</p>
@@ -33,5 +41,28 @@ h1{max-width:18em;margin:0 auto;font-size:clamp(22.8px,3.36vw,42px);font-weight:
 </div>
 
 </main>
+<script>
+if(!matchMedia('(prefers-reduced-motion: reduce)').matches){
+  const blocks=[document.querySelector('.mission-title'),...document.querySelectorAll('.intro p')];
+  const tunnel=document.createElement('div');tunnel.className='mission-tunnel';tunnel.setAttribute('aria-hidden','true');
+  const lines=Array.from({length:16},()=>{const line=document.createElement('i');tunnel.append(line);return line});document.body.append(tunnel);
+  document.body.classList.add('flight');blocks.forEach(block=>block.classList.add('flight-block'));
+  let offsets=[],pending=false;
+  function draw(){
+    pending=false;
+    blocks.forEach((block,i)=>{block.style.transform=`translate(-50%,${innerHeight*.38+scrollY-offsets[i]}px)`});
+    lines.forEach((line,i)=>{
+      const laneX=(i%8+.5)/8,slope=(laneX-.5)*.24,span=innerHeight*1.45;
+      const y=((i*173-scrollY*(.75+(i%3)*.22))%span+span)%span-innerHeight*.18;
+      const depth=Math.max(0,Math.min(1,(y+innerHeight*.18)/span));
+      line.style.height=(65+depth*230)+'px';line.style.opacity=.14+depth*.28;
+      line.style.transform=`translate(${innerWidth*laneX+slope*(y-innerHeight*.5)}px,${y}px) rotate(${-Math.atan(slope)}rad)`;
+    });
+  }
+  function layout(){let offset=0;offsets=blocks.map((block,i)=>{if(i)offset+=Math.max(innerHeight*.85,block.offsetHeight+innerHeight*.35);return offset});document.body.style.height=(offset+innerHeight*1.2)+'px';draw()}
+  addEventListener('scroll',()=>{if(!pending){pending=true;requestAnimationFrame(draw)}},{passive:true});
+  addEventListener('resize',layout);document.fonts.ready.then(layout);layout();
+}
+</script>
 </body>
 </html>
