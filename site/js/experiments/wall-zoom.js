@@ -20,7 +20,7 @@ const panels=[...document.querySelectorAll('[data-panel]')],N=panels.length,LAST
 const TOP=body.classList.contains('rabbit-top');
 const FLIP=body.hasAttribute('data-burrow-flip');
 let flipScreen,projectFlight,tunnelLines=[],bootFontsReady=!FLIP;
-let tunnelTravel=0,tunnelSpeed=85,tunnelLastTime=performance.now(),tunnelLastScroll=scrollY;
+let tunnelTravel=0,tunnelSpeed=170,tunnelLastTime=performance.now(),tunnelLastScroll=scrollY;
 if(FLIP)document.fonts.ready.then(()=>{bootFontsReady=true;scrollTo(0,0);layout();lastKey=''});
 if(FLIP){
  flipScreen=document.createElement('div');flipScreen.className='burrow-flip-screen';
@@ -197,9 +197,10 @@ if(!reading&&!roomOpen){
   if(FLIP&&!reduced&&u>=START+SINK&&up===0){
       const now=performance.now(),dt=Math.min(.05,(now-tunnelLastTime)/1000);
       const scrollSpeed=Math.abs(scrollY-tunnelLastScroll)/Math.max(.001,dt);
-      tunnelSpeed+=(85+Math.min(1800,scrollSpeed*.75)-tunnelSpeed)*(1-Math.exp(-dt*8));
+      tunnelSpeed+=(170+Math.min(1800,scrollSpeed*.75)-tunnelSpeed)*(1-Math.exp(-dt*8));
       tunnelTravel+=tunnelSpeed*dt;
       const distance=tunnelTravel;
+      const speedStretch=Math.pow(clamp((tunnelSpeed-170)/1500),.8);
       tunnelLines.forEach((line,i)=>{
         // Shared vanishing point: streaks travel upwards along the tunnel walls.
         const lane=i%12,angle=(lane+.5)/12*Math.PI;
@@ -211,7 +212,7 @@ if(!reading&&!roomOpen){
         const x=innerWidth*laneX+slope*(y-innerHeight*.5);
         const depth=clamp((y+innerHeight*.18)/span);
         line.style.left='0';line.style.transformOrigin='top center';
-        line.style.height=(45+depth*180*wallDepth+Math.min(80,tunnelSpeed*.035))+'px';
+        line.style.height=(45+depth*180*wallDepth+speedStretch*innerHeight*.95*(.6+wallDepth*.4))+'px';
         line.style.opacity=(.08+depth*.28*wallDepth).toFixed(3);
         line.style.transform=`translate(${x}px,${y}px) rotate(${-Math.atan(slope)}rad)`;
       });
