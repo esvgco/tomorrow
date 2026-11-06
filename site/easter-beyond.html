@@ -23,7 +23,7 @@ h1{max-width:18em;margin:0 auto;font-size:clamp(22.8px,3.36vw,42px);font-weight:
 .mission-tunnel i{position:absolute;top:0;left:0;width:1px;transform-origin:top center;background:linear-gradient(transparent,#fff 25%,#fff 75%,transparent)}
 body.flight main{position:fixed;inset:0;padding:0;overflow:hidden}
 body.flight .intro{display:contents}
-body.flight main .flight-block{position:absolute;top:0;left:50%;width:calc(100% - 2 * var(--gutter));max-width:46ch;margin:0;text-align:center;will-change:transform}
+body.flight main .flight-block{position:absolute;top:0;left:50%;width:calc(100% - 2 * var(--gutter));max-width:46ch;margin:0;text-align:center;transform-origin:50% 30%;will-change:transform,opacity}
 body.flight main .mission-title{max-width:800px}
 body.flight .mission-back{position:fixed;z-index:3}
 </style>
@@ -45,32 +45,39 @@ body.flight .mission-back{position:fixed;z-index:3}
 if(!matchMedia('(prefers-reduced-motion: reduce)').matches){
   const blocks=[document.querySelector('.mission-title'),...document.querySelectorAll('.intro p')];
   const tunnel=document.createElement('div');tunnel.className='mission-tunnel';tunnel.setAttribute('aria-hidden','true');
-  const lines=Array.from({length:16},()=>{const line=document.createElement('i');tunnel.append(line);return line});document.body.append(tunnel);
+  const lines=Array.from({length:24},()=>{const line=document.createElement('i');tunnel.append(line);return line});document.body.append(tunnel);
   document.body.classList.add('flight');blocks.forEach(block=>block.classList.add('flight-block'));
-  let offsets=[],pending=false;
-  function draw(){
-    pending=false;
+  const clamp=v=>Math.max(0,Math.min(1,v)),ease=v=>v*v*(3-2*v);
+  let segment=1000,travel=0,speed=170,lastTime=performance.now(),lastScroll=scrollY;
+  function draw(now){
+    const dt=Math.min(.05,(now-lastTime)/1000);
+    const velocity=Math.abs(scrollY-lastScroll)/Math.max(.001,dt);
+    speed+=(170+Math.min(1800,velocity*.75)-speed)*(1-Math.exp(-dt*8));
+    travel+=speed*dt;
+    const stretch=Math.pow(clamp((speed-170)/1500),.8);
     blocks.forEach((block,i)=>{
-      const y=innerHeight*.38+scrollY-offsets[i];
-      const enter=Math.max(0,Math.min(1,(y+block.offsetHeight)/(innerHeight*.35)));
-      const leave=Math.max(0,Math.min(1,(innerHeight-y)/(innerHeight*.35)));
-      const visibility=Math.min(enter,leave);
-      const opacity=visibility*visibility*(3-2*visibility);
-      const scale=.9+.1*opacity;
+      const progress=(scrollY/segment+.45-i*1.25)/1.2;
+      const active=progress>=0&&progress<=1;
+      block.style.visibility=active?'visible':'hidden';
+      if(!active)return;
+      const y=innerHeight*.94-progress*(innerHeight*.94+block.offsetHeight*1.35);
+      const scale=progress<.55?.45+.55*(progress/.55):1+.18*((progress-.55)/.45);
       block.style.transform=`translate(-50%,${y}px) scale(${scale})`;
-      block.style.opacity=opacity;
+      block.style.opacity=ease(clamp(progress/.28))*(1-.3*ease(clamp((progress-.65)/.35)));
     });
     lines.forEach((line,i)=>{
-      const laneX=(i%8+.5)/8,slope=(laneX-.5)*.24,span=innerHeight*1.45;
-      const y=((i*173-scrollY*(.75+(i%3)*.22))%span+span)%span-innerHeight*.18;
-      const depth=Math.max(0,Math.min(1,(y+innerHeight*.18)/span));
-      line.style.height=(65+depth*230)+'px';line.style.opacity=.14+depth*.28;
+      const angle=(i%12+.5)/12*Math.PI,laneX=.5-Math.cos(angle)*.47;
+      const depthFactor=.35+.65*Math.abs(Math.cos(angle)),slope=(laneX-.5)*.16,span=innerHeight*1.45;
+      const y=((i*173-travel*(.45+depthFactor*.9))%span+span)%span-innerHeight*.18;
+      const depth=clamp((y+innerHeight*.18)/span);
+      line.style.height=(45+depth*180*depthFactor+stretch*innerHeight*.95*(.6+depthFactor*.4))+'px';
+      line.style.opacity=.08+depth*.28*depthFactor;
       line.style.transform=`translate(${innerWidth*laneX+slope*(y-innerHeight*.5)}px,${y}px) rotate(${-Math.atan(slope)}rad)`;
     });
+    lastTime=now;lastScroll=scrollY;requestAnimationFrame(draw);
   }
-  function layout(){let offset=0;offsets=blocks.map((block,i)=>{if(i)offset+=Math.max(innerHeight*.85,block.offsetHeight+innerHeight*.35);return offset});document.body.style.height=(offset+innerHeight*1.2)+'px';draw()}
-  addEventListener('scroll',()=>{if(!pending){pending=true;requestAnimationFrame(draw)}},{passive:true});
-  addEventListener('resize',layout);document.fonts.ready.then(layout);layout();
+  function layout(){segment=Math.max(850,innerHeight*1.3);document.body.style.height=(((blocks.length-1)*1.25+.3)*segment+innerHeight)+'px'}
+  addEventListener('resize',layout);document.fonts.ready.then(layout);layout();requestAnimationFrame(draw);
 }
 </script>
 </body>
