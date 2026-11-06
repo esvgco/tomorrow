@@ -114,9 +114,9 @@ body[data-burrow-flip]:not(.reading) .burrow-cards{visibility:hidden}
 
 .spoon-heading{position:relative;text-align:center}
 .spoon-reference{position:absolute;visibility:hidden;pointer-events:none;white-space:nowrap;left:0;top:0}
-.spoon-copy{display:inline-block}
+.spoon-copy{display:block;width:100%;text-align:center}
 .spoon-copy span{display:inline-block}
-.spoon-trigger{display:block;position:absolute;left:calc(50% + var(--spoon-text-width, 700px)/2 + 16px);bottom:0;margin:0;width:80px;height:70px;padding:0;border:0;background:none;color:#141414;cursor:pointer;z-index:3}
+.spoon-trigger{display:block;position:absolute;left:calc(50% + var(--spoon-text-width, 700px)/2 + 16px);bottom:-20px;margin:0;width:80px;height:70px;padding:0;border:0;background:none;color:#141414;cursor:pointer;z-index:3}
 .spoon-trigger svg{position:absolute;left:0;bottom:0;width:220px;height:70px;overflow:visible;transform-origin:40px 35px}
 .spoon-handle{transform:scaleX(0);transform-origin:50px 35px;transition:transform .45s cubic-bezier(.2,.8,.2,1)}
 .spoon-trigger:hover .spoon-handle,.spoon-trigger:focus-visible .spoon-handle,.spoon-revealed .spoon-handle{transform:scaleX(1)}
@@ -126,3 +126,6 @@ body[data-burrow-flip]:not(.reading) .burrow-cards{visibility:hidden}
 .spoon-open .spoon-trigger ellipse{transform:scaleY(1)}
 .spoon-story[hidden]{display:none}
 @media(prefers-reduced-motion:reduce){.spoon-handle{transition:none}}
+
+.spoon-hover-locked .spoon-trigger .spoon-handle{transform:scaleX(0)}
+.spoon-hover-locked .spoon-trigger ellipse{transform:scaleY(1)}

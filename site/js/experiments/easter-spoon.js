@@ -21,6 +21,7 @@ new ResizeObserver(positionSpoon).observe(reference);
 document.fonts.ready.then(positionSpoon);positionSpoon();
 async function transform(){
  if(busy)return;busy=true;open=!open;
+ section.classList.add('spoon-hover-locked');
  section.classList.toggle('spoon-open',open);
  section.classList.remove('spoon-revealed');
  button.setAttribute('aria-pressed',String(open));
@@ -31,6 +32,10 @@ async function transform(){
  await spin.finished;busy=false;
 }
 button.addEventListener('click',()=>{
- if(touch.matches&&!open&&!section.classList.contains('spoon-revealed')){section.classList.add('spoon-revealed');return}
+ if(touch.matches&&!open&&!section.classList.contains('spoon-revealed')){section.classList.remove('spoon-hover-locked');section.classList.add('spoon-revealed');return}
  transform();
 });
+
+button.addEventListener('pointerleave',()=>{if(!busy)section.classList.remove('spoon-hover-locked')});
+button.addEventListener('pointerenter',()=>{if(!busy)section.classList.remove('spoon-hover-locked')});
+button.addEventListener('blur',()=>{if(!busy)section.classList.remove('spoon-hover-locked')});
