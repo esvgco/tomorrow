@@ -41,7 +41,7 @@ if(FLIP){
   ['flair','Flair','An end-to-end clothing manufacturing platform.','https://www.melengo.com/'],
   ['numeric','Numeric','AI-powered accounting automation.','https://www.numeric.io/']
  ];
- projectFlight.innerHTML=projects.map(([id,name,description,url],i)=>`<article class="project-flyby"><img src="assets/projects/${id}.svg?v=original" alt="${name} logo"><h2>${name}</h2><p>${description}</p><a href="${url}" target="_blank" rel="noopener">Explore ${name} ↗</a></article>`).join('');
+ projectFlight.innerHTML=projects.map(([id,name,description,url],i)=>`<article class="project-flyby"><img src="assets/projects/${id}.svg?v=original" alt="${name} logo"><div class="project-copy"><h2>${name}</h2><p>${description}</p><a href="${url}" target="_blank" rel="noopener">Explore ${name} ↗</a></div></article>`).join('');
  body.append(projectFlight);
  for(const element of [$('#viewport'),$('#rabbit-dock'),$('#above')])flipScreen.append(element);
 }
@@ -178,10 +178,10 @@ if(!reading&&!roomOpen){
         card.hidden=!active;card.inert=!active;
         if(active){
           const progress=phase/1.2;
-          const y=innerHeight-(innerHeight+card.offsetHeight)*progress;
-          const x=mobile?50:[31,68,46,65,33,54][i];
-          card.style.left=x+'%';card.style.transform=`translate(-50%,${y}px) scale(${.9+progress*.15})`;
-          card.style.opacity=Math.min(clamp(progress/.12),clamp((1-progress)/.12));
+          const y=innerHeight*.5-card.offsetHeight*.5+(1-progress)*innerHeight*.12-progress*innerHeight*.12;
+          const x=mobile?50:[36,64,46,62,37,54][i];
+          card.style.left=x+'%';card.style.transform=`translate(-50%,${y}px) scale(${.55+progress*.55})`;
+          card.style.opacity=Math.min(ease(clamp(progress/.3)),ease(clamp((1-progress)/.22)));
         }
       });
 
