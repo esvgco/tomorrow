@@ -19,6 +19,7 @@ const material=(color)=>materials[color]??=(new THREE.MeshStandardMaterial({colo
 function box(w,h,d,x,y,z,color){const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material(color));mesh.position.set(x,y,z);mesh.receiveShadow=true;scene.add(mesh);return mesh}
 let portalGeometry;
 const wallPortals=[];
+let hoveredWall=null;
 function makePortalGeometry(font){
  // The opening is the actual counter of the same Areal Regular o used in the hero.
  const counter=shapesFor(font,'o',1).flatMap(shape=>shape.holes)[0];
@@ -32,7 +33,7 @@ function makePortalGeometry(font){
  geometry.scale(scale,scale,1);
  return geometry;
 }
-function portal(x,y,z,rotation=0){const mesh=new THREE.Mesh(portalGeometry,new THREE.MeshBasicMaterial({color:0x141414,side:THREE.DoubleSide}));mesh.position.set(x,y,z);mesh.rotation.y=rotation;scene.add(mesh);wallPortals.push(mesh);return mesh}
+function portal(x,y,z,rotation=0){const mesh=new THREE.Mesh(portalGeometry.clone(),new THREE.MeshBasicMaterial({color:0x141414,side:THREE.DoubleSide}));mesh.position.set(x,y,z);mesh.rotation.y=rotation;mesh.userData.rest=mesh.geometry.attributes.position.array.slice();mesh.userData.wave=0;scene.add(mesh);wallPortals.push(mesh);return mesh}
 async function loadRabbit(){
  if(rabbitTexture)return;
  const source=new DOMParser().parseFromString(MARK_SVG,'image/svg+xml');
@@ -49,12 +50,17 @@ function makeBackPortal(font){
  const pad=24,width=320,height=Math.ceil((width-pad*2)*h/w+pad*2),scale=(width-pad*2)/w;
  function path(points){const p=new Path2D();points.forEach((v,i)=>{const x=pad+(v.x-minX)*scale,y=pad+(maxY-v.y)*scale;i?p.lineTo(x,y):p.moveTo(x,y)});p.closePath();return p}
  const outline=path(outer);
- function tex(hover){const c=document.createElement('canvas');c.width=width;c.height=height;const ctx=c.getContext('2d');ctx.fillStyle='#111';if(hover){ctx.shadowColor='#111';ctx.shadowBlur=8}ctx.fill(outline);const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return t}
+ function tex(hover){const c=document.createElement('canvas');c.width=width;c.height=height;const ctx=c.getContext('2d');ctx.fillStyle='#111';if(hover)ctx.filter='blur(5px)';ctx.fill(outline);const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return t}
  const geometry=new THREE.PlaneGeometry(1.25*w/h*width/(width-pad*2),1.25*height/(height-pad*2));
- const normal=new THREE.Mesh(geometry,new THREE.MeshBasicMaterial({map:tex(false),transparent:true,depthTest:true,depthWrite:false}));
+ const material=new THREE.ShaderMaterial({
+  uniforms:{sharp:{value:tex(false)},soft:{value:tex(true)},hover:{value:0}},
+  vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',
+  fragmentShader:'uniform sampler2D sharp;uniform sampler2D soft;uniform float hover;varying vec2 vUv;void main(){float alpha=mix(texture2D(sharp,vUv).a,texture2D(soft,vUv).a,hover);gl_FragColor=vec4(vec3(0.067),alpha);}',
+  transparent:true,depthTest:true,depthWrite:false
+ });
+ const normal=new THREE.Mesh(geometry,material);
  normal.position.set(0,2.23,.03);normal.rotation.y=Math.PI;normal.renderOrder=10;
- portalFill=new THREE.Mesh(geometry,new THREE.MeshBasicMaterial({map:tex(true),transparent:true,opacity:0,depthTest:true,depthWrite:false}));portalFill.position.copy(normal.position);portalFill.rotation.copy(normal.rotation);portalFill.renderOrder=11;
- easel.add(normal,portalFill);return normal;
+ portalFill=normal;easel.add(normal);return normal;
 }
 function init(){
  if(renderer)return;
@@ -115,12 +121,26 @@ function animate(){
  const k=reduced.matches?1:.09;
  angle+=(target-angle)*k;approach+=(approachTarget-approach)*k;
  hoverAmount+=((portalHover?1:0)-hoverAmount)*(reduced.matches?1:.16);
- if(portalFill){portalFill.material.opacity=hoverAmount;backPortal.material.opacity=1-hoverAmount}
+ if(portalFill)portalFill.material.uniforms.hover.value=hoverAmount;
+ let wallMoving=false;
+ const time=performance.now()/1000;
+ for(const wall of wallPortals){
+  const goal=wall===hoveredWall&&!reduced.matches?1:0;
+  wall.userData.wave+=(goal-wall.userData.wave)*.09;
+  const strength=wall.userData.wave;
+  const positions=wall.geometry.attributes.position,rest=wall.userData.rest;
+  for(let i=0;i<positions.count;i++){
+   const x=rest[i*3],y=rest[i*3+1];
+   positions.setXY(i,x+strength*.035*Math.sin(y*3.2+time*1.7),y+strength*.028*Math.sin(x*4-time*1.3));
+  }
+  positions.needsUpdate=true;
+  wallMoving ||= goal>0||strength>.001;
+ }
  pose(angle);draw();
- if(Math.abs(target-angle)>.0001||Math.abs(approachTarget-approach)>.0001||Math.abs((portalHover?1:0)-hoverAmount)>.001)raf=requestAnimationFrame(animate);else raf=0;
+ if(wallMoving||Math.abs(target-angle)>.0001||Math.abs(approachTarget-approach)>.0001||Math.abs((portalHover?1:0)-hoverAmount)>.001)raf=requestAnimationFrame(animate);else raf=0;
 }
 function wake(){if(!raf)raf=requestAnimationFrame(animate)}
-function setView(n){closeMode=false;approachTarget=0;portalHover=false;angle=Math.atan2(Math.sin(angle),Math.cos(angle));target=angles[n];views.forEach((v,i)=>v.setAttribute('aria-pressed',String(i===n)));wake()}
+function setView(n){hoveredWall=null;closeMode=false;approachTarget=0;portalHover=false;angle=Math.atan2(Math.sin(angle),Math.cos(angle));target=angles[n];views.forEach((v,i)=>v.setAttribute('aria-pressed',String(i===n)));wake()}
 function prepareFlight(n){
  const b=entries[n].getBoundingClientRect(),h=document.querySelector('#opening h1'),r=h.getBoundingClientRect();
  // A screen-space copy avoids disturbing the existing scroll camera while we cross the letter.
@@ -177,17 +197,18 @@ function pointRay(e){const r=host.getBoundingClientRect();pointer.set((e.clientX
 host.addEventListener('pointerdown',e=>{if(busy)return;drag={x:e.clientX,y:e.clientY,a:target,moved:false};host.setPointerCapture(e.pointerId)});
 host.addEventListener('pointermove',e=>{
  if(!renderer||busy)return;
- if(drag){const dx=e.clientX-drag.x;if(Math.hypot(dx,e.clientY-drag.y)>6)drag.moved=true;target=limitAngle(drag.a-dx/host.clientWidth*Math.PI*2);views.forEach(v=>v.setAttribute('aria-pressed','false'));portalHover=false;wake();return}
+ if(drag){const dx=e.clientX-drag.x;if(Math.hypot(dx,e.clientY-drag.y)>6)drag.moved=true;target=limitAngle(drag.a-dx/host.clientWidth*Math.PI*2);views.forEach(v=>v.setAttribute('aria-pressed','false'));portalHover=false;hoveredWall=null;wake();return}
  pointRay(e);const hit=closeMode&&camera.position.z<easel.position.z-.12&&ray.intersectObject(backPortal).length>0;
- if(portalHover!==hit){portalHover=hit;wake()}
- host.style.cursor=hit||wallPortalHit()?'pointer':!closeMode&&ray.intersectObjects(easel.children,true).length?'pointer':'grab';
+ const wall=e.pointerType==='touch'?null:wallPortalHit();
+ if(portalHover!==hit||hoveredWall!==wall){portalHover=hit;hoveredWall=wall;wake()}
+ host.style.cursor=hit||wall?'pointer':!closeMode&&ray.intersectObjects(easel.children,true).length?'pointer':'grab';
 });
 host.addEventListener('pointerup',e=>{if(!drag)return;const clicked=!drag.moved;drag=null;if(!clicked||busy)return;pointRay(e);
  const wall=wallPortalHit();if(wall){returnThroughWall(wall);return}
  if(!closeMode){if(ray.intersectObjects(easel.children,true).length)approachEasel();return}
  if(camera.position.z<easel.position.z-.12&&ray.intersectObject(backPortal).length)through();
 });
-host.addEventListener('pointerleave',()=>{portalHover=false;wake()});
+host.addEventListener('pointerleave',()=>{portalHover=false;hoveredWall=null;wake()});
 host.addEventListener('pointercancel',()=>drag=null);
 addEventListener('resize',resize);
 
