@@ -20,6 +20,7 @@ const panels=[...document.querySelectorAll('[data-panel]')],N=panels.length,LAST
 const TOP=body.classList.contains('rabbit-top');
 const FLIP=body.hasAttribute('data-burrow-flip');
 let flipScreen,projectFlight,tunnelLines=[],bootFontsReady=!FLIP;
+let flipHoldUntil=0,flipHeld=false;
 let tunnelTravel=0,tunnelSpeed=170,tunnelLastTime=performance.now(),tunnelLastScroll=scrollY;
 if(FLIP)document.fonts.ready.then(()=>{bootFontsReady=true;scrollTo(0,0);layout();lastKey=''});
 if(FLIP){
@@ -160,6 +161,9 @@ async function enterRoom(){if($('#last-heading').hasAttribute('data-letter-porta
 function leaveRoom(){if(!roomOpen)return;roomOpen=false;$('#room').hidden=true;viewport.inert=false;$('#last-heading').focus({preventScroll:true})}
 $('#leave-room').onclick=leaveRoom;$('#room-tomorrow').onclick=()=>tomorrow(reset);
 {const h=$('#last-heading');h.onpointerenter=()=>hoverLast=!h.hasAttribute('data-letter-portals');h.onpointerleave=()=>hoverLast=false;h.onclick=()=>{if(!h.hasAttribute('data-letter-portals'))enterRoom()};h.onkeydown=e=>{if(!h.hasAttribute('data-letter-portals')&&e.key==='Enter'){e.preventDefault();enterRoom()}}}
+// Let the flipped title settle before accepting another scroll gesture.
+for(const type of ['wheel','touchmove'])addEventListener(type,e=>{if(FLIP&&performance.now()<flipHoldUntil)e.preventDefault()},{passive:false});
+addEventListener('keydown',e=>{if(FLIP&&performance.now()<flipHoldUntil&&['ArrowDown','ArrowUp','PageDown','PageUp',' ','End','Home'].includes(e.key))e.preventDefault()});
 addEventListener('wheel',e=>{if(reading||e.ctrlKey||document.querySelector('dialog[open]'))return;if(roomOpen||roomEntering){e.preventDefault();return}if(hoverLast&&u>START-.3&&u<START+SINK&&e.deltaY<0){e.preventDefault();enterRoom()}},{passive:false});
 addEventListener('keydown',e=>{if(roomOpen){if(e.key==='Escape'){leaveRoom();e.preventDefault()}if(e.key==='Tab'){e.preventDefault();(document.activeElement===$('#leave-room')?$('#room-tomorrow'):$('#leave-room')).focus()}}});
 mountGaps((x,y)=>{if(reading){tomorrow();return}viewport.style.transformOrigin=`${x}px ${y}px`;const a=viewport.animate([{transform:'scale(1)'},{transform:'scale(20)',opacity:0}],{duration:reduced?1:650,fill:'forwards',easing:'cubic-bezier(.6,0,1,1)'});a.onfinish=()=>{tomorrow(()=>{a.cancel()})}});
@@ -204,6 +208,12 @@ function camera(u=window.__u??0){
 function frame(){
 if(warming||!bootFontsReady){requestAnimationFrame(frame);return}
 if(!reading&&!roomOpen){
+  if(FLIP){
+    const threshold=START+SINK,now=performance.now();
+    if(scrollY/segment<threshold-.1)flipHeld=false;
+    if(!flipHeld&&scrollY/segment>=threshold){flipHeld=true;flipHoldUntil=now+1212}
+    if(now<flipHoldUntil)scrollTo({top:threshold*segment,behavior:'instant'});
+  }
   u=clamp(scrollY/segment,0,TOTAL);window.__u=u;
   if(finalHole){
     const settled=u>=TOTAL-.015&&up===0;
@@ -225,7 +235,7 @@ if(!reading&&!roomOpen){
     panels.forEach((p,j)=>{const [ox,oy,h,oyo]=origins[j],k=Z*scales[j],y=Z*(oy+(FLIP&&j===7?cy-centres[j]:centres[j]-cy))+lower;const top=y-oyo*k,bottom=y+(h-oyo)*k;
       const far=k<.004||bottom<-half||top>half||(j>LAST&&!inHole);if(far!==p.hasAttribute('hidden-far'))far?p.setAttribute('hidden-far',''):p.removeAttribute('hidden-far');
       if(!far&&j===LAST&&p.querySelector('[data-letter-portals]'))p.querySelectorAll('[data-letter-portals], .contact-link').forEach(element=>{element.style.transform=`translateY(${-60/k}px)`});
-      if(!far)p.style.transform=`translate3d(${Z*ox-ox}px,${y-oy-(FLIP&&j===LAST?clamp((u-START-SINK)/.65)*innerHeight*.95:0)}px,0) scale(${k})${FLIP&&inHole&&j>LAST?' rotate(180deg)':''}`;if(p.inert!==far)p.inert=far});
+      if(!far)p.style.transform=`translate3d(${Z*ox-ox}px,${y-oy+(FLIP&&j===LAST?clamp((u-START-SINK)/.65)*innerHeight*.95:0)}px,0) scale(${k})${FLIP&&inHole&&j>LAST?' rotate(180deg)':''}`;if(p.inert!==far)p.inert=far});
     // The dock until the rabbit is gone; from then on, the hole belongs to the wall.
     if(!TOP)dock.style.visibility=inHole&&!FLIP?'hidden':'';
     if(FLIP){

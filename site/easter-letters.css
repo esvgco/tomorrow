@@ -55,7 +55,7 @@
 .letter-entry[data-entry="7"].rippling{filter:url(#letter-wave-7)}
 .letter-entry[data-entry="8"].rippling{filter:url(#letter-wave-8)}
 
-.burrow-flip-screen{position:fixed;inset:0;transform:rotate(0deg);transform-origin:50% 50%;transition:transform 260ms cubic-bezier(.76,0,.24,1)}
+.burrow-flip-screen{position:fixed;inset:0;transform:rotate(0deg);transform-origin:50% 50%;transition:transform 312ms cubic-bezier(.76,0,.24,1)}
 .burrow-flip-screen.flipped{transform:rotate(180deg)}
 @media(prefers-reduced-motion:reduce){.burrow-flip-screen{transition:none}}
 
@@ -69,7 +69,7 @@ body[data-burrow-flip]{background:#fff}
 .burrow-flip-screen::before{content:"";position:absolute;left:50%;top:50%;width:100%;height:100%;transform:translate(-50%,-50%);z-index:-1;pointer-events:none;transition:width 360ms cubic-bezier(.76,0,.24,1),height 360ms cubic-bezier(.76,0,.24,1)}
 .inside-burrow .burrow-flip-screen::before{background:#000;width:142vmax;height:142vmax}
 .inside-burrow #viewport{filter:invert(1)}
-.burrow-tunnel{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:6;opacity:0;transition:opacity 260ms ease;mask-image:linear-gradient(to right,#000,rgba(0,0,0,.45) 40%,rgba(0,0,0,.45) 60%,#000)}
+.burrow-tunnel{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:6;opacity:0;transition:opacity 312ms ease;mask-image:linear-gradient(to right,#000,rgba(0,0,0,.45) 40%,rgba(0,0,0,.45) 60%,#000)}
 .inside-burrow .burrow-tunnel{opacity:1}
 .burrow-tunnel i{position:absolute;top:0;width:1px;background:linear-gradient(transparent,#fff 25%,#fff 75%,transparent);will-change:transform}
 @media(prefers-reduced-motion:reduce){.burrow-tunnel{display:none}.burrow-flip-screen::before{transition:none}}
