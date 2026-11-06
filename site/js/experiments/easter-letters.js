@@ -153,11 +153,11 @@ function prepareFlight(n){
  const zoom=Math.max(innerWidth/b.width,innerHeight/(b.height*.42))*2.8;
  return `translate(${innerWidth/2-cx}px,${innerHeight/2-cy}px) scale(${zoom})`;
 }
-async function enter(n){
+async function enter(n,{fly=true}={}){
  const viewIndex=n===3?1:n;
  if(busy||dialog.open)return;busy=true;entry=n;returnEntry=n;scrollBefore=scrollY;oldOverflow=document.documentElement.style.overflow;
- const zoomTransform=prepareFlight(n);
- const animation=flight.animate([{transform:'scale(1)',opacity:1},{transform:zoomTransform,opacity:1}],{duration:reduced.matches?1:1100,easing:'cubic-bezier(.7,0,.6,1)',fill:'forwards'});
+ const zoomTransform=fly?prepareFlight(n):null;
+ const animation=fly?flight.animate([{transform:'scale(1)',opacity:1},{transform:zoomTransform,opacity:1}],{duration:reduced.matches?1:1100,easing:'cubic-bezier(.7,0,.6,1)',fill:'forwards'}):{finished:Promise.resolve(),cancel(){}};
  document.documentElement.style.overflow='hidden';
  try{const [,fonts]=await Promise.all([animation.finished,arealFonts,loadRabbit()]);portalFont=fonts[0];portalGeometry??=makePortalGeometry(fonts[0]);closeMode=false;approach=approachTarget=0;portalHover=false;hoverAmount=0;dialog.showModal();init();angle=target=angles[viewIndex];resize();setView(viewIndex);history.pushState({...history.state,letterGallery:true},'',location.href);historyActive=true;entries[n].classList.add('visited');dialog.querySelector('.gallery-back').focus();}
  catch(error){console.error('Letter room could not open',error);dialog.close();document.documentElement.style.overflow=oldOverflow;}
@@ -239,8 +239,12 @@ entries.forEach((button,index)=>{
  if(mobileLetters.matches&&!reduced.matches)syncMotion();
  button.addEventListener('pointerenter',begin);button.addEventListener('pointerleave',end);button.addEventListener('focus',begin);button.addEventListener('blur',end);button.addEventListener('click',end);
 });
+// Consume the return address once: reloads always start on the homepage.
 if(new URLSearchParams(location.search).get('room')==='back'){
- document.fonts.ready.then(async()=>{await enter(1);closeMode=true;approach=approachTarget=1;angle=target=Math.PI;views.forEach(v=>v.setAttribute('aria-pressed','false'));pose(angle);draw()});
+ const url=new URL(location.href);url.searchParams.delete('room');
+ history.replaceState(history.state,'',url);
+ const navigation=performance.getEntriesByType('navigation')[0];
+ if(navigation?.type!=='reload')document.fonts.ready.then(async()=>{await enter(1,{fly:false});closeMode=true;approach=approachTarget=1;angle=target=Math.PI;views.forEach(v=>v.setAttribute('aria-pressed','false'));pose(angle);draw()});
 }
 
 // Fill the actual o counter on hover, using the font outline and baseline metrics.
