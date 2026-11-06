@@ -1,4 +1,4 @@
-/* The title keeps 04.7's typesetting. Only its three counters become entrances. */
+/* The title keeps 04.6's typesetting. Only its three counters become entrances. */
 .letter-entry{display:inline;padding:0;margin:0;border:0;background:none;color:inherit;font:inherit;letter-spacing:inherit;line-height:inherit;position:relative;cursor:default}
 .letter-entry:focus-visible{outline:1px dotted #888;outline-offset:4px}
 .letter-entry[data-entry="0"].rippling{filter:url(#letter-wave-0)}
@@ -33,3 +33,5 @@
 @media(prefers-reduced-motion:reduce){.letter-counter{transition:none}}
 
 .letter-flight .flight-entry .letter-counter{opacity:1;transition:none}
+/* Keep Tomorrow on one line even though its o glyphs are separate buttons. */
+#opening h1{white-space:nowrap}
