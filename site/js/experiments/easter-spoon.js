@@ -7,7 +7,9 @@ let open=false,busy=false;
 function setLetters(text){
  copy.replaceChildren(...[...text].map(char=>{
   if(char==='\n')return document.createElement('br');
-  const span=document.createElement('span');span.textContent=char===' '?'\u00a0':char;return span;
+  const span=document.createElement('span');span.textContent=char===' '?'\u00a0':char;
+  if(char==='.')span.classList.add('spoon-period');
+  return span;
  }));
 }
 setLetters('Not everything\nfits a category');

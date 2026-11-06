@@ -129,3 +129,6 @@ body[data-burrow-flip]:not(.reading) .burrow-cards{visibility:hidden}
 
 .spoon-hover-locked .spoon-trigger .spoon-handle{transform:scaleX(0)}
 .spoon-hover-locked .spoon-trigger ellipse{transform:scaleY(1)}
+
+/* Hanging punctuation keeps the words optically centered. */
+.spoon-copy .spoon-period{width:0;overflow:visible;text-align:left}
