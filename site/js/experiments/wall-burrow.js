@@ -34,14 +34,31 @@ const LENS=reduced?0:Math.max(0,parseFloat(new URLSearchParams(location.search).
 // While the rabbit waits at the foot of the window, the wall comes up to it out of nothing:
 // a white mist lies over the foot of the wall, under the rabbit, and lifts as it goes down.
 const mist=document.createElement('div');mist.className='foot-mist';dock.before(mist);
-const glw=LENS?mountWallGL(viewport,panels,{flare:.9*LENS}):null;
-if(!glw)body.classList.remove('wall-gl');
+// 04.12 (body.lean): the same page with nothing left for the browser to do while it moves.
+//   - The rabbit and the mist are drawn in WebGL too, so the page itself does not change.
+//   - Moving, the wall is drawn at three quarters of the resolution; at rest, at all of it.
+//   - The loop stops when nothing moves and starts again at the first touch.
+//   - The chapters in the page, there for the pointer, are not moved at all until the
+//     pointer comes down; and a click is passed on to what is seen under it, through the lens.
+let lean=body.classList.contains('lean')&&!reduced,running=false,awakeUntil=0;
+function wake(){awakeUntil=performance.now()+300;if(!running){running=true;requestAnimationFrame(frame)}}
+const glw=LENS?mountWallGL(viewport,panels,{flare:.9*LENS,lean,onWork:wake}):null;
+if(!glw){body.classList.remove('wall-gl','lean');lean=false}
+// The rabbit, drawn as the mark draws it: the hole lifted by how far it has sunk, and the
+// head cut off at the middle of the hole.
+const hareState={sc:1,sink:0,color:'#000'},bunPaths=[...mark.svg.querySelectorAll('#tc-bun path')].map(p=>new Path2D(p.getAttribute('d'))),holePath=new Path2D(mark.svg.querySelector('#tc-holeshape').getAttribute('d'));
+const hare=lean?glw.front(ctx=>{const {sc,sink}=hareState,dy=-depth*sink;ctx.save();ctx.scale(sc,sc);ctx.translate(-882,-264);ctx.fillStyle=hareState.color;
+  ctx.save();ctx.translate(0,dy);ctx.fill(holePath);ctx.restore();
+  ctx.beginPath();ctx.rect(bb.x-bb.width,bb.y-bb.width+dy,bb.width*3,hb.y+hb.height/2-bb.y+bb.width);ctx.clip();for(const p of bunPaths)ctx.fill(p);ctx.restore()},10,10):null;
 // Sprites: the cards and the pages move by themselves inside the hole's chapter.
 const cardSprite=cards.map(c=>glw?.sprite(c,HOLE,{funnel:true})),pageSprite=pages.map(p=>glw?.sprite(p,HOLE,{rest:1.1}));
 const fallHost=$('[data-fall]'),fallLayer=glw?.paint(fallHost,1,170),fall=mountFall(fallHost,{center:true,paint:fallLayer?list=>fallLayer.set(list):null});
 // Where the page's own elements should be. In WebGL they are only there for the pointer, so
 // they are moved once the camera has come to rest, not on every frame.
 const settle=new Map(),move=(el,t)=>{if(glw)settle.set(el,t);else el.style.transform=t};
+const place=()=>{settle.forEach((t,el)=>el.style.transform=t);settle.clear()};
+// The chapter with the edit in it: the one the page reads at rest (watchEdit).
+const edited=$('[data-edit]')?.closest('[data-panel]'),editedAt=panels.indexOf(edited);let editNear=false;
 // Written only when it differs: a write inside a chapter makes WebGL read the chapter again.
 const put=(el,o)=>{for(const k in o)if(el.style[k]!==o[k])el.style[k]=o[k]};
 
@@ -49,7 +66,7 @@ const put=(el,o)=>{for(const k in o)if(el.style[k]!==o[k])el.style[k]=o[k]};
 // wide the hole is; y0: where on the window it waits; sink: how far the mark lifts its hole.
 const rabbit={hx:0,hy:0,wide:0,y0:0,sink:0};
 // Places inside the hole's chapter, in its own pixels.
-let holeAt=[0,0],holeWide=0,rest=[],pageSize=[1100,650],pageFit=1,pagePose=[0,0,1],pageCam=[1,0,0];
+let mistAt=[0,1],holeAt=[0,0],holeWide=0,rest=[],pageSize=[1100,650],pageFit=1,pagePose=[0,0,1],pageCam=[1,0,0];
 function layout(force){
   const iw=innerWidth;
   // A phone's toolbar comes and goes while scrolling and changes the height of the window.
@@ -66,8 +83,10 @@ function layout(force){
   const wH=(mobile?Math.min(iw*.24,100):Math.min(iw*.11,150))*.84,sc=wH/hb.width,y0=ih-ih*.05-hb.height/2*sc;
   Object.assign(rabbit,{hx:(hb.x+hb.width/2-882)*sc,hy:(hb.y+hb.height/2-264)*sc,wide:wH,y0,sink:depth*sc});
   Object.assign(dock.style,{width:932*sc+'px',height:1251*sc+'px'});
+  hareState.sc=sc;hareState.color=getComputedStyle(dock).color;hare?.size(932*sc,1251*sc,hb.height*sc*1.2);hare?.again();
   // The mist reaches from a little above the ears to below the window, however tall it gets.
   const mh=ih-(y0+hb.height/2*sc-depth*sc)+(mobile?70:110),stop=(a,f)=>`rgba(255,255,255,${a}) ${(mh*f).toFixed(0)}px`;
+  mistAt=[ih-mh,mh];
   Object.assign(mist.style,{top:ih-mh+'px',height:mh+240+'px',background:`linear-gradient(to bottom,${stop(0,0)},${stop(.04,.05)},${stop(.18,.13)},${stop(.45,.23)},${stop(.74,.32)},${stop(.93,.41)},${stop(1,.5)},#fff 100%)`});
   // The hole as a chapter: the size and place that project exactly onto the waiting hole
   // when the camera is at the last screen.
@@ -115,12 +134,12 @@ const slug=k=>'project-'+pages[k].dataset.slug,named=()=>pages.findIndex((p,k)=>
 function openProject(k,instant=false){
   if(reading||roomOpen||open===k&&aim===1)return;
   if(open<0||shown===0)open=k;else if(open!==k)return;
-  aim=1;openedAt=scrollY;if(instant)shown=1;
+  aim=1;openedAt=scrollY;if(instant)shown=1;wake();
   if(location.hash!=='#'+slug(k)){history.pushState({project:k},'','#'+slug(k));pushed=true}
   lastKey='';
 }
 function closeProject(viaHistory=false){
-  if(open<0||aim===0)return;aim=0;lastKey='';
+  if(open<0||aim===0)return;aim=0;lastKey='';wake();
   if(!viaHistory&&location.hash==='#'+slug(open)){if(pushed){pushed=false;history.back()}else history.replaceState(null,'',location.pathname+location.search)}
 }
 $$('[data-open]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();const k=+b.dataset.open;
@@ -146,8 +165,8 @@ const above=$('#above'),TILT=62*Math.PI/180;
 const inv=(a,b,v)=>clamp((v-a)/(b-a));
 const beyond={el:$('#beyond'),far:$('#beyond .beyond-far'),rooms:$$('#beyond .chamber').map(el=>({el,c:+el.dataset.c,span:+el.dataset.span||1.05,on:null})),p:0,aim:null,active:false,done:null,key:''};
 beyond.max=beyond.rooms[beyond.rooms.length-1].c;
-beyond.enter=done=>{beyond.done=done;beyond.p=-.8;beyond.aim=0;beyond.active=true;beyond.key='';beyond.el.hidden=false};
-beyond.close=()=>{beyond.active=false;beyond.el.hidden=true;beyond.done?.()};
+beyond.enter=done=>{wake();beyond.done=done;beyond.p=-.8;beyond.aim=0;beyond.active=true;beyond.key='';beyond.el.hidden=false};
+beyond.close=()=>{wake();beyond.active=false;beyond.el.hidden=true;beyond.done?.()};
 beyond.leave=()=>{if(beyond.active){beyond.close();lastKey=''}};
 beyond.on=()=>{if(!beyond.active)return;beyond.active=false;tomorrow(()=>{beyond.close();up=0;scrollTo(0,0);lastKey='';lastMark=''})};
 beyond.step=d=>{if(!beyond.active)return;beyond.aim=null;beyond.p+=d;if(beyond.p<-.85)beyond.leave();else if(beyond.p>beyond.max+.62)beyond.on()};
@@ -168,7 +187,7 @@ function lookUp(){
   above.classList.toggle('shown',a>0);above.classList.toggle('drawable',up>=1);
   above.style.transform=up>=1?'':`perspective(${P}px) translateZ(${P}px) rotateX(${a-TILT}rad) translateZ(${-P}px)`;
 }
-function lift(d){const before=up;up=clamp(up+d,0,1);if(up!==before)lastKey=''}
+function lift(d){const before=up;up=clamp(up+d,0,1);if(up!==before){lastKey='';wake()}}
 addEventListener('wheel',e=>{if(reading||roomOpen||document.querySelector('dialog[open]'))return;
   if(beyond.active){e.preventDefault();beyond.step(e.deltaY*(e.deltaMode===1?16:1)/700);return}
   if(up>0||(scrollY<=0&&e.deltaY<0)){e.preventDefault();lift(-e.deltaY*(e.deltaMode===1?16:1)/(innerHeight*1.4))}},{passive:false});
@@ -187,7 +206,20 @@ addEventListener('keydown',e=>{if(reading||roomOpen||document.querySelector('dia
   if(beyond.active){if(e.key==='Escape'){e.preventDefault();beyond.leave()}else if(['ArrowDown','PageDown',' '].includes(e.key)){e.preventDefault();beyond.step(.34)}else if(['ArrowUp','PageUp'].includes(e.key)){e.preventDefault();beyond.step(-.34)}return}
   if((e.key==='ArrowUp'||e.key==='PageUp')&&scrollY<=0&&up<1){e.preventDefault();lift(e.key==='PageUp'?.5:.15)}
   else if((e.key==='ArrowDown'||e.key==='PageDown'||e.key===' ')&&up>0){e.preventDefault();lift(e.key==='ArrowDown'?-.15:-.5)}});
-$('#above-back').onclick=()=>{const from=up,t0=performance.now();const step=now=>{const k=clamp((now-t0)/900);up=from*(1-ease(k));lastKey='';if(k<1)requestAnimationFrame(step)};requestAnimationFrame(step)};
+$('#above-back').onclick=()=>{const from=up,t0=performance.now();const step=now=>{const k=clamp((now-t0)/900);up=from*(1-ease(k));lastKey='';wake();if(k<1)requestAnimationFrame(step)};requestAnimationFrame(step)};
+
+// ---------- Lean: waking, and the pointer ----------
+if(lean){
+  for(const type of ['scroll','resize','wheel','touchstart','touchmove','keydown','pointerdown','popstate','focusin','click'])addEventListener(type,wake,{passive:true,capture:true});
+  // The chapters are put where they are seen only now, when something is about to be touched.
+  for(const type of ['pointerdown','touchstart','focusin'])addEventListener(type,()=>{if(!reading)place()},{passive:true,capture:true});
+  // What is seen under the pointer is not where the page has it: the lens moved it sideways.
+  // A click inside the lens is taken, and given to the element that is seen there.
+  let passing=false;
+  viewport.addEventListener('click',e=>{if(passing||reading||!e.isTrusted)return;const x=glw.unbend(e.clientX,e.clientY);if(Math.abs(x-e.clientX)<1.5)return;
+    place();const el=document.elementFromPoint(x,e.clientY);if(!el||!viewport.contains(el))return;
+    e.stopPropagation();e.preventDefault();passing=true;el.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,view:window,clientX:x,clientY:e.clientY}));passing=false},true);
+}
 
 // ---------- The camera ----------
 // [Z, cx, cy]: a point (X, Y) of the wall is seen at (iw/2 + Z(X-cx), VH/2 + Z(Y-cy) + lower).
@@ -213,6 +245,7 @@ function camera(){
 }
 function frame(now){
 if(warming){requestAnimationFrame(frame);return}
+if(now==null)now=performance.now();
 const gap=now-clock||16,dt=Math.min(64,gap),t0=hud?performance.now():0;clock=now;
 if(!reading&&!roomOpen){
   u=clamp(scrollY/segment,0,TOTAL);
@@ -223,12 +256,13 @@ if(!reading&&!roomOpen){
     if(shown===1&&before<1)pages[open].querySelector('footer [data-back]').focus({preventScroll:true});
     if(shown===0&&!aim){open=-1;lastKey=''}}
   const key=`${u}|${up}|${shown}|${open}|${wide}|${VH}`;
-  if(key!==lastKey){lastKey=key;
+  const changed=key!==lastKey;
+  if(changed){lastKey=key;
     const iw=wide,ih=VH,[Z,cx,cy]=camera(),half=(glw?.height||ih)/2+ih*.2,gone=u>=START+REL,e=open>=0?ease(shown):0,wall=1-ease(clamp(e*1.6));
     panels.forEach((p,j)=>{const [ox,oy,h,oyo]=origins[j],k=Z*scales[j],x=Z*(ox-cx)-ox,y=Z*(oy+centres[j]-cy)+lower;const top=y-oyo*k,bottom=y+(h-oyo)*k;
       const far=k<.004||(j!==HOLE||!e)&&(bottom<-half||top>half)||(j>LAST&&!gone&&!e)||(j!==HOLE&&wall<.004);if(far!==p.hasAttribute('hidden-far'))far?p.setAttribute('hidden-far',''):p.removeAttribute('hidden-far');
       // At a page only the hole's chapter is left of the wall: the rest would be in the way.
-      glw?.panel(j,x,y-oy,k,far,j===HOLE?1:wall);if(!far)move(p,glw?`translate(${x}px,${y-oy}px) scale(${k})`:`translate3d(${x}px,${y-oy}px,0) scale(${k})`);if(!glw&&j!==HOLE)p.style.opacity=wall===1?'':wall.toFixed(3);if(p.inert!==far)p.inert=far});
+      glw?.panel(j,x,y-oy,k,far,j===HOLE?1:wall);if(!far)move(p,glw?`translate(${x}px,${y-oy}px) scale(${k})`:`translate3d(${x}px,${y-oy}px,0) scale(${k})`);if(!glw&&j!==HOLE)p.style.opacity=wall===1?'':wall.toFixed(3);if(p.inert!==far)p.inert=far;if(j===editedAt)editNear=!far&&k>fit*.45&&k<fit*2.4});
     lookUp();
     // The rabbit goes down as the last screen arrives. Then its hole lets go of the window:
     // over REL it slides from where it waited to where the hole on the wall now is, and
@@ -236,14 +270,20 @@ if(!reading&&!roomOpen){
     const going=clamp((u-(START-LEAD))/(LEAD+REL*.7)),flat=1-ease(clamp(up/.3)),t=u-START-REL,sink=Math.max(ease(going),ease(clamp(up/.35)));
     const [ox6,oy6,,oyo6,,oxo6]=origins[HOLE],k6=Z*scales[HOLE],holeY=ih/2+Z*(oy6+centres[HOLE]-cy)+lower+k6*(holeAt[1]-oyo6),holeX=iw/2+Z*(ox6-cx)+k6*(holeAt[0]-oxo6);
     const letGo=ease(clamp((u-START)/REL)),S=1+(k6*holeWide/rabbit.wide-1)*letGo,dy=rabbit.y0+(holeY-rabbit.y0)*letGo;
-    const m=`${sink.toFixed(4)}|${S.toFixed(4)}|${dy.toFixed(2)}`;if(m!==lastMark){lastMark=m;mark.set(sink,0,1);dock.style.transform=`translate(${iw/2-S*rabbit.hx}px,${dy-S*(rabbit.hy-rabbit.sink*sink)}px) scale(${S})`}
-    dock.style.visibility=gone?'hidden':'';
+    // Lean: the rabbit is a picture in front of the wall. Only while the head is raised is
+    // it the page's own again, because then the wall tilts and the rabbit must not.
+    const drawn=lean&&up===0,m=`${sink.toFixed(4)}|${S.toFixed(4)}|${dy.toFixed(2)}|${drawn}`;
+    if(m!==lastMark){lastMark=m;const x=iw/2-S*rabbit.hx,y=dy-S*(rabbit.hy-rabbit.sink*sink);
+      if(drawn){if(hareState.sink!==sink){hareState.sink=sink;hare.again()}hare.set(x,y,S,1)}
+      else{mark.set(sink,0,1);dock.style.transform=`translate(${x}px,${y}px) scale(${S})`}}
+    if(lean)hare.set(...(drawn&&!gone?[iw/2-S*rabbit.hx,dy-S*(rabbit.hy-rabbit.sink*sink),S,1]:[0,0,1,0]));
+    dock.style.visibility=gone||drawn?'hidden':'';
     // The foot of the lens is flat by the time the hole is on the wall, so that the swap is
     // not seen; it bends again as the hole rises. Raising the head flattens all of it, and
     // so does a project's page: it is for reading.
     const foot=flat*(t<0?1-ease(clamp((u-(START-LEAD))/(LEAD+REL*.8))):ease(clamp(t/.5)));
     glw?.lens(flat*(1-e),foot*(1-e));
-    mist.style.opacity=(flat*(1-ease(clamp(going/.85)))).toFixed(3);
+    const haze=flat*(1-ease(clamp(going/.85)));if(lean)glw.mist(mistAt[0],mistAt[1],haze);else mist.style.opacity=haze.toFixed(3);
     const fa=Math.round(clamp((u/START-.15)/.4)*1000)/1000;if(fa!==lastFall){lastFall=fa;fall(fa)}
     // What the rabbit found comes out of the hole: each project starts inside it, small and
     // tumbling, is squeezed through the funnel under it and lands where it lies.
@@ -256,19 +296,22 @@ if(!reading&&!roomOpen){
       move(p,`translate(${pagePose[0]}px,${pagePose[1]}px) scale(${pagePose[2]})`);if(!glw)p.style.opacity=o.toFixed(3);p.inert=!(open===k&&shown>.9)});
     if(glw){glw.funnel(holeX,holeY,k6*(rest[0].cy-rest[0].h/2-holeAt[1])*.92,ease(clamp(t/.2))*(1-ease(clamp((t-.75)/.3)))*(1-e));glw.touch()}
   }
-  if(glw){if(settle.size&&glw.idle&&(open<0||shown===aim)){settle.forEach((t,el)=>el.style.transform=t);settle.clear()}glw.tick()}
+  let busy=changed||open>=0&&shown!==aim;
+  if(glw){if(!lean&&settle.size&&glw.idle&&(open<0||shown===aim))place();if(glw.tick())busy=true}
   // Looking for the moment of the edit reads the page; not while the wall is moving.
-  if(!glw||glw.idle)watchEdit();
+  // Lean: only when that chapter is the one in front of us, and it alone is put in its place.
+  if(!glw||glw.idle&&(!lean||editNear)){if(lean&&settle.has(edited)){edited.style.transform=settle.get(edited);settle.delete(edited)}watchEdit()}
+  if(busy||beyond.active)awakeUntil=now+300;
 }else if(reading){watchEdit();panels.forEach(p=>{p.inert=false;p.removeAttribute('hidden-far')});pages.forEach(p=>p.inert=false)}
-beyond.draw(dt);
+beyond.draw(dt);if(up>0&&up<1)awakeUntil=now+300;
 {const hold=!reading&&(up>0||beyond.active);if(hold!==held){held=hold;document.documentElement.style.touchAction=hold?'none':''}}
 if(hud){perf.n++;perf.worst=Math.max(perf.worst,gap);perf.js+=performance.now()-t0;if(gap>40)perf.slow++;
-  if(now-perf.since>1000){const g=glw?.stats||{};hud.textContent=`${Math.round(perf.n*1000/(now-perf.since))} fps   worst ${perf.worst.toFixed(0)} ms   over 40ms: ${perf.slow}\nscript ${(perf.js/perf.n).toFixed(1)} ms/frame\ndrawn again ${g.rasters||0} (${(g.rasterMs||0).toFixed(0)} ms)   read ${g.reads||0}\n${innerWidth}x${innerHeight} @${devicePixelRatio}`;
+  if(now-perf.since>1000){const g=glw?.stats||{};hud.textContent=`${Math.round(perf.n*1000/(now-perf.since))} fps   worst ${perf.worst.toFixed(0)} ms   over 40ms: ${perf.slow}\nscript ${(perf.js/perf.n).toFixed(1)} ms/frame\ndrawn again ${g.rasters||0} (${(g.rasterMs||0).toFixed(0)} ms)   read ${g.reads||0}\n${innerWidth}x${innerHeight} @${devicePixelRatio}   drawn at ${glw?(Math.min(2,devicePixelRatio)*glw.res).toFixed(2):'-'}x${lean?'   lean':''}`;
     Object.assign(perf,{n:0,worst:0,js:0,since:now,slow:0});if(glw)Object.assign(glw.stats,{rasters:0,rasterMs:0,reads:0})}}
-requestAnimationFrame(frame)}
-document.fonts.ready.then(()=>{glw?.reread();layout(true)});addEventListener('resize',layout);body.classList.remove('reading');body.classList.add('flat');dock.style.transformOrigin='0 0';layout(true);if(reduced)toggleReading(true);requestAnimationFrame(frame);
+if(!lean||warming||now<awakeUntil)requestAnimationFrame(frame);else{running=false;if(hud)hud.textContent+='\nat rest: loop stopped'}}
+document.fonts.ready.then(()=>{glw?.reread();layout(true);wake()});addEventListener('resize',layout);body.classList.remove('reading');body.classList.add('flat');dock.style.transformOrigin='0 0';layout(true);if(reduced)toggleReading(true);running=true;requestAnimationFrame(frame);
 // Give the page a few frames to draw every chapter before showing the far view.
-if(warming){viewport.style.opacity='.01';let n=0;const tick=()=>{if(++n<4)requestAnimationFrame(tick);else{warming=false;lastKey='';requestAnimationFrame(()=>viewport.style.opacity='')}};requestAnimationFrame(tick)}
+if(warming){viewport.style.opacity='.01';let n=0;const tick=()=>{if(++n<4)requestAnimationFrame(tick);else{warming=false;lastKey='';wake();requestAnimationFrame(()=>viewport.style.opacity='')}};requestAnimationFrame(tick)}
 if(location.hash){const k=named(),target=k<0&&document.querySelector(location.hash);
   if(k>=0&&!reduced)setTimeout(()=>{scrollTo(0,at(START+1));u=START+1;openProject(k,true)},80);else if(target?.dataset?.panel)setTimeout(()=>go(+target.dataset.panel),50)}
 $('.skip-link').onclick=e=>{e.preventDefault();go(7)};

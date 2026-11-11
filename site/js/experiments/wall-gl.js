@@ -25,9 +25,11 @@
 //     seen by a MutationObserver and that one chapter is read again.
 const VERT=`attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}`;
 const FRAG=`precision highp float;
-uniform sampler2D tex;uniform vec2 view,origin,size,flare;uniform vec4 funnel;uniform float dpr,k,opacity,band,power;uniform vec2 turn;
+uniform sampler2D tex;uniform vec2 view,origin,size,flare;uniform vec4 funnel;uniform float dpr,k,opacity,band,power;uniform vec2 turn;uniform vec3 mist;
 void main(){
   vec2 s=vec2(gl_FragCoord.x/dpr,view.y-gl_FragCoord.y/dpr);
+  // The mist: toward the foot of the window, from mist.x down over mist.y, the wall fades out.
+  float clear=1.-mist.z*smoothstep(0.,.5,(s.y-mist.x)/mist.y);
   float top=max(0.,1.-s.y/band),foot=max(0.,1.-(view.y-s.y)/band);
   float m=1.+flare.x*pow(top,power)+flare.y*pow(foot,power);
   s.x=view.x*.5+(s.x-view.x*.5)/m;
@@ -36,10 +38,12 @@ void main(){
   s.x=funnel.x+(s.x-funnel.x)/c;
   vec2 q=s-origin;
   vec2 uv=vec2(q.x*turn.x+q.y*turn.y,q.y*turn.x-q.x*turn.y)/(k*size);
-  gl_FragColor=texture2D(tex,uv)*opacity*step(0.,uv.x)*step(uv.x,1.)*step(0.,uv.y)*step(uv.y,1.);
+  gl_FragColor=texture2D(tex,uv)*opacity*clear*step(0.,uv.x)*step(uv.x,1.)*step(0.,uv.y)*step(uv.y,1.);
 }`;
 const SKIP=new Set(['SCRIPT','STYLE','CANVAS']);
-export function mountWallGL(viewport,panels,{band=.27,flare=.9,power=2.2}={}){
+// lean: draw at three quarters of the resolution while the wall is moving, and at full
+// resolution as soon as it rests. onWork: called whenever there is something to draw.
+export function mountWallGL(viewport,panels,{band=.27,flare=.9,power=2.2,lean=false,onWork=()=>{}}={}){
   const canvas=document.createElement('canvas');canvas.className='wall-canvas';canvas.setAttribute('aria-hidden','true');
   const opts={alpha:true,premultipliedAlpha:true,antialias:false,powerPreference:'high-performance'};
   let gl=canvas.getContext('webgl2',opts),two=!!gl;if(!gl)gl=canvas.getContext('webgl',opts);if(!gl)return null;
@@ -47,17 +51,18 @@ export function mountWallGL(viewport,panels,{band=.27,flare=.9,power=2.2}={}){
   const pen=document.createElement('canvas'),ctx=pen.getContext('2d'),spacing='letterSpacing' in ctx;
   const layers=panels.map((el,j)=>({el,panel:j,rest:1})),states=panels.map(()=>({tx:0,ty:0,k:1,far:true,opacity:1}));
   const base=panels.map(()=>({x:0,y:0,ox:0,oy:0}));
-  let prog,loc={},dpr=1,W=0,H=0,R=1,amounts=[1,1],fun=[0,0,1,0],redraw=true,maxSize=4096,lost=false,moved=0,seenW=-1;
+  let prog,loc={},dpr=1,W=0,H=0,R=1,amounts=[1,1],fun=[0,0,1,0],redraw=true,maxSize=4096,lost=false,moved=0,seenW=-1,fog=[0,1,0],res=1,worked=0;
+  const fronts=[];
   function setup(){
     const sh=(type,src)=>{const s=gl.createShader(type);gl.shaderSource(s,src);gl.compileShader(s);return s};
     prog=gl.createProgram();gl.attachShader(prog,sh(gl.VERTEX_SHADER,VERT));gl.attachShader(prog,sh(gl.FRAGMENT_SHADER,FRAG));gl.linkProgram(prog);gl.useProgram(prog);
-    for(const n of ['tex','view','origin','size','dpr','k','opacity','band','power','flare','funnel','turn'])loc[n]=gl.getUniformLocation(prog,n);
+    for(const n of ['tex','view','origin','size','dpr','k','opacity','band','power','flare','funnel','turn','mist'])loc[n]=gl.getUniformLocation(prog,n);
     gl.bindBuffer(gl.ARRAY_BUFFER,gl.createBuffer());gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
     const a=gl.getAttribLocation(prog,'p');gl.enableVertexAttribArray(a);gl.vertexAttribPointer(a,2,gl.FLOAT,false,0,0);
     gl.enable(gl.BLEND);gl.blendFunc(gl.ONE,gl.ONE_MINUS_SRC_ALPHA);gl.enable(gl.SCISSOR_TEST);
     gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,true);gl.clearColor(0,0,0,0);
     maxSize=Math.min(gl.getParameter(gl.MAX_TEXTURE_SIZE),innerWidth<650?2048:4096);
-    for(const l of layers){l.tex=null;l.q=0}
+    for(const l of [...layers,...fronts]){l.tex=null;l.q=0}
   }
   setup();
   canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();lost=true});
@@ -124,11 +129,12 @@ export function mountWallGL(viewport,panels,{band=.27,flare=.9,power=2.2}={}){
   // ---------- 2. draw into a texture, q texture pixels per chapter pixel ----------
   const most=layer=>maxSize/Math.max(layer.bounds.w,layer.bounds.h);
   function raster(layer,q){
-    const b=layer.bounds;if(!b||!layer.items){drop(layer);return 0}
+    const b=layer.bounds;if(!b||!layer.items&&!layer.draw){drop(layer);return 0}
     const began=performance.now();q=Math.min(q,most(layer));
     const w=Math.max(1,Math.ceil(b.w*q)),h=Math.max(1,Math.ceil(b.h*q));pen.width=w;pen.height=h;
     ctx.setTransform(q,0,0,q,-b.x*q,-b.y*q);ctx.textBaseline='alphabetic';
-    for(const it of layer.items){
+    if(layer.draw){ctx.globalAlpha=1;layer.draw(ctx)}
+    else for(const it of layer.items){
       ctx.globalAlpha=it.a;
       if(it.t==='box'){ctx.fillStyle=it.c;ctx.fillRect(it.x,it.y,it.w,it.h)}
       else if(it.t==='text'){ctx.font=it.font;if(spacing)ctx.letterSpacing=it.ls+'px';ctx.fillStyle=it.c;ctx.fillText(it.s,it.x,it.y)}
@@ -190,9 +196,15 @@ export function mountWallGL(viewport,panels,{band=.27,flare=.9,power=2.2}={}){
     }
     // Drawing a chapter again takes a few milliseconds; at most one per frame.
     if(chosen&&budget>0)raster(chosen[0],chosen[1]);
-    if(!redraw)return;redraw=false;
-    gl.viewport(0,0,canvas.width,canvas.height);gl.scissor(0,0,canvas.width,canvas.height);gl.clear(gl.COLOR_BUFFER_BIT);
-    gl.uniform1i(loc.tex,0);gl.uniform2f(loc.view,W,H);gl.uniform1f(loc.dpr,canvas.width/W);gl.uniform1f(loc.band,H*band);gl.uniform1f(loc.power,power);gl.uniform2f(loc.flare,flare*amounts[0],flare*amounts[1]);
+    // What stands in front of the wall (the rabbit): small, drawn again whenever it changes.
+    for(const f of fronts){const want=Math.min(4,dpr*Math.max(1,f.pose.s));if(f.pose.o>.004&&(!f.tex||f.stale||want>f.q*1.15)){raster(f,want*1.1)}}
+    // Moving, three quarters of the pixels in each direction are enough; at rest, all of them.
+    const next=lean&&dpr>=2&&!idle?.75:1;if(next!==res){res=next;canvas.style.transform=res===1?'':`scale(${1/res})`;redraw=true}
+    if(budget<2.6e6||chosen)worked=now;
+    if(!redraw)return now-worked<200||!idle;redraw=false;worked=now;
+    const cw=Math.round(canvas.width*res),chh=Math.round(canvas.height*res);
+    gl.viewport(0,0,cw,chh);gl.scissor(0,0,cw,chh);gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.uniform1i(loc.tex,0);gl.uniform2f(loc.view,W,H);gl.uniform1f(loc.dpr,cw/W);gl.uniform3f(loc.mist,fog[0],fog[1],fog[2]);gl.uniform1f(loc.band,H*band);gl.uniform1f(loc.power,power);gl.uniform2f(loc.flare,flare*amounts[0],flare*amounts[1]);
     for(const layer of layers){
       if(states[layer.panel].far||!layer.tex||!layer.bounds)continue;
       const at=place(layer);if(at.opacity<.004||at.k<=0)continue;
@@ -202,11 +214,17 @@ export function mountWallGL(viewport,panels,{band=.27,flare=.9,power=2.2}={}){
       // Only the part of the window the layer can reach is filled: its rows, and its
       // columns pushed out from the centre line as far as the lens can push them.
       const squeezed=layer.funnel&&fun[3]>0,out=x=>[x,W/2+(x-W/2)*(1+flare)],xs=[...out(x0),...out(x1)],left=squeezed?0:Math.max(0,Math.min(...xs)),right=squeezed?W:Math.min(W,Math.max(...xs));if(right<=left)continue;
-      const r=canvas.height/H;gl.scissor(Math.floor(left*r),Math.floor((H-bottom)*r),Math.ceil((right-left)*r)+1,Math.ceil((bottom-top)*r)+1);
+      const r=chh/H;gl.scissor(Math.floor(left*r),Math.floor((H-bottom)*r),Math.ceil((right-left)*r)+1,Math.ceil((bottom-top)*r)+1);
       gl.bindTexture(gl.TEXTURE_2D,layer.tex);gl.uniform2f(loc.origin,at.x,at.y);gl.uniform2f(loc.size,layer.bounds.w,layer.bounds.h);gl.uniform1f(loc.k,at.k);gl.uniform1f(loc.opacity,at.opacity);gl.uniform2f(loc.turn,at.c,at.sn);
       gl.uniform4f(loc.funnel,fun[0],fun[1],fun[2],squeezed?fun[3]:0);
       gl.drawArrays(gl.TRIANGLES,0,3);
     }
+    // In front of everything, neither bent nor in the mist.
+    gl.uniform2f(loc.flare,0,0);gl.uniform3f(loc.mist,0,1,0);gl.uniform4f(loc.funnel,0,0,1,0);gl.uniform2f(loc.turn,1,0);
+    for(const f of fronts){const p=f.pose;if(p.o<.004||!f.tex)continue;const r=chh/H,oy=p.y+p.s*f.bounds.y,top=Math.max(0,oy),bottom=Math.min(H,oy+p.s*f.bounds.h);if(bottom<=top)continue;
+      gl.scissor(Math.max(0,Math.floor(p.x*r)),Math.floor((H-bottom)*r),Math.ceil(p.s*f.bounds.w*r)+2,Math.ceil((bottom-top)*r)+1);
+      gl.bindTexture(gl.TEXTURE_2D,f.tex);gl.uniform2f(loc.origin,p.x,oy);gl.uniform2f(loc.size,f.bounds.w,f.bounds.h);gl.uniform1f(loc.k,p.s);gl.uniform1f(loc.opacity,p.o);gl.drawArrays(gl.TRIANGLES,0,3)}
+    return true;
   }
   function layout(){
     dpr=Math.min(devicePixelRatio||1,2);W=viewport.clientWidth;H=canvas.clientHeight||viewport.clientHeight;
@@ -222,7 +240,7 @@ export function mountWallGL(viewport,panels,{band=.27,flare=.9,power=2.2}={}){
     let n=r.target.nodeType===1?r.target:r.target.parentElement;if(!n||n===canvas)continue;
     const own=layers.find(l=>l.el===n);if(own&&r.type==='attributes')continue;
     let layer=null;for(;n&&n!==viewport;n=n.parentElement){layer=layers.find(l=>l.el===n);if(layer)break}
-    if(layer&&!layer.painted){layer.dirty=true;redraw=true}
+    if(layer&&!layer.painted){layer.dirty=true;redraw=true;onWork()}
   }}).observe(viewport,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['style','class']});
   const change=()=>{redraw=true;moved=performance.now()};
   return {
@@ -243,6 +261,16 @@ export function mountWallGL(viewport,panels,{band=.27,flare=.9,power=2.2}={}){
     lens(top,foot){if(amounts[0]!==top||amounts[1]!==foot){amounts=[top,foot];redraw=true}},
     funnel(x,y,r,a){if(fun[0]!==x||fun[1]!==y||fun[2]!==r||fun[3]!==a){fun=[x,y,Math.max(1,r),a];redraw=true}},
     touch(){redraw=true},
+    // A layer in front of the wall, placed on the window itself: draw(ctx) paints it in a box
+    // w by h. set(x,y,s,o) places it; again() says its picture has changed.
+    front(draw,w,h){const f={draw,bounds:{x:0,y:0,w,h},pose:{x:0,y:0,s:1,o:0},tex:null,q:0,stale:true};fronts.push(f);
+      return {set(x,y,s=1,o=1){const p=f.pose;if(p.x!==x||p.y!==y||p.s!==s||p.o!==o){p.x=x;p.y=y;p.s=s;p.o=o;redraw=true}},again(){f.stale=true;redraw=true},// above: how far over its top edge the picture may reach.
+      size(w,h,above=0){if(f.bounds.w!==w||f.bounds.h!==h+above){f.bounds.w=w;f.bounds.y=-above;f.bounds.h=h+above;f.stale=true;redraw=true}}}},
+    // The mist over the foot of the wall: from y=top down over h pixels, as strong as a.
+    mist(top,h,a){if(fog[0]!==top||fog[1]!==h||fog[2]!==a){fog=[top,Math.max(1,h),a];redraw=true}},
+    // Where on the unbent wall the point seen at (x, y) is: for telling what a click is on.
+    unbend(x,y){const t=Math.max(0,1-y/(H*band)),f=Math.max(0,1-(H-y)/(H*band));return W/2+(x-W/2)/(1+flare*amounts[0]*t**power+flare*amounts[1]*f**power)},
+    get res(){return res},
     get height(){return H},
     get idle(){return performance.now()-moved>170},
   };

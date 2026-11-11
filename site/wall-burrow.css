@@ -111,3 +111,7 @@
 /* The page is not pulled past its top: the pull is how the head is raised (see the script). */
 html:has(.wall-burrow:not(.reading)){overscroll-behavior:none}
 .perf-hud{position:fixed;left:8px;top:8px;z-index:90;font:11px/1.35 ui-monospace,monospace;background:rgba(0,0,0,.78);color:#fff;padding:6px 8px;border-radius:6px;white-space:pre;pointer-events:none}
+
+/* 04.12 (lean): the mist is drawn in WebGL, and so is the rabbit, except while the head is
+   raised (the script shows the page's own rabbit then). */
+.lean:not(.reading) .foot-mist{display:none}
