@@ -18,7 +18,7 @@ const $=s=>document.querySelector(s),body=document.body,viewport=$('#viewport');
 const panels=[...document.querySelectorAll('[data-panel]')],N=panels.length,LAST=5;
 // 04.7 (body.rabbit-top): the rabbit is fixed just above the first heading instead, and the
 // hole is simply on the wall after the last screen; it dives as the hole passes under it.
-const TOP=body.classList.contains('rabbit-top');
+const TOP=body.classList.contains('rabbit-top'),EDGE=body.classList.contains('edge-lens')&&!TOP;
 // In 04.7 the camera stops at the hole's chapter (HOLD): the rabbit dives, then the projects come.
 const RATIO=.34,scales=panels.map((_,i)=>RATIO**i),centres=[0],BACK=1.6,START=BACK*.7,SINK=TOP?0:.7,HOLD=TOP?1.1:0,TOTAL=START+SINK+2+HOLD;
 const surface=$('#wall-surface'),dock=$('#rabbit-dock'),hole6=$('.burrow-hole'),cards=[...document.querySelectorAll('.burrow-card')];
@@ -32,7 +32,7 @@ function layout(){
   const iw=innerWidth,ih=innerHeight;mobile=iw<650;
   fit=Math.max(.3,Math.min((iw-(mobile?40:100))/(mobile?700:1100),(ih-60)/650));
   segment=Math.max(850,ih*1.3);$('#scroll-track').style.height=(segment*TOTAL+ih)+'px';
-  lower=ih*.1;spacing=(mobile?1280:830)*.8;
+  lower=ih*.1;spacing=(mobile?1280:830)*.8*(EDGE?1.22:1);
   for(let i=1;i<=LAST;i++)centres[i]=centres[i-1]+spacing*scales[i-1];
   floor=centres[LAST]+6;
   origins=panels.map(p=>{const o=getComputedStyle(p).transformOrigin.split(' ').map(parseFloat);return [surface.offsetLeft+p.offsetLeft+o[0],surface.offsetTop+p.offsetTop+o[1],p.offsetHeight,o[1],p.offsetWidth,o[0]]});
@@ -44,6 +44,8 @@ function layout(){
   const y0=ih-ih*.05-hb.height/2*sc,yEnd=y0;
   dockX=iw/2-(hb.x+hb.width/2-882)*sc;dockY=y0-(hb.y+hb.height/2-264)*sc;dockDepth=depth*sc;
   Object.assign(dock.style,{width:932*sc+'px',height:1251*sc+'px'});
+  // 04.9: the mist reaches from the foot of the window to a little above the ears.
+  if(mist)mist.style.height=ih-(y0+hb.height/2*sc-depth*sc)+(mobile?50:80)+'px';
   // The hole as a chapter: the size and place that project exactly onto the dock's hole
   // when the camera stands at the last screen.
   const [,oy,PH,oyo,PW]=origins[6],k6=fit*RATIO,Z5=fit/scales[LAST],W6=wH/k6,H6=W6*hb.height/hb.width,hy=PH*(mobile?.26:.3);
@@ -97,7 +99,12 @@ mountGaps((x,y)=>{if(reading){tomorrow();return}viewport.style.transformOrigin=`
 const above=$('#above'),TILT=62*Math.PI/180;
 // 04.9 (body.edge-lens): the top and bottom of the window are a lens (lens.js) that the wall
 // passes through. The rabbit stays in front of it. ?lens=0 turns it off, ?lens=1.5 makes it stronger.
-const LENS=!body.classList.contains('edge-lens')||TOP||reduced?0:Math.max(0,parseFloat(new URLSearchParams(location.search).get('lens')??1)||0);
+const LENS=!EDGE||reduced?0:Math.max(0,parseFloat(new URLSearchParams(location.search).get('lens')??1)||0);
+// 04.9: while the rabbit waits at the foot of the window, the wall comes up to it out of
+// nothing: a white mist lies over the foot of the wall, under the rabbit. It lifts as the
+// rabbit goes down, and from then on the wall is plain to the bottom edge.
+const mist=EDGE&&!reduced?document.createElement('div'):null;
+if(mist){mist.className='foot-mist';dock.before(mist)}
 const lens=LENS?mountLens(dock,{flare:.6*LENS}):null;
 const door=mountDoor(above,{reduced,onEnter:done=>tomorrow(()=>{done();up=0;scrollTo(0,0);lastKey='';lastMark=''})});
 function lookUp(){
@@ -147,6 +154,7 @@ if(!reading&&!roomOpen){
     // Raising the head flattens all of it: the screen above is drawn on where the pointer is.
     const flat=1-ease(clamp(up/.3));
     lens?.set(flat,flat*(u<START?1:u<START+SINK?1-ease(clamp((u-START)/(SINK*.6))):ease(clamp((u-START-SINK)/.5))));
+    if(mist)mist.style.opacity=(flat*(1-ease(clamp((u-START)/(SINK*.8))))).toFixed(3);
     const sink=TOP?ease(clamp((u-START-1)/.45)):u>0?ease(clamp((u-START)/SINK)):ease(clamp(up/.35)),m=sink.toFixed(4);if(m!==lastMark){lastMark=m;mark.set(sink,0,1);if(TOP){dock.style.visibility=sink>=1?'hidden':''}else dock.style.transform=`translate(${dockX}px,${dockY+dockDepth*sink}px)`}
     const fa=Math.round(clamp((u/START-.15)/.4)*1000)/1000;if(fa!==lastFall){lastFall=fa;fall(fa)}
     // Projects come up from below and out of nothing, one after another, once the rabbit is in.
