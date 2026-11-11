@@ -1,6 +1,7 @@
 import {clamp,ease,reduced,tomorrow,setDay,mountFall,mountGaps,watchEdit} from './shared.js';
 import {mountMark} from '../mark.js';
 import {mountDoor} from './door-ink.js';
+import {mountLens} from './lens.js';
 // The wall, from afar (04.6). Built on 04.1's flat camera: every chapter is its own layer,
 // zoomed and moved directly from the scroll position.
 //
@@ -94,6 +95,10 @@ mountGaps((x,y)=>{if(reading){tomorrow();return}viewport.style.transformOrigin=`
 // rabbit drops into it, and the wall slides down in perspective: we did not move, we
 // raised our head. Above the wall is a white screen with one word, and a door to find.
 const above=$('#above'),TILT=62*Math.PI/180;
+// 04.6 only: the top and bottom of the window are a lens (lens.js) that the wall passes
+// through. The rabbit stays in front of it. ?lens=0 turns it off, ?lens=1.5 makes it stronger.
+const LENS=TOP||reduced?0:Math.max(0,parseFloat(new URLSearchParams(location.search).get('lens')??1)||0);
+const lens=LENS?mountLens([above,viewport],{flare:.6*LENS}):null;
 const door=mountDoor(above,{reduced,onEnter:done=>tomorrow(()=>{done();up=0;scrollTo(0,0);lastKey='';lastMark=''})});
 function lookUp(){
   const a=TILT*ease(clamp((up-.2)/.8)),P=innerHeight*1.1;
@@ -137,6 +142,11 @@ if(!reading&&!roomOpen){
     // The dock until the rabbit is gone; from then on, the hole belongs to the wall.
     if(!TOP)dock.style.visibility=inHole?'hidden':'';
     lookUp();
+    // The foot of the lens is flat while the rabbit goes down, so that the hole it leaves and
+    // the hole on the wall are still the same pixels; it bends again as that hole rises.
+    // Raising the head flattens all of it: the screen above is drawn on where the pointer is.
+    const flat=1-ease(clamp(up/.3));
+    lens?.set(flat,flat*(u<START?1:u<START+SINK?1-ease(clamp((u-START)/(SINK*.6))):ease(clamp((u-START-SINK)/.5))));
     const sink=TOP?ease(clamp((u-START-1)/.45)):u>0?ease(clamp((u-START)/SINK)):ease(clamp(up/.35)),m=sink.toFixed(4);if(m!==lastMark){lastMark=m;mark.set(sink,0,1);if(TOP){dock.style.visibility=sink>=1?'hidden':''}else dock.style.transform=`translate(${dockX}px,${dockY+dockDepth*sink}px)`}
     const fa=Math.round(clamp((u/START-.15)/.4)*1000)/1000;if(fa!==lastFall){lastFall=fa;fall(fa)}
     // Projects come up from below and out of nothing, one after another, once the rabbit is in.

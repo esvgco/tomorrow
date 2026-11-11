@@ -74,3 +74,8 @@
 .above.drawable .above-back{opacity:1}
 .door-leaf{position:absolute;transform-origin:0 50%;pointer-events:none;backface-visibility:visible;background:#fff}
 .rabbit-top .rabbit-dock .mk-hole,.rabbit-top .rabbit-dock .mk-sunk{visibility:hidden}
+
+/* wall-zoom: the edge lens (js/experiments/lens.js). One fixed box holds the rabbit, the wall
+   and the screen above, and carries the filter. Read normally, the box is not there. */
+.lens{position:fixed;inset:0}
+.wall-page.reading .lens{display:contents}
