@@ -2,6 +2,7 @@ import {clamp,ease,reduced,tomorrow,setDay,mountFall,mountGaps,watchEdit} from '
 import {mountMark} from '../mark.js';
 import {mountDoor} from './door-ink.js';
 import {mountLens} from './lens.js';
+import {mountWallGL} from './wall-gl.js';
 // The wall, from afar (04.6). Built on 04.1's flat camera: every chapter is its own layer,
 // zoomed and moved directly from the scroll position.
 //
@@ -55,7 +56,7 @@ function layout(){
   }
   const [,,PH6,,PW6]=origins[6],hb6=parseFloat(hole6.style.top)+parseFloat(hole6.style.height);
   cardBase=cards.map((c,k)=>{c.style.top=hb6+(mobile?90:60)+k*(mobile?150:95)+'px';return {w:c.offsetWidth,dx:parseFloat(c.style.getPropertyValue('--dx'))*PW6}});
-  lastKey='';lastMark='';
+  glw?.layout();lastKey='';lastMark='';
 }
 
 // 04.7: the rabbit sits just above the first heading as the page opens, and stays there.
@@ -105,7 +106,12 @@ const LENS=!EDGE||reduced?0:Math.max(0,parseFloat(new URLSearchParams(location.s
 // rabbit goes down, and from then on the wall is plain to the bottom edge.
 const mist=EDGE&&!reduced?document.createElement('div'):null;
 if(mist){mist.className='foot-mist';dock.before(mist)}
-const lens=LENS?mountLens(dock,{flare:.6*LENS}):null;
+// 04.10 (body.wall-gl): the same wall and the same lens, drawn in WebGL (wall-gl.js). The
+// chapters stay in the page, invisible, for the pointer and the keyboard; a canvas shows them.
+// Without WebGL the page falls back to 04.9.
+const glw=LENS&&body.classList.contains('wall-gl')?mountWallGL(viewport,panels,{flare:.9*LENS}):null;
+if(glw)cards.forEach(c=>glw.sprite(c,6));else body.classList.remove('wall-gl');
+const lens=LENS&&!glw?mountLens(dock,{flare:.6*LENS}):null;
 const door=mountDoor(above,{reduced,onEnter:done=>tomorrow(()=>{done();up=0;scrollTo(0,0);lastKey='';lastMark=''})});
 function lookUp(){
   const a=TILT*ease(clamp((up-.2)/.8)),P=innerHeight*1.1;
@@ -145,7 +151,7 @@ if(!reading&&!roomOpen){
     const [Z,cy]=camera(),half=innerHeight/2+80,inHole=TOP||u>=START+SINK;
     panels.forEach((p,j)=>{const [ox,oy,h,oyo]=origins[j],k=Z*scales[j],y=Z*(oy+centres[j]-cy)+lower;const top=y-oyo*k,bottom=y+(h-oyo)*k;
       const far=k<.004||bottom<-half||top>half||(j>LAST&&!inHole);if(far!==p.hasAttribute('hidden-far'))far?p.setAttribute('hidden-far',''):p.removeAttribute('hidden-far');
-      if(!far)p.style.transform=`translate3d(${Z*ox-ox}px,${y-oy}px,0) scale(${k})`;if(p.inert!==far)p.inert=far});
+      if(!far)p.style.transform=`translate3d(${Z*ox-ox}px,${y-oy}px,0) scale(${k})`;glw?.panel(j,Z*ox-ox,y-oy,k,far);if(p.inert!==far)p.inert=far});
     // The dock until the rabbit is gone; from then on, the hole belongs to the wall.
     if(!TOP)dock.style.visibility=inHole?'hidden':'';
     lookUp();
@@ -153,7 +159,8 @@ if(!reading&&!roomOpen){
     // the hole on the wall are still the same pixels; it bends again as that hole rises.
     // Raising the head flattens all of it: the screen above is drawn on where the pointer is.
     const flat=1-ease(clamp(up/.3));
-    lens?.set(flat,flat*(u<START?1:u<START+SINK?1-ease(clamp((u-START)/(SINK*.6))):ease(clamp((u-START-SINK)/.5))));
+    const foot=flat*(u<START?1:u<START+SINK?1-ease(clamp((u-START)/(SINK*.6))):ease(clamp((u-START-SINK)/.5)));
+    lens?.set(flat,foot);glw?.lens(flat,foot);glw?.touch();
     if(mist)mist.style.opacity=(flat*(1-ease(clamp((u-START)/(SINK*.8))))).toFixed(3);
     const sink=TOP?ease(clamp((u-START-1)/.45)):u>0?ease(clamp((u-START)/SINK)):ease(clamp(up/.35)),m=sink.toFixed(4);if(m!==lastMark){lastMark=m;mark.set(sink,0,1);if(TOP){dock.style.visibility=sink>=1?'hidden':''}else dock.style.transform=`translate(${dockX}px,${dockY+dockDepth*sink}px)`}
     const fa=Math.round(clamp((u/START-.15)/.4)*1000)/1000;if(fa!==lastFall){lastFall=fa;fall(fa)}
@@ -161,7 +168,7 @@ if(!reading&&!roomOpen){
     const t=u-START-SINK;
     cards.forEach((c,k)=>{const l=ease(clamp((t-(TOP?1.5:.12)-k*.17)/.45)),dy=(1-l)*(mobile?260:170);c.style.transform=`translate(${-cardBase[k].w/2+cardBase[k].dx}px,${dy}px)`;c.style.opacity=l.toFixed(3)});
   }
-  watchEdit();
+  watchEdit();glw?.tick();
 }else if(reading){watchEdit();panels.forEach(p=>{p.inert=false;p.removeAttribute('hidden-far')})}requestAnimationFrame(frame)}
 document.fonts.ready.then(layout);addEventListener("resize",layout);body.classList.remove('reading');body.classList.add('flat');layout();if(reduced)toggleReading(true);requestAnimationFrame(frame);
 // Safari rasters a layer at the scale it is first shown and redraws it each time that scale
