@@ -79,9 +79,6 @@
    rabbit; the bend is their backdrop. Read normally, they are not there. */
 .lens-strip{position:fixed;left:0;right:0;z-index:3;pointer-events:none}
 .wall-page.reading .lens-strip{display:none}
-/* ?lens=filter: one fixed box holds the wall and the screen above, and carries the filter. */
-.lens{position:fixed;inset:0}
-.wall-page.reading .lens{display:contents}
 /* 04.9: the mist at the foot of the window, over the lens and under the rabbit. */
 .foot-mist{position:fixed;left:0;right:0;bottom:0;z-index:4;pointer-events:none;will-change:opacity;background:linear-gradient(to top,#fff 0,#fff 30%,rgba(255,255,255,.93) 42%,rgba(255,255,255,.74) 55%,rgba(255,255,255,.45) 68%,rgba(255,255,255,.18) 82%,rgba(255,255,255,.04) 93%,rgba(255,255,255,0) 100%)}
 .wall-page.reading .foot-mist{display:none}
