@@ -98,7 +98,7 @@ const above=$('#above'),TILT=62*Math.PI/180;
 // 04.9 (body.edge-lens): the top and bottom of the window are a lens (lens.js) that the wall
 // passes through. The rabbit stays in front of it. ?lens=0 turns it off, ?lens=1.5 makes it stronger.
 const LENS=!body.classList.contains('edge-lens')||TOP||reduced?0:Math.max(0,parseFloat(new URLSearchParams(location.search).get('lens')??1)||0);
-const lens=LENS?mountLens([above,viewport],{flare:.6*LENS}):null;
+const lens=LENS?mountLens(dock,{flare:.6*LENS}):null;
 const door=mountDoor(above,{reduced,onEnter:done=>tomorrow(()=>{done();up=0;scrollTo(0,0);lastKey='';lastMark=''})});
 function lookUp(){
   const a=TILT*ease(clamp((up-.2)/.8)),P=innerHeight*1.1;

@@ -75,7 +75,7 @@
 .door-leaf{position:absolute;transform-origin:0 50%;pointer-events:none;backface-visibility:visible;background:#fff}
 .rabbit-top .rabbit-dock .mk-hole,.rabbit-top .rabbit-dock .mk-sunk{visibility:hidden}
 
-/* 04.9: the edge lens (js/experiments/lens.js). One fixed box holds the rabbit, the wall
-   and the screen above, and carries the filter. Read normally, the box is not there. */
-.lens{position:fixed;inset:0}
-.wall-page.reading .lens{display:contents}
+/* 04.9: the edge lens (js/experiments/lens.js). Two empty strips over the wall, under the
+   rabbit; the bend is their backdrop. Read normally, they are not there. */
+.lens-strip{position:fixed;left:0;right:0;z-index:3;pointer-events:none}
+.wall-page.reading .lens-strip{display:none}
