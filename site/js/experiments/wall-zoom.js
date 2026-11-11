@@ -98,14 +98,16 @@ mountGaps((x,y)=>{if(reading){tomorrow();return}viewport.style.transformOrigin=`
 // raised our head. Above the wall is a white screen with one word, and a door to find.
 const above=$('#above'),TILT=62*Math.PI/180;
 // 04.9 (body.edge-lens): the top and bottom of the window are a lens (lens.js) that the wall
-// passes through. The rabbit stays in front of it. ?lens=0 turns it off, ?lens=1.5 makes it stronger.
-const LENS=!EDGE||reduced?0:Math.max(0,parseFloat(new URLSearchParams(location.search).get('lens')??1)||0);
+// passes through. The rabbit stays in front of it. ?lens=0 turns it off, ?lens=1.5 makes it stronger,
+// ?lens=filter bends the whole wall with a plain filter, for browsers where the strips do nothing.
+const ASK=new URLSearchParams(location.search).get('lens'),WHOLE=ASK==='filter';
+const LENS=!EDGE||reduced?0:WHOLE?1:Math.max(0,parseFloat(ASK??1)||0);
 // 04.9: while the rabbit waits at the foot of the window, the wall comes up to it out of
 // nothing: a white mist lies over the foot of the wall, under the rabbit. It lifts as the
 // rabbit goes down, and from then on the wall is plain to the bottom edge.
 const mist=EDGE&&!reduced?document.createElement('div'):null;
 if(mist){mist.className='foot-mist';dock.before(mist)}
-const lens=LENS?mountLens(dock,{flare:.6*LENS}):null;
+const lens=LENS?mountLens(dock,{flare:.6*LENS,whole:WHOLE?[above,viewport]:null}):null;
 const door=mountDoor(above,{reduced,onEnter:done=>tomorrow(()=>{done();up=0;scrollTo(0,0);lastKey='';lastMark=''})});
 function lookUp(){
   const a=TILT*ease(clamp((up-.2)/.8)),P=innerHeight*1.1;
