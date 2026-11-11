@@ -95,9 +95,9 @@ mountGaps((x,y)=>{if(reading){tomorrow();return}viewport.style.transformOrigin=`
 // rabbit drops into it, and the wall slides down in perspective: we did not move, we
 // raised our head. Above the wall is a white screen with one word, and a door to find.
 const above=$('#above'),TILT=62*Math.PI/180;
-// 04.6 only: the top and bottom of the window are a lens (lens.js) that the wall passes
-// through. The rabbit stays in front of it. ?lens=0 turns it off, ?lens=1.5 makes it stronger.
-const LENS=TOP||reduced?0:Math.max(0,parseFloat(new URLSearchParams(location.search).get('lens')??1)||0);
+// 04.9 (body.edge-lens): the top and bottom of the window are a lens (lens.js) that the wall
+// passes through. The rabbit stays in front of it. ?lens=0 turns it off, ?lens=1.5 makes it stronger.
+const LENS=!body.classList.contains('edge-lens')||TOP||reduced?0:Math.max(0,parseFloat(new URLSearchParams(location.search).get('lens')??1)||0);
 const lens=LENS?mountLens([above,viewport],{flare:.6*LENS}):null;
 const door=mountDoor(above,{reduced,onEnter:done=>tomorrow(()=>{done();up=0;scrollTo(0,0);lastKey='';lastMark=''})});
 function lookUp(){
