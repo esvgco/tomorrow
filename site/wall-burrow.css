@@ -130,13 +130,13 @@
 .wall-burrow .above{pointer-events:none}
 .wall-burrow .above.drawable .above-ink{pointer-events:auto;clip-path:inset(0 0 17% 0)}
 
-/* 04.14 (under), on iOS: nothing fixed. The document is held still, 240px taller than the
-   window above and below; the wall lies in it and the canvas reaches over the window's edges,
-   where Safari shows the page through its bars. A box over the window does the scrolling. */
+/* 04.14 (under), on iOS: nothing fixed. The document is held still, --under-park taller than
+   the window, above it; the wall lies in it and the canvas starts that far over the window's
+   top, where Safari shows the page through its bar. A box over the window does the scrolling. */
 html[data-layer="inner"]{overflow-x:hidden}
-html[data-layer="inner"] body{min-height:0;height:calc(var(--under-h,100svh) + 480px);overflow:visible}
-.under-stage{position:absolute;left:0;top:240px;width:100vw;height:var(--under-h,100svh)}
+html[data-layer="inner"] body{min-height:0;height:calc(var(--under-h,100svh) + var(--under-park,110px));overflow:visible}
+.under-stage{position:absolute;left:0;top:var(--under-park,110px);width:100vw;height:var(--under-h,100svh)}
 html[data-layer="inner"] .viewport{position:absolute;inset:0}
-html[data-layer="inner"] .wall-canvas{top:-240px;height:calc(var(--under-h,100svh) + 480px)}
-.under-scroller{position:absolute;left:0;top:0;width:100vw;height:calc(var(--under-h,100svh) + 480px);z-index:3;overflow:hidden auto;overscroll-behavior:contain;scrollbar-width:none;-webkit-tap-highlight-color:transparent}
+html[data-layer="inner"] .wall-canvas{top:calc(var(--under-park,110px) * -1);height:calc(100lvh + var(--under-park,110px))}
+.under-scroller{position:absolute;left:0;top:0;width:100vw;height:calc(var(--under-h,100svh) + var(--under-park,110px));z-index:3;overflow:hidden auto;overscroll-behavior:contain;scrollbar-width:none;-webkit-tap-highlight-color:transparent}
 .under-scroller::-webkit-scrollbar{display:none}

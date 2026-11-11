@@ -43,12 +43,16 @@ const mist=document.createElement('div');mist.className='foot-mist';dock.before(
 let lean=body.classList.contains('lean')&&!reduced,running=false,awakeUntil=0,followed=false;
 // 04.14 (body.under): on an iPhone, Safari cuts everything fixed off under its own bars and
 // leaves the page's background there; what is simply in the document it shows through them.
-// So here nothing is fixed. The document does not scroll at all: it is PARK pixels taller than
-// the window above and below and is held PARK down, and the canvas, lying in it, reaches that
-// far over the window's edges. The scrolling is done by a box over the window (after
-// esvgco/orbit, which found this). Only on iOS; ?layer=inner forces it elsewhere, ?layer=fixed
-// turns it off.
-const PARK=240,asked=new URLSearchParams(location.search).get('layer'),iOS=/iP(hone|ad|od)/.test(navigator.userAgent)||/Macintosh/.test(navigator.userAgent)&&navigator.maxTouchPoints>1;
+// The one thing wanted is the top: the wall must go on behind Safari's bar instead of ending
+// at it. For that the canvas has to be a still thing that is not fixed, which is only
+// possible if the document does not scroll; and then something else has to. So:
+//   - the document is PARK pixels taller than the window, above it only, and is held PARK down;
+//   - the canvas lies in it and starts PARK over the window's top;
+//   - a box over the window does the scrolling.
+// Nothing more than that (esvgco/orbit, which found this, also reaches below the window and
+// much further above; neither is needed here). Only on iOS; ?layer=inner forces it elsewhere,
+// ?layer=fixed turns it off.
+const PARK=110,asked=new URLSearchParams(location.search).get('layer'),iOS=/iP(hone|ad|od)/.test(navigator.userAgent)||/Macintosh/.test(navigator.userAgent)&&navigator.maxTouchPoints>1;
 let under=body.classList.contains('under')&&lean&&asked!=='fixed'&&(iOS||asked==='inner'),stage=null,box=null;
 if(under){
   stage=document.createElement('div');stage.className='under-stage';viewport.before(stage);stage.append(viewport);
@@ -113,8 +117,8 @@ function layout(force){
   // bounce is left at both ends.
   const was=RISE?[up,u]:null;
   segment=Math.max(850,ih*1.3);RISE=Math.round(ih*.72);
-  if(under)document.documentElement.style.setProperty('--under-h',ih+'px');
-  $('#scroll-track').style.height=(RISE+segment*TOTAL+(under?ih+PARK*2:ih))+'px';
+  if(under){document.documentElement.style.setProperty('--under-h',ih+'px');document.documentElement.style.setProperty('--under-park',PARK+'px')}
+  $('#scroll-track').style.height=(RISE+segment*TOTAL+(under?ih+PARK:ih))+'px';
   if(!reading)goTo(was?(was[0]>0?RISE*(1-was[0]):RISE+was[1]*segment):RISE);pos=here();
   lower=ih*.1;spacing=(mobile?1280:830)*.8*1.36;
   for(let i=1;i<=LAST;i++)centres[i]=centres[i-1]+spacing*scales[i-1];
