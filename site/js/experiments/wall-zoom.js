@@ -29,8 +29,12 @@ const mark=mountMark($('#wall-rabbit'));
 const hb=mark.holeBox,bb=mark.bunBox,depth=hb.y+hb.height-bb.y;
 hole6.setAttribute('viewBox',`${hb.x} ${hb.y} ${hb.width} ${hb.height}`);
 
+// In WebGL a phone's toolbar coming and going is not a new layout: the wall keeps the
+// height it was laid out for.
+let seenW=0,seenH=0;
+function onResize(){if(glw&&innerWidth===seenW&&Math.abs(innerHeight-seenH)<160)return;layout()}
 function layout(){
-  const iw=innerWidth,ih=innerHeight;mobile=iw<650;
+  const iw=innerWidth,ih=glw&&iw===seenW&&Math.abs(innerHeight-seenH)<160?seenH:innerHeight;seenW=iw;seenH=ih;mobile=iw<650;
   fit=Math.max(.3,Math.min((iw-(mobile?40:100))/(mobile?700:1100),(ih-60)/650));
   segment=Math.max(850,ih*1.3);$('#scroll-track').style.height=(segment*TOTAL+ih)+'px';
   lower=ih*.1;spacing=(mobile?1280:830)*.8*(EDGE?1.36:1);
@@ -136,7 +140,7 @@ addEventListener('keydown',e=>{if(reading||roomOpen||document.querySelector('dia
   if((e.key==='ArrowUp'||e.key==='PageUp')&&scrollY<=0&&up<1){e.preventDefault();lift(e.key==='PageUp'?.5:.15)}
   else if((e.key==='ArrowDown'||e.key==='PageDown'||e.key===' ')&&up>0){e.preventDefault();lift(e.key==='ArrowDown'?-.15:-.5)}});
 $('#above-back').onclick=()=>{const from=up,t0=performance.now();const step=now=>{const k=clamp((now-t0)/900);up=from*(1-ease(k));lastKey='';if(k<1)requestAnimationFrame(step)};requestAnimationFrame(step)};
-const overview=()=>Math.min(fit*.3,innerHeight*.4/(floor+300));
+const overview=()=>Math.min(fit*.3,(seenH||innerHeight)*.4/(floor+300));
 function camera(u=window.__u??0){
   if(u<START){// the pull-back of 04.1, backwards: distance shrinks linearly while descending
     const v=ease((START-u)/BACK),Z5=fit/scales[LAST],Zend=overview();
@@ -151,9 +155,9 @@ function frame(){
 if(warming){requestAnimationFrame(frame);return}
 if(!reading&&!roomOpen){
   u=clamp(scrollY/segment,0,TOTAL);window.__u=u;
-  const key=`${u}|${up}|${innerWidth}|${innerHeight}`;
+  const key=`${u}|${up}|${innerWidth}|${seenH}`;
   if(key!==lastKey){lastKey=key;
-    const [Z,cy]=camera(),half=innerHeight/2+80,inHole=TOP||u>=START+SINK;
+    const [Z,cy]=camera(),half=(seenH||innerHeight)/2+80,inHole=TOP||u>=START+SINK;
     panels.forEach((p,j)=>{const [ox,oy,h,oyo]=origins[j],k=Z*scales[j],y=Z*(oy+centres[j]-cy)+lower;const top=y-oyo*k,bottom=y+(h-oyo)*k;
       const far=k<.004||bottom<-half||top>half||(j>LAST&&!inHole);if(far!==p.hasAttribute('hidden-far'))far?p.setAttribute('hidden-far',''):p.removeAttribute('hidden-far');
       if(glw){glw.panel(j,Z*ox-ox,y-oy,k,far);(settle||(settle=[]))[j]=far?null:`translate(${Z*ox-ox}px,${y-oy}px) scale(${k})`}else if(!far)p.style.transform=`translate3d(${Z*ox-ox}px,${y-oy}px,0) scale(${k})`;if(p.inert!==far)p.inert=far});
@@ -176,7 +180,7 @@ if(!reading&&!roomOpen){
   if(glw){if(settle&&glw.idle){settle.forEach((t,j)=>{if(t)panels[j].style.transform=t});settle=null}glw.tick()}
   watchEdit();
 }else if(reading){watchEdit();panels.forEach(p=>{p.inert=false;p.removeAttribute('hidden-far')})}requestAnimationFrame(frame)}
-document.fonts.ready.then(()=>{glw?.reread();layout()});addEventListener("resize",layout);body.classList.remove('reading');body.classList.add('flat');layout();if(reduced)toggleReading(true);requestAnimationFrame(frame);
+document.fonts.ready.then(()=>{glw?.reread();layout()});addEventListener("resize",onResize);body.classList.remove('reading');body.classList.add('flat');layout();if(reduced)toggleReading(true);requestAnimationFrame(frame);
 // Safari rasters a layer at the scale it is first shown and redraws it each time that scale
 // grows; draw every chapter once at full size, invisibly, before showing the far view.
 if(warming){viewport.style.opacity='.01';panels.forEach(p=>{p.removeAttribute('hidden-far');p.style.transform=`scale(${fit})`});let n=0;const tick=()=>{if(++n<4)requestAnimationFrame(tick);else{warming=false;lastKey='';requestAnimationFrame(()=>viewport.style.opacity='')}};requestAnimationFrame(tick)}
