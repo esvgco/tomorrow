@@ -25,7 +25,7 @@ const RATIO=.34,scales=panels.map((_,i)=>RATIO**i),centres=[0],BACK=1.6,START=BA
 const surface=$('#wall-surface'),dock=$('#rabbit-dock'),hole6=$('.burrow-hole'),cards=[...document.querySelectorAll('.burrow-card')];
 let Yr=0,tStar=0,dockX=0,dockY=0,dockDepth=0,floor=0,origins=[],lastKey='',lastMark='',lastFall=-1,fit=1,segment=1100,mobile=false,lower=0,spacing=830;
 let up=0,warming=!reduced,roomEntering=false,roomFlight=null,reading=false,roomOpen=false,hoverLast=false,u=0,cardBase=[];
-const mark=mountMark($('#wall-rabbit')),fall=mountFall($('[data-fall]'),{center:true});
+const mark=mountMark($('#wall-rabbit'));
 const hb=mark.holeBox,bb=mark.bunBox,depth=hb.y+hb.height-bb.y;
 hole6.setAttribute('viewBox',`${hb.x} ${hb.y} ${hb.width} ${hb.height}`);
 
@@ -56,7 +56,7 @@ function layout(){
   }
   const [,,PH6,,PW6]=origins[6],hb6=parseFloat(hole6.style.top)+parseFloat(hole6.style.height);
   cardBase=cards.map((c,k)=>{c.style.top=hb6+(mobile?90:60)+k*(mobile?150:95)+'px';return {w:c.offsetWidth,dx:parseFloat(c.style.getPropertyValue('--dx'))*PW6}});
-  glw?.layout();lastKey='';lastMark='';
+  glw?.rest(fit);glw?.layout();lastKey='';lastMark='';
 }
 
 // 04.7: the rabbit sits just above the first heading as the page opens, and stays there.
@@ -111,6 +111,11 @@ if(mist){mist.className='foot-mist';dock.before(mist)}
 // Without WebGL the page falls back to 04.9.
 const glw=LENS&&body.classList.contains('wall-gl')?mountWallGL(viewport,panels,{flare:.9*LENS}):null;
 if(glw)cards.forEach(c=>glw.sprite(c,6));else body.classList.remove('wall-gl');
+// In WebGL the falling letters are not spans in the page: they are handed over as a list.
+const fallHost=$('[data-fall]'),fallLayer=glw?.paint(fallHost,1,170),fall=mountFall(fallHost,{center:true,paint:fallLayer?list=>fallLayer.set(list):null});
+// In WebGL the chapters in the page are only there for the pointer, so they are moved to
+// where the picture is once the camera has come to rest, not on every frame.
+let settle=null;
 const lens=LENS&&!glw?mountLens(dock,{flare:.6*LENS}):null;
 const door=mountDoor(above,{reduced,onEnter:done=>tomorrow(()=>{done();up=0;scrollTo(0,0);lastKey='';lastMark=''})});
 function lookUp(){
@@ -151,7 +156,7 @@ if(!reading&&!roomOpen){
     const [Z,cy]=camera(),half=innerHeight/2+80,inHole=TOP||u>=START+SINK;
     panels.forEach((p,j)=>{const [ox,oy,h,oyo]=origins[j],k=Z*scales[j],y=Z*(oy+centres[j]-cy)+lower;const top=y-oyo*k,bottom=y+(h-oyo)*k;
       const far=k<.004||bottom<-half||top>half||(j>LAST&&!inHole);if(far!==p.hasAttribute('hidden-far'))far?p.setAttribute('hidden-far',''):p.removeAttribute('hidden-far');
-      if(!far)p.style.transform=`translate3d(${Z*ox-ox}px,${y-oy}px,0) scale(${k})`;glw?.panel(j,Z*ox-ox,y-oy,k,far);if(p.inert!==far)p.inert=far});
+      if(glw){glw.panel(j,Z*ox-ox,y-oy,k,far);(settle||(settle=[]))[j]=far?null:`translate(${Z*ox-ox}px,${y-oy}px) scale(${k})`}else if(!far)p.style.transform=`translate3d(${Z*ox-ox}px,${y-oy}px,0) scale(${k})`;if(p.inert!==far)p.inert=far});
     // The dock until the rabbit is gone; from then on, the hole belongs to the wall.
     if(!TOP)dock.style.visibility=inHole?'hidden':'';
     lookUp();
@@ -168,9 +173,10 @@ if(!reading&&!roomOpen){
     const t=u-START-SINK;
     cards.forEach((c,k)=>{const l=ease(clamp((t-(TOP?1.5:.12)-k*.17)/.45)),dy=(1-l)*(mobile?260:170);c.style.transform=`translate(${-cardBase[k].w/2+cardBase[k].dx}px,${dy}px)`;c.style.opacity=l.toFixed(3)});
   }
-  watchEdit();glw?.tick();
+  if(glw){if(settle&&glw.idle){settle.forEach((t,j)=>{if(t)panels[j].style.transform=t});settle=null}glw.tick()}
+  watchEdit();
 }else if(reading){watchEdit();panels.forEach(p=>{p.inert=false;p.removeAttribute('hidden-far')})}requestAnimationFrame(frame)}
-document.fonts.ready.then(layout);addEventListener("resize",layout);body.classList.remove('reading');body.classList.add('flat');layout();if(reduced)toggleReading(true);requestAnimationFrame(frame);
+document.fonts.ready.then(()=>{glw?.reread();layout()});addEventListener("resize",layout);body.classList.remove('reading');body.classList.add('flat');layout();if(reduced)toggleReading(true);requestAnimationFrame(frame);
 // Safari rasters a layer at the scale it is first shown and redraws it each time that scale
 // grows; draw every chapter once at full size, invisibly, before showing the far view.
 if(warming){viewport.style.opacity='.01';panels.forEach(p=>{p.removeAttribute('hidden-far');p.style.transform=`scale(${fit})`});let n=0;const tick=()=>{if(++n<4)requestAnimationFrame(tick);else{warming=false;lastKey='';requestAnimationFrame(()=>viewport.style.opacity='')}};requestAnimationFrame(tick)}

@@ -89,4 +89,6 @@
 .wall-gl:not(.reading) .wall-panel{opacity:0;will-change:auto}
 /* 04.9, 04.10: a quieter opening. The first heading is smaller, like the rabbit and its hole. */
 .edge-lens:not(.reading) .wall-panel h1{font-size:128px}
-@media(max-width:650px){.edge-lens:not(.reading) .wall-panel h1{font-size:98px}}
+/* On a phone the opening is seen from far away, so there the heading is larger than its
+   chapter is wide; it is let out on both sides and stays centred. */
+@media(max-width:650px){.edge-lens:not(.reading) .wall-panel h1{font-size:168px;margin-left:-260px;margin-right:-260px}}
