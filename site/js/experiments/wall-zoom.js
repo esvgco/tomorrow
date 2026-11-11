@@ -33,20 +33,20 @@ function layout(){
   const iw=innerWidth,ih=innerHeight;mobile=iw<650;
   fit=Math.max(.3,Math.min((iw-(mobile?40:100))/(mobile?700:1100),(ih-60)/650));
   segment=Math.max(850,ih*1.3);$('#scroll-track').style.height=(segment*TOTAL+ih)+'px';
-  lower=ih*.1;spacing=(mobile?1280:830)*.8*(EDGE?1.22:1);
+  lower=ih*.1;spacing=(mobile?1280:830)*.8*(EDGE?1.36:1);
   for(let i=1;i<=LAST;i++)centres[i]=centres[i-1]+spacing*scales[i-1];
   floor=centres[LAST]+6;
   origins=panels.map(p=>{const o=getComputedStyle(p).transformOrigin.split(' ').map(parseFloat);return [surface.offsetLeft+p.offsetLeft+o[0],surface.offsetTop+p.offsetTop+o[1],p.offsetHeight,o[1],p.offsetWidth,o[0]]});
   if(TOP)layoutTop(iw,ih);else{
   // The dock: the rabbit and its hole, sized by the hole, sitting at the foot of the window.
-  const wH=mobile?Math.min(iw*.24,100):Math.min(iw*.11,150),sc=wH/hb.width;
+  const wH=(mobile?Math.min(iw*.24,100):Math.min(iw*.11,150))*(EDGE?.84:1),sc=wH/hb.width;
   // The mark lifts its hole over the head; the dock moves down by as much, so the hole stays
   // where it is and the rabbit is seen going down into it.
   const y0=ih-ih*.05-hb.height/2*sc,yEnd=y0;
   dockX=iw/2-(hb.x+hb.width/2-882)*sc;dockY=y0-(hb.y+hb.height/2-264)*sc;dockDepth=depth*sc;
   Object.assign(dock.style,{width:932*sc+'px',height:1251*sc+'px'});
   // 04.9: the mist reaches from the foot of the window to a little above the ears.
-  if(mist)mist.style.height=ih-(y0+hb.height/2*sc-depth*sc)+(mobile?50:80)+'px';
+  if(mist)mist.style.height=ih-(y0+hb.height/2*sc-depth*sc)+(mobile?70:110)+'px';
   // The hole as a chapter: the size and place that project exactly onto the dock's hole
   // when the camera stands at the last screen.
   const [,oy,PH,oyo,PW]=origins[6],k6=fit*RATIO,Z5=fit/scales[LAST],W6=wH/k6,H6=W6*hb.height/hb.width,hy=PH*(mobile?.26:.3);

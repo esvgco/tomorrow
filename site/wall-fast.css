@@ -80,10 +80,13 @@
 .lens-strip{position:fixed;left:0;right:0;z-index:3;pointer-events:none}
 .wall-page.reading .lens-strip{display:none}
 /* 04.9: the mist at the foot of the window, over the lens and under the rabbit. */
-.foot-mist{position:fixed;left:0;right:0;bottom:0;z-index:4;pointer-events:none;will-change:opacity;background:linear-gradient(to top,#fff 0,#fff 30%,rgba(255,255,255,.93) 42%,rgba(255,255,255,.74) 55%,rgba(255,255,255,.45) 68%,rgba(255,255,255,.18) 82%,rgba(255,255,255,.04) 93%,rgba(255,255,255,0) 100%)}
+.foot-mist{position:fixed;left:0;right:0;bottom:0;z-index:4;pointer-events:none;will-change:opacity;background:linear-gradient(to top,#fff 0,#fff 50%,rgba(255,255,255,.93) 59%,rgba(255,255,255,.74) 68%,rgba(255,255,255,.45) 77%,rgba(255,255,255,.18) 87%,rgba(255,255,255,.04) 95%,rgba(255,255,255,0) 100%)}
 .wall-page.reading .foot-mist{display:none}
 /* 04.10: the wall drawn in WebGL (js/experiments/wall-gl.js). The chapters are still there
    for the pointer, only not painted; the canvas inside the viewport shows them. */
 .wall-canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;display:none}
 .wall-gl:not(.reading) .wall-canvas{display:block}
 .wall-gl:not(.reading) .wall-panel{opacity:0;will-change:auto}
+/* 04.9, 04.10: a quieter opening. The first heading is smaller, like the rabbit and its hole. */
+.edge-lens:not(.reading) .wall-panel h1{font-size:128px}
+@media(max-width:650px){.edge-lens:not(.reading) .wall-panel h1{font-size:98px}}
