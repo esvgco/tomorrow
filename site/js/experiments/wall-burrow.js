@@ -40,19 +40,30 @@ const mist=document.createElement('div');mist.className='foot-mist';dock.before(
 //   - The loop stops when nothing moves and starts again at the first touch.
 //   - The chapters in the page, there for the pointer, are not moved at all until the
 //     pointer comes down; and a click is passed on to what is seen under it, through the lens.
-let lean=body.classList.contains('lean')&&!reduced,running=false,awakeUntil=0;
+let lean=body.classList.contains('lean')&&!reduced,running=false,awakeUntil=0,followed=false;
 function wake(){awakeUntil=performance.now()+300;if(!running){running=true;requestAnimationFrame(frame)}}
-const glw=LENS?mountWallGL(viewport,panels,{flare:.9*LENS,lean,onWork:wake}):null;
+const glw=LENS?mountWallGL(viewport,panels,{flare:.9*LENS,lean,calm:body.classList.contains('steady'),onWork:wake}):null;
 if(!glw){body.classList.remove('wall-gl','lean');lean=false}
 // The rabbit, drawn as the mark draws it: the hole lifted by how far it has sunk, and the
 // head cut off at the middle of the hole.
 const hareState={sc:1,sink:0,color:'#000'},bunPaths=[...mark.svg.querySelectorAll('#tc-bun path')].map(p=>new Path2D(p.getAttribute('d'))),holePath=new Path2D(mark.svg.querySelector('#tc-holeshape').getAttribute('d'));
-const hare=lean?glw.front(ctx=>{const {sc,sink}=hareState,dy=-depth*sink;ctx.save();ctx.scale(sc,sc);ctx.translate(-882,-264);ctx.fillStyle=hareState.color;
+// 04.13 (body.steady), on top of lean: nothing at all is drawn into a texture while the wall
+// moves, and the camera follows the scroll instead of being pinned to it.
+//   - The rabbit is two pictures that never change: the hole, and the head, cut off at the
+//     hole's middle by where it is placed. The falling letters are one small picture per
+//     character. So a scroll uploads nothing to the graphics card.
+//   - A phone reports the scroll position at uneven moments, and a camera pinned to it moves
+//     in uneven steps even at a full frame rate. Following it with a short lag (EASE, in
+//     milliseconds; ?ease=0 pins it again) makes the steps even.
+const steady=lean&&body.classList.contains('steady'),EASE=steady?Math.max(0,parseFloat(new URLSearchParams(location.search).get('ease')??70)||0):0;
+const inMark=(ctx,draw)=>{ctx.save();ctx.scale(hareState.sc,hareState.sc);ctx.translate(-882,-264);ctx.fillStyle=hareState.color;draw();ctx.restore()};
+const holeFront=steady?glw.front(ctx=>inMark(ctx,()=>ctx.fill(holePath)),10,10):null,headFront=steady?glw.front(ctx=>inMark(ctx,()=>{for(const p of bunPaths)ctx.fill(p)}),10,10):null;
+const hare=lean&&!steady?glw.front(ctx=>{const {sc,sink}=hareState,dy=-depth*sink;ctx.save();ctx.scale(sc,sc);ctx.translate(-882,-264);ctx.fillStyle=hareState.color;
   ctx.save();ctx.translate(0,dy);ctx.fill(holePath);ctx.restore();
   ctx.beginPath();ctx.rect(bb.x-bb.width,bb.y-bb.width+dy,bb.width*3,hb.y+hb.height/2-bb.y+bb.width);ctx.clip();for(const p of bunPaths)ctx.fill(p);ctx.restore()},10,10):null;
 // Sprites: the cards and the pages move by themselves inside the hole's chapter.
 const cardSprite=cards.map(c=>glw?.sprite(c,HOLE,{funnel:true})),pageSprite=pages.map(p=>glw?.sprite(p,HOLE,{rest:1.1}));
-const fallHost=$('[data-fall]'),fallLayer=glw?.paint(fallHost,1,170),fall=mountFall(fallHost,{center:true,paint:fallLayer?list=>fallLayer.set(list):null});
+const fallHost=$('[data-fall]'),fallLayer=glw?.paint(fallHost,1,170,{glyphs:steady}),fall=mountFall(fallHost,{center:true,paint:fallLayer?list=>fallLayer.set(list):null});
 // Where the page's own elements should be. In WebGL they are only there for the pointer, so
 // they are moved once the camera has come to rest, not on every frame.
 const settle=new Map(),move=(el,t)=>{if(glw)settle.set(el,t);else el.style.transform=t};
@@ -83,7 +94,7 @@ function layout(force){
   const wH=(mobile?Math.min(iw*.24,100):Math.min(iw*.11,150))*.84,sc=wH/hb.width,y0=ih-ih*.05-hb.height/2*sc;
   Object.assign(rabbit,{hx:(hb.x+hb.width/2-882)*sc,hy:(hb.y+hb.height/2-264)*sc,wide:wH,y0,sink:depth*sc});
   Object.assign(dock.style,{width:932*sc+'px',height:1251*sc+'px'});
-  hareState.sc=sc;hareState.color=getComputedStyle(dock).color;hare?.size(932*sc,1251*sc,hb.height*sc*1.2);hare?.again();
+  hareState.sc=sc;hareState.color=getComputedStyle(dock).color;hare?.size(932*sc,1251*sc,hb.height*sc*1.2);hare?.again();for(const f of [holeFront,headFront]){f?.size(932*sc,1251*sc);f?.again()}
   // The mist reaches from a little above the ears to below the window, however tall it gets.
   const mh=ih-(y0+hb.height/2*sc-depth*sc)+(mobile?70:110),stop=(a,f)=>`rgba(255,255,255,${a}) ${(mh*f).toFixed(0)}px`;
   mistAt=[ih-mh,mh];
@@ -248,7 +259,9 @@ if(warming){requestAnimationFrame(frame);return}
 if(now==null)now=performance.now();
 const gap=now-clock||16,dt=Math.min(64,gap),t0=hud?performance.now():0;clock=now;
 if(!reading&&!roomOpen){
-  u=clamp(scrollY/segment,0,TOTAL);
+  const asked=clamp(scrollY/segment,0,TOTAL);
+  // Steady: the camera closes a share of the gap to the scroll every frame.
+  if(EASE&&followed){const gap=asked-u;u=Math.abs(gap)<1e-4?asked:u+gap*(1-Math.exp(-dt/EASE));if(u!==asked)awakeUntil=now+300}else{u=asked;followed=true}
   // At a project's page, any scroll steps forward to the wall again.
   if(open>=0){if(aim===1&&Math.abs(scrollY-openedAt)>28)closeProject();
     const before=shown;shown=clamp(shown+(aim?1:-1)*dt/(reduced?1:1250));
@@ -274,9 +287,12 @@ if(!reading&&!roomOpen){
     // it the page's own again, because then the wall tilts and the rabbit must not.
     const drawn=lean&&up===0,m=`${sink.toFixed(4)}|${S.toFixed(4)}|${dy.toFixed(2)}|${drawn}`;
     if(m!==lastMark){lastMark=m;const x=iw/2-S*rabbit.hx,y=dy-S*(rabbit.hy-rabbit.sink*sink);
-      if(drawn){if(hareState.sink!==sink){hareState.sink=sink;hare.again()}hare.set(x,y,S,1)}
-      else{mark.set(sink,0,1);dock.style.transform=`translate(${x}px,${y}px) scale(${S})`}}
-    if(lean)hare.set(...(drawn&&!gone?[iw/2-S*rabbit.hx,dy-S*(rabbit.hy-rabbit.sink*sink),S,1]:[0,0,1,0]));
+      if(drawn&&hare){if(hareState.sink!==sink){hareState.sink=sink;hare.again()}}
+      else if(!drawn){mark.set(sink,0,1);dock.style.transform=`translate(${x}px,${y}px) scale(${S})`}}
+    if(lean){const on=drawn&&!gone?1:0,x=iw/2-S*rabbit.hx;
+      hare?.set(x,dy-S*(rabbit.hy-rabbit.sink*sink),S,on);
+      // Steady: the hole stays, the head goes down behind the line through its middle.
+      holeFront?.set(x,dy-S*rabbit.hy,S,on);headFront?.set(x,dy-S*(rabbit.hy-rabbit.sink*sink),S,on,dy)}
     dock.style.visibility=gone||drawn?'hidden':'';
     // The foot of the lens is flat by the time the hole is on the wall, so that the swap is
     // not seen; it bends again as the hole rises. Raising the head flattens all of it, and
@@ -306,7 +322,7 @@ if(!reading&&!roomOpen){
 beyond.draw(dt);if(up>0&&up<1)awakeUntil=now+300;
 {const hold=!reading&&(up>0||beyond.active);if(hold!==held){held=hold;document.documentElement.style.touchAction=hold?'none':''}}
 if(hud){perf.n++;perf.worst=Math.max(perf.worst,gap);perf.js+=performance.now()-t0;if(gap>40)perf.slow++;
-  if(now-perf.since>1000){const g=glw?.stats||{};hud.textContent=`${Math.round(perf.n*1000/(now-perf.since))} fps   worst ${perf.worst.toFixed(0)} ms   over 40ms: ${perf.slow}\nscript ${(perf.js/perf.n).toFixed(1)} ms/frame\ndrawn again ${g.rasters||0} (${(g.rasterMs||0).toFixed(0)} ms)   read ${g.reads||0}\n${innerWidth}x${innerHeight} @${devicePixelRatio}   drawn at ${glw?(Math.min(2,devicePixelRatio)*glw.res).toFixed(2):'-'}x${lean?'   lean':''}`;
+  if(now-perf.since>1000){const g=glw?.stats||{};hud.textContent=`${Math.round(perf.n*1000/(now-perf.since))} fps   worst ${perf.worst.toFixed(0)} ms   over 40ms: ${perf.slow}\nscript ${(perf.js/perf.n).toFixed(1)} ms/frame\ndrawn again ${g.rasters||0} (${(g.rasterMs||0).toFixed(0)} ms)   read ${g.reads||0}\n${innerWidth}x${innerHeight} @${devicePixelRatio}   drawn at ${glw?(Math.min(2,devicePixelRatio)*glw.res).toFixed(2):'-'}x${lean?'   lean':''}${steady?'   steady, ease '+EASE+' ms':''}`;
     Object.assign(perf,{n:0,worst:0,js:0,since:now,slow:0});if(glw)Object.assign(glw.stats,{rasters:0,rasterMs:0,reads:0})}}
 if(!lean||warming||now<awakeUntil)requestAnimationFrame(frame);else{running=false;if(hud)hud.textContent+='\nat rest: loop stopped'}}
 document.fonts.ready.then(()=>{glw?.reread();layout(true);wake()});addEventListener('resize',layout);body.classList.remove('reading');body.classList.add('flat');dock.style.transformOrigin='0 0';layout(true);if(reduced)toggleReading(true);running=true;requestAnimationFrame(frame);
