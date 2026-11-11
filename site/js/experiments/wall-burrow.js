@@ -41,9 +41,30 @@ const mist=document.createElement('div');mist.className='foot-mist';dock.before(
 //   - The chapters in the page, there for the pointer, are not moved at all until the
 //     pointer comes down; and a click is passed on to what is seen under it, through the lens.
 let lean=body.classList.contains('lean')&&!reduced,running=false,awakeUntil=0,followed=false;
+// 04.14 (body.under): on an iPhone, Safari cuts everything fixed off under its own bars and
+// leaves the page's background there; what is simply in the document it shows through them.
+// So here nothing is fixed. The document does not scroll at all: it is PARK pixels taller than
+// the window above and below and is held PARK down, and the canvas, lying in it, reaches that
+// far over the window's edges. The scrolling is done by a box over the window (after
+// esvgco/orbit, which found this). Only on iOS; ?layer=inner forces it elsewhere, ?layer=fixed
+// turns it off.
+const PARK=240,asked=new URLSearchParams(location.search).get('layer'),iOS=/iP(hone|ad|od)/.test(navigator.userAgent)||/Macintosh/.test(navigator.userAgent)&&navigator.maxTouchPoints>1;
+let under=body.classList.contains('under')&&lean&&asked!=='fixed'&&(iOS||asked==='inner'),stage=null,box=null;
+if(under){
+  stage=document.createElement('div');stage.className='under-stage';viewport.before(stage);stage.append(viewport);
+  box=document.createElement('div');box.className='under-scroller';stage.after(box);box.append($('#scroll-track'));
+  document.documentElement.dataset.layer='inner';
+  const hold=()=>{if(scrollX!==0||Math.abs(scrollY-PARK)>.5)scrollTo(0,PARK)};
+  for(const type of ['scroll','load','pageshow'])addEventListener(type,hold,{passive:true});
+}
+// Where the scroll is, and going somewhere.
+const here=()=>box?box.scrollTop:scrollY,goTo=(top,smooth=false)=>(box||window).scrollTo({top,behavior:smooth&&!reduced?'smooth':'instant'});
+// What is tilted when the head is raised and flown into for a room: the wall as a whole.
+const scene=stage||viewport;
 function wake(){awakeUntil=performance.now()+300;if(!running){running=true;requestAnimationFrame(frame)}}
-const glw=LENS?mountWallGL(viewport,panels,{flare:.9*LENS,lean,calm:body.classList.contains('steady'),onWork:wake}):null;
-if(!glw){body.classList.remove('wall-gl','lean');lean=false}
+const glw=LENS?mountWallGL(viewport,panels,{flare:.9*LENS,lean,calm:body.classList.contains('steady'),onWork:wake,host:scene,scene}):null;
+if(!glw){body.classList.remove('wall-gl','lean');lean=false;
+  if(under){under=false;delete document.documentElement.dataset.layer;box.before($('#scroll-track'));stage.before(viewport);stage.remove();box.remove();stage=box=null}}
 // The rabbit, drawn as the mark draws it: the hole lifted by how far it has sunk, and the
 // head cut off at the middle of the hole.
 const hareState={sc:1,sink:0,color:'#000'},bunPaths=[...mark.svg.querySelectorAll('#tc-bun path')].map(p=>new Path2D(p.getAttribute('d'))),holePath=new Path2D(mark.svg.querySelector('#tc-holeshape').getAttribute('d'));
@@ -91,8 +112,10 @@ function layout(force){
   // the walk. A fling back to the top runs on into the look-up, and the browser's own
   // bounce is left at both ends.
   const was=RISE?[up,u]:null;
-  segment=Math.max(850,ih*1.3);RISE=Math.round(ih*.72);$('#scroll-track').style.height=(RISE+segment*TOTAL+ih)+'px';
-  if(!reading)scrollTo(0,was?(was[0]>0?RISE*(1-was[0]):RISE+was[1]*segment):RISE);pos=scrollY;
+  segment=Math.max(850,ih*1.3);RISE=Math.round(ih*.72);
+  if(under)document.documentElement.style.setProperty('--under-h',ih+'px');
+  $('#scroll-track').style.height=(RISE+segment*TOTAL+(under?ih+PARK*2:ih))+'px';
+  if(!reading)goTo(was?(was[0]>0?RISE*(1-was[0]):RISE+was[1]*segment):RISE);pos=here();
   lower=ih*.1;spacing=(mobile?1280:830)*.8*1.36;
   for(let i=1;i<=LAST;i++)centres[i]=centres[i-1]+spacing*scales[i-1];
   floor=centres[LAST]+6;
@@ -126,22 +149,25 @@ function layout(force){
   pageCam=[Zt,(iw/2-mx)/Zt,centres[HOLE]-(my+lower/FAR-ih/2-lower)/Zt];
   pagePose=[oxo+(px-iw/2-Zt*(ox-pageCam[1]))/(Zt*s6),oyo+(py-ih/2-lower-Zt*(oy+centres[HOLE]-pageCam[2]))/(Zt*s6),pageFit/(Zt*s6)];
   pages.forEach(p=>{p.style.setProperty('--mini-w',(miniW/pageFit).toFixed(1)+'px');p.style.setProperty('--mini-h',(miniH/pageFit).toFixed(1)+'px')});
-  glw?.rest(fit);glw?.layout();lastKey='';lastMark='';
+  glw?.layout();
+  // Under: the lens begins where the picture does, behind the browser's bar over the window.
+  if(under){const tall=Object.assign(document.createElement('div'),{style:'position:fixed;top:0;height:100lvh;width:0'});body.append(tall);const lvh=tall.offsetHeight||ih;tall.remove();glw.inset(PARK,62,Math.max(ih,lvh))}
+  glw?.rest(fit);lastKey='';lastMark='';
 }
-function reset(){scrollTo(0,reading?0:RISE);leaveRoom()}
+function reset(){if(reading)scrollTo(0,0);else goTo(RISE);leaveRoom()}
 const at=v=>RISE+v*segment;
-function go(i){if(reading){panels[i].scrollIntoView({behavior:reduced?'instant':'smooth'});return}scrollTo({top:at(i<=LAST?START:i===HOLE?START+1:TOTAL),behavior:reduced?'instant':'smooth'})}
+function go(i){if(reading){panels[i].scrollIntoView({behavior:reduced?'instant':'smooth'});return}goTo(at(i<=LAST?START:i===HOLE?START+1:TOTAL),true)}
 $$('[data-stop]').forEach(b=>b.onclick=e=>{e.preventDefault();go(+b.dataset.stop)});
 $('#about-link').onclick=()=>$('#about-dialog').showModal();
 $('#reset-wall').onclick=()=>{setDay(0);$('#help').close();reset()};
 function toggleReading(force){reading=typeof force==='boolean'?force:!reading;body.classList.toggle('reading',reading);dock.hidden=reading;if(reading){viewport.removeAttribute('inert');scrollTo(0,0)}else{layout(true);reset()}}
-async function enterRoom(){if(roomOpen||roomEntering||reading||open>=0)return;roomEntering=true;const r=$('#last-heading').getBoundingClientRect();viewport.style.transformOrigin=`${r.left+r.width*.18}px ${r.top+r.height*.3}px`;roomFlight=viewport.animate([{transform:'scale(1)'},{transform:'scale(34)'}],{duration:reduced?1:950,fill:'forwards',easing:'cubic-bezier(.6,0,.8,.4)'});await roomFlight.finished;roomOpen=true;roomEntering=false;$('#room').hidden=false;viewport.inert=true;$('#leave-room').focus();roomFlight.cancel()}
+async function enterRoom(){if(roomOpen||roomEntering||reading||open>=0)return;roomEntering=true;const r=$('#last-heading').getBoundingClientRect();scene.style.transformOrigin=`${r.left+r.width*.18}px ${r.top+r.height*.3}px`;roomFlight=scene.animate([{transform:'scale(1)'},{transform:'scale(34)'}],{duration:reduced?1:950,fill:'forwards',easing:'cubic-bezier(.6,0,.8,.4)'});await roomFlight.finished;roomOpen=true;roomEntering=false;$('#room').hidden=false;viewport.inert=true;$('#leave-room').focus();roomFlight.cancel()}
 function leaveRoom(){if(!roomOpen)return;roomOpen=false;$('#room').hidden=true;viewport.inert=false;$('#last-heading').focus({preventScroll:true})}
 $('#leave-room').onclick=leaveRoom;$('#room-tomorrow').onclick=()=>tomorrow(reset);
 {const h=$('#last-heading');h.onpointerenter=()=>hoverLast=true;h.onpointerleave=()=>hoverLast=false;h.onclick=enterRoom;h.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();enterRoom()}}}
 addEventListener('wheel',e=>{if(reading||e.ctrlKey||document.querySelector('dialog[open]'))return;if(roomOpen||roomEntering){e.preventDefault();return}if(hoverLast&&Math.abs(u-START)<.25&&e.deltaY<0){e.preventDefault();enterRoom()}},{passive:false});
 addEventListener('keydown',e=>{if(roomOpen){if(e.key==='Escape'){leaveRoom();e.preventDefault()}if(e.key==='Tab'){e.preventDefault();(document.activeElement===$('#leave-room')?$('#room-tomorrow'):$('#leave-room')).focus()}}});
-mountGaps((x,y)=>{if(reading){tomorrow();return}viewport.style.transformOrigin=`${x}px ${y}px`;const a=viewport.animate([{transform:'scale(1)'},{transform:'scale(20)',opacity:0}],{duration:reduced?1:650,fill:'forwards',easing:'cubic-bezier(.6,0,1,1)'});a.onfinish=()=>{tomorrow(()=>{a.cancel()})}});
+mountGaps((x,y)=>{if(reading){tomorrow();return}scene.style.transformOrigin=`${x}px ${y}px`;const a=scene.animate([{transform:'scale(1)'},{transform:'scale(20)',opacity:0}],{duration:reduced?1:650,fill:'forwards',easing:'cubic-bezier(.6,0,1,1)'});a.onfinish=()=>{tomorrow(()=>{a.cancel()})}});
 
 // ---------- A project, opened by stepping back ----------
 // open: which one, or -1. shown: 0 at the wall, 1 at its page; it runs on the clock.
@@ -151,7 +177,7 @@ const slug=k=>'project-'+pages[k].dataset.slug,named=()=>pages.findIndex((p,k)=>
 function openProject(k,instant=false){
   if(reading||roomOpen||open===k&&aim===1)return;
   if(open<0||shown===0)open=k;else if(open!==k)return;
-  aim=1;openedAt=scrollY;if(instant)shown=1;wake();
+  aim=1;openedAt=here();if(instant)shown=1;wake();
   if(location.hash!=='#'+slug(k)){history.pushState({project:k},'','#'+slug(k));pushed=true}
   lastKey='';
 }
@@ -163,7 +189,7 @@ $$('[data-open]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();
   // At a page, the cards are the small wall in its corner: touching it steps forward again.
   if(open>=0){closeProject();return}
   // From the list in the fourth chapter: walk down to the hole first, then step back.
-  if(u<START+.75){go(HOLE);const wait=()=>{if(Math.abs(scrollY-at(START+1))<4)openProject(k);else if(scrollY<at(START+1)+4)requestAnimationFrame(wait)};setTimeout(wait,reduced?0:300)}else openProject(k)}));
+  if(u<START+.75){go(HOLE);const wait=()=>{if(Math.abs(here()-at(START+1))<4)openProject(k);else if(here()<at(START+1)+4)requestAnimationFrame(wait)};setTimeout(wait,reduced?0:300)}else openProject(k)}));
 $$('[data-back]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();closeProject()}));
 viewport.addEventListener('click',e=>{if(open>=0&&shown===1&&!e.target.closest('.project-page'))closeProject()});
 addEventListener('keydown',e=>{if(e.key==='Escape'&&open>=0&&aim===1){e.preventDefault();closeProject()}});
@@ -186,11 +212,11 @@ beyond.max=beyond.rooms[beyond.rooms.length-1].c;
 // that is scrolled is how far in we are. It is scrolled by the browser, with its momentum.
 {const stage=document.createElement('div'),track=document.createElement('div');stage.className='beyond-stage';track.className='beyond-track';stage.append(...beyond.el.childNodes);beyond.el.append(stage,track);beyond.track=track;beyond.el.tabIndex=-1}
 const roomStep=()=>Math.min(700,innerHeight*.62);
-beyond.enter=done=>{wake();beyond.done=done;beyond.active=true;beyond.key='';beyond.pull=0;beyond.since=performance.now();beyond.el.hidden=false;
+beyond.enter=done=>{wake();beyond.done=done;beyond.active=true;beyond.key='';beyond.pull=0;beyond.since=performance.now();beyond.el.hidden=false;if(under)document.documentElement.style.background='#000';
   beyond.track.style.height=(beyond.max+.75)*roomStep()+'px';beyond.el.scrollTop=0;beyond.el.focus({preventScroll:true})};
-beyond.close=()=>{wake();beyond.active=false;beyond.el.hidden=true;beyond.done?.()};
+beyond.close=()=>{wake();beyond.active=false;beyond.el.hidden=true;if(under)document.documentElement.style.background='';beyond.done?.()};
 beyond.leave=()=>{if(beyond.active){beyond.close();lastKey=''}};
-beyond.on=()=>{if(!beyond.active)return;beyond.active=false;tomorrow(()=>{beyond.close();scrollTo(0,RISE);pos=RISE;lastKey='';lastMark=''})};
+beyond.on=()=>{if(!beyond.active)return;beyond.active=false;tomorrow(()=>{beyond.close();goTo(RISE);pos=RISE;lastKey='';lastMark=''})};
 // Pulling back at the very beginning leaves by the door.
 beyond.el.addEventListener('wheel',e=>{if(beyond.el.scrollTop<=0&&e.deltaY<0){beyond.pull-=e.deltaY;if(beyond.pull>260)beyond.leave()}else beyond.pull=0},{passive:true});
 {let from=null;beyond.el.addEventListener('touchstart',e=>{from=beyond.el.scrollTop<=0?e.touches[0].clientY:null},{passive:true});
@@ -212,13 +238,10 @@ beyond.draw=now=>{if(!beyond.active)return;
   const k=clamp(p/(beyond.max+.6)),need=Math.hypot(innerWidth,innerHeight)/44;
   beyond.far.style.transform=`translate(-50%,-50%) scale(${(.18*Math.pow(need/.18,k**5)).toFixed(3)})`;beyond.far.style.opacity=(.95*inv(-.3,.05,p)).toFixed(3)};
 $('#beyond-on').onclick=beyond.on;$('#beyond-back').onclick=beyond.leave;
-// The white screen takes every touch as drawing. Its lowest strip does not: a finger there
-// scrolls the page, which is the way back down.
-above.append(Object.assign(document.createElement('div'),{className:'above-pass'}));
 const door=mountDoor(above,{reduced,onEnter:done=>beyond.enter(done)});
 function lookUp(){
   const a=TILT*ease(clamp((up-.2)/.8)),P=innerHeight*1.1;
-  viewport.style.transform=a?`perspective(${P}px) translateZ(${P}px) rotateX(${a}rad) translateZ(${-P}px)`:'';
+  scene.style.transform=a?`perspective(${P}px) translateZ(${P}px) rotateX(${a}rad) translateZ(${-P}px)`:'';
   above.classList.toggle('shown',a>0);above.classList.toggle('drawable',up>=1);
   above.style.transform=up>=1?'':`perspective(${P}px) translateZ(${P}px) rotateX(${a-TILT}rad) translateZ(${-P}px)`;
 }
@@ -226,7 +249,7 @@ function lookUp(){
 const hud=new URLSearchParams(location.search).has('perf')?body.appendChild(Object.assign(document.createElement('div'),{className:'perf-hud'})):null,perf={n:0,worst:0,js:0,since:0,slow:0};
 addEventListener('keydown',e=>{if(beyond.active&&e.key==='Escape'){e.preventDefault();beyond.leave()}});
 // Back down from the white screen: the browser scrolls there.
-$('#above-back').onclick=()=>scrollTo({top:RISE,behavior:reduced?'instant':'smooth'});
+$('#above-back').onclick=()=>goTo(RISE,true);
 
 // ---------- Lean: waking, and the pointer ----------
 if(lean){
@@ -239,6 +262,14 @@ if(lean){
   viewport.addEventListener('click',e=>{if(passing||reading||!e.isTrusted)return;const x=glw.unbend(e.clientX,e.clientY);if(Math.abs(x-e.clientX)<1.5)return;
     place();const el=document.elementFromPoint(x,e.clientY);if(!el||!viewport.contains(el))return;
     e.stopPropagation();e.preventDefault();passing=true;el.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,view:window,clientX:x,clientY:e.clientY}));passing=false},true);
+}
+
+// ---------- Under: the box that scrolls is over the wall ----------
+if(under){
+  box.addEventListener('scroll',wake,{passive:true});
+  // A click lands on the box. It is given to what is seen under it on the wall.
+  box.addEventListener('click',e=>{if(!e.isTrusted)return;place();const x=glw.unbend(e.clientX,e.clientY),el=document.elementsFromPoint(x,e.clientY).find(n=>n!==viewport&&viewport.contains(n));
+    if(el)el.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,view:window,clientX:x,clientY:e.clientY}))});
 }
 
 // ---------- The camera ----------
@@ -269,12 +300,13 @@ if(now==null)now=performance.now();
 const gap=now-clock||16,dt=Math.min(64,gap),t0=hud?performance.now():0;clock=now;
 if(!reading&&!roomOpen){
   // Steady: the camera closes a share of the gap to the scroll every frame.
-  if(EASE&&followed){const gap=scrollY-pos;pos=Math.abs(gap)<.08?scrollY:pos+gap*(1-Math.exp(-dt/EASE));if(pos!==scrollY)awakeUntil=now+300}else{pos=scrollY;followed=true}
+  const y=here();
+  if(EASE&&followed){const gap=y-pos;pos=Math.abs(gap)<.08?y:pos+gap*(1-Math.exp(-dt/EASE));if(pos!==y)awakeUntil=now+300}else{pos=y;followed=true}
   // Above RISE the walk, below it the look-up; past the end, the browser's bounce (a phone
   // reports it), which the wall follows.
   u=clamp((pos-RISE)/segment,0,TOTAL);up=clamp((RISE-pos)/RISE);over=Math.max(0,pos-(RISE+segment*TOTAL));
   // At a project's page, any scroll steps forward to the wall again.
-  if(open>=0){if(aim===1&&Math.abs(scrollY-openedAt)>28)closeProject();
+  if(open>=0){if(aim===1&&Math.abs(y-openedAt)>28)closeProject();
     const before=shown;shown=clamp(shown+(aim?1:-1)*dt/(reduced?1:1250));
     if(shown!==before)lastKey='';
     if(shown===1&&before<1)pages[open].focus({preventScroll:true});
@@ -340,5 +372,5 @@ document.fonts.ready.then(()=>{glw?.reread();layout(true);wake()});addEventListe
 // Give the page a few frames to draw every chapter before showing the far view.
 if(warming){viewport.style.opacity='.01';let n=0;const tick=()=>{if(++n<4)requestAnimationFrame(tick);else{warming=false;lastKey='';wake();requestAnimationFrame(()=>viewport.style.opacity='')}};requestAnimationFrame(tick)}
 if(location.hash){const k=named(),target=k<0&&document.querySelector(location.hash);
-  if(k>=0&&!reduced)setTimeout(()=>{scrollTo(0,at(START+1));pos=at(START+1);u=START+1;openProject(k,true)},80);else if(target?.dataset?.panel)setTimeout(()=>go(+target.dataset.panel),50)}
+  if(k>=0&&!reduced)setTimeout(()=>{goTo(at(START+1));pos=at(START+1);u=START+1;openProject(k,true)},80);else if(target?.dataset?.panel)setTimeout(()=>go(+target.dataset.panel),50)}
 $('.skip-link').onclick=e=>{e.preventDefault();go(7)};

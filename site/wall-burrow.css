@@ -124,6 +124,19 @@
    raised (the script shows the page's own rabbit then). */
 .lean:not(.reading) .foot-mist{display:none}
 
-/* The white screen above: no arrow; its lowest strip is left for the finger to scroll by. */
+/* The white screen above: no arrow. It takes a touch as drawing only once we are fully up
+   there, and never in its lowest part: a finger there, or on the way up, scrolls the page. */
 .wall-burrow .above-back{display:none}
-.above-pass{position:absolute;left:0;right:0;bottom:0;height:17%;z-index:2;touch-action:pan-y}
+.wall-burrow .above{pointer-events:none}
+.wall-burrow .above.drawable .above-ink{pointer-events:auto;clip-path:inset(0 0 17% 0)}
+
+/* 04.14 (under), on iOS: nothing fixed. The document is held still, 240px taller than the
+   window above and below; the wall lies in it and the canvas reaches over the window's edges,
+   where Safari shows the page through its bars. A box over the window does the scrolling. */
+html[data-layer="inner"]{overflow-x:hidden}
+html[data-layer="inner"] body{min-height:0;height:calc(var(--under-h,100svh) + 480px);overflow:visible}
+.under-stage{position:absolute;left:0;top:240px;width:100vw;height:var(--under-h,100svh)}
+html[data-layer="inner"] .viewport{position:absolute;inset:0}
+html[data-layer="inner"] .wall-canvas{top:-240px;height:calc(var(--under-h,100svh) + 480px)}
+.under-scroller{position:absolute;left:0;top:0;width:100vw;height:calc(var(--under-h,100svh) + 480px);z-index:3;overflow:hidden auto;overscroll-behavior:contain;scrollbar-width:none;-webkit-tap-highlight-color:transparent}
+.under-scroller::-webkit-scrollbar{display:none}

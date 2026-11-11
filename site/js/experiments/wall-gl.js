@@ -25,12 +25,12 @@
 //     seen by a MutationObserver and that one chapter is read again.
 const VERT=`attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}`;
 const FRAG=`precision highp float;
-uniform sampler2D tex;uniform vec2 view,origin,size,flare;uniform vec4 funnel;uniform float dpr,k,opacity,band,power;uniform vec2 turn;uniform vec3 mist;
+uniform sampler2D tex;uniform vec2 view,origin,size,flare;uniform vec4 funnel;uniform float dpr,k,opacity,band,power;uniform vec2 turn;uniform vec3 mist;uniform vec2 edges;
 void main(){
   vec2 s=vec2(gl_FragCoord.x/dpr,view.y-gl_FragCoord.y/dpr);
   // The mist: toward the foot of the window, from mist.x down over mist.y, the wall fades out.
   float clear=1.-mist.z*smoothstep(0.,.5,(s.y-mist.x)/mist.y);
-  float top=max(0.,1.-s.y/band),foot=max(0.,1.-(view.y-s.y)/band);
+  float top=max(0.,1.-(s.y-edges.x)/band),foot=max(0.,1.-(edges.y-s.y)/band);
   float m=1.+flare.x*pow(top,power)+flare.y*pow(foot,power);
   s.x=view.x*.5+(s.x-view.x*.5)/m;
   // The funnel: under a point, rows are squeezed toward it, the tighter the nearer.
@@ -41,23 +41,25 @@ void main(){
   gl_FragColor=texture2D(tex,uv)*opacity*clear*step(0.,uv.x)*step(uv.x,1.)*step(0.,uv.y)*step(uv.y,1.);
 }`;
 const SKIP=new Set(['SCRIPT','STYLE','CANVAS']);
+// host: where the canvas is put (default: in the viewport). scene: the element that is tilted
+// or flown (while it is, nothing is read from the page).
 // calm: never draw a chapter larger while the wall is moving, however soft it gets; only at rest.
 // lean: draw at three quarters of the resolution while the wall is moving, and at full
 // resolution as soon as it rests. onWork: called whenever there is something to draw.
-export function mountWallGL(viewport,panels,{band=.27,flare=.9,power=2.2,lean=false,calm=false,onWork=()=>{}}={}){
+export function mountWallGL(viewport,panels,{band=.27,flare=.9,power=2.2,lean=false,calm=false,onWork=()=>{},host=viewport,scene=viewport}={}){
   const canvas=document.createElement('canvas');canvas.className='wall-canvas';canvas.setAttribute('aria-hidden','true');
   const opts={alpha:true,premultipliedAlpha:true,antialias:false,powerPreference:'high-performance'};
   let gl=canvas.getContext('webgl2',opts),two=!!gl;if(!gl)gl=canvas.getContext('webgl',opts);if(!gl)return null;
-  viewport.prepend(canvas);
+  host.prepend(canvas);
   const pen=document.createElement('canvas'),ctx=pen.getContext('2d'),spacing='letterSpacing' in ctx;
   const layers=panels.map((el,j)=>({el,panel:j,rest:1})),states=panels.map(()=>({tx:0,ty:0,k:1,far:true,opacity:1}));
   const base=panels.map(()=>({x:0,y:0,ox:0,oy:0}));
-  let prog,loc={},dpr=1,W=0,H=0,R=1,amounts=[1,1],fun=[0,0,1,0],redraw=true,maxSize=4096,lost=false,moved=0,seenW=-1,fog=[0,1,0],res=1,worked=0;
+  let prog,loc={},dpr=1,W=0,H=0,R=1,amounts=[1,1],fun=[0,0,1,0],redraw=true,maxSize=4096,lost=false,moved=0,seenW=-1,fog=[0,1,0],res=1,worked=0,park=0,topAt=0,footAt=0;
   const fronts=[];
   function setup(){
     const sh=(type,src)=>{const s=gl.createShader(type);gl.shaderSource(s,src);gl.compileShader(s);return s};
     prog=gl.createProgram();gl.attachShader(prog,sh(gl.VERTEX_SHADER,VERT));gl.attachShader(prog,sh(gl.FRAGMENT_SHADER,FRAG));gl.linkProgram(prog);gl.useProgram(prog);
-    for(const n of ['tex','view','origin','size','dpr','k','opacity','band','power','flare','funnel','turn','mist'])loc[n]=gl.getUniformLocation(prog,n);
+    for(const n of ['tex','view','origin','size','dpr','k','opacity','band','power','flare','funnel','turn','mist','edges'])loc[n]=gl.getUniformLocation(prog,n);
     gl.bindBuffer(gl.ARRAY_BUFFER,gl.createBuffer());gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
     const a=gl.getAttribLocation(prog,'p');gl.enableVertexAttribArray(a);gl.vertexAttribPointer(a,2,gl.FLOAT,false,0,0);
     gl.enable(gl.BLEND);gl.blendFunc(gl.ONE,gl.ONE_MINUS_SRC_ALPHA);gl.enable(gl.SCISSOR_TEST);
@@ -173,7 +175,7 @@ export function mountWallGL(viewport,panels,{band=.27,flare=.9,power=2.2,lean=fa
   // ---------- 3. every frame ----------
   function tick(){
     if(lost||!W)return;
-    const now=performance.now(),idle=now-moved>170,still=viewport.style.transform===''&&!viewport.getAnimations().length;
+    const now=performance.now(),idle=now-moved>170,still=scene.style.transform===''&&!scene.getAnimations().length;
     let budget=2.6e6,chosen=null,worst=0;
     for(const layer of layers){
       const s=states[layer.panel];
@@ -205,7 +207,7 @@ export function mountWallGL(viewport,panels,{band=.27,flare=.9,power=2.2,lean=fa
     if(!redraw)return now-worked<200||!idle;redraw=false;worked=now;
     const cw=Math.round(canvas.width*res),chh=Math.round(canvas.height*res);
     gl.viewport(0,0,cw,chh);gl.scissor(0,0,cw,chh);gl.clear(gl.COLOR_BUFFER_BIT);
-    gl.uniform1i(loc.tex,0);gl.uniform2f(loc.view,W,H);gl.uniform1f(loc.dpr,cw/W);gl.uniform3f(loc.mist,fog[0],fog[1],fog[2]);gl.uniform1f(loc.band,H*band);gl.uniform1f(loc.power,power);gl.uniform2f(loc.flare,flare*amounts[0],flare*amounts[1]);
+    gl.uniform1i(loc.tex,0);gl.uniform2f(loc.view,W,H);gl.uniform1f(loc.dpr,cw/W);gl.uniform3f(loc.mist,fog[0]+park,fog[1],fog[2]);gl.uniform1f(loc.band,(footAt-park)*band);gl.uniform2f(loc.edges,topAt,footAt);gl.uniform1f(loc.power,power);gl.uniform2f(loc.flare,flare*amounts[0],flare*amounts[1]);
     for(const layer of layers){
       if(layer.glyphs){
         const s=states[layer.panel],t=layer.type;if(s.far||!t||!layer.shown)continue;
@@ -220,13 +222,13 @@ export function mountWallGL(viewport,panels,{band=.27,flare=.9,power=2.2,lean=fa
             gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
             if(two){gl.generateMipmap(gl.TEXTURE_2D);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR_MIPMAP_LINEAR)}else gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);
             layer.chars.set(g.ch,c)}
-          const x=b.x+b.ox+s.tx+s.k*(layer.bx+g.x-pad-b.ox),y=b.y+b.oy+s.ty+s.k*(layer.by+g.y-pad-b.oy),top=Math.max(0,y),bottom=Math.min(H,y+s.k*c.h);if(bottom<=top)continue;
+          const x=b.x+b.ox+s.tx+s.k*(layer.bx+g.x-pad-b.ox),y=park+b.y+b.oy+s.ty+s.k*(layer.by+g.y-pad-b.oy),top=Math.max(0,y),bottom=Math.min(H,y+s.k*c.h);if(bottom<=top)continue;
           const xa=W/2+(x-W/2)*(1+flare),xb=W/2+(x+s.k*c.w-W/2)*(1+flare),left=Math.max(0,Math.min(x,xa,xb)),right=Math.min(W,Math.max(x+s.k*c.w,xa,xb));if(right<=left)continue;
           gl.scissor(Math.floor(left*r),Math.floor((H-bottom)*r),Math.ceil((right-left)*r)+1,Math.ceil((bottom-top)*r)+1);
           gl.bindTexture(gl.TEXTURE_2D,c.tex);gl.uniform2f(loc.origin,x,y);gl.uniform2f(loc.size,c.w,c.h);gl.uniform1f(loc.opacity,g.a*s.opacity);gl.drawArrays(gl.TRIANGLES,0,3)}
         continue}
       if(states[layer.panel].far||!layer.tex||!layer.bounds)continue;
-      const at=place(layer);if(at.opacity<.004||at.k<=0)continue;
+      const at=place(layer);if(at.opacity<.004||at.k<=0)continue;at.y+=park;
       // The box the layer covers on screen, turned or not.
       const bw=at.k*layer.bounds.w,bh=at.k*layer.bounds.h,cx=[0,bw*at.c,-bh*at.sn,bw*at.c-bh*at.sn],cy=[0,bw*at.sn,bh*at.c,bw*at.sn+bh*at.c];
       const x0=at.x+Math.min(...cx),x1=at.x+Math.max(...cx),top=Math.max(0,at.y+Math.min(...cy)),bottom=Math.min(H,at.y+Math.max(...cy));if(bottom<=top)continue;
@@ -235,18 +237,18 @@ export function mountWallGL(viewport,panels,{band=.27,flare=.9,power=2.2,lean=fa
       const squeezed=layer.funnel&&fun[3]>0,out=x=>[x,W/2+(x-W/2)*(1+flare)],xs=[...out(x0),...out(x1)],left=squeezed?0:Math.max(0,Math.min(...xs)),right=squeezed?W:Math.min(W,Math.max(...xs));if(right<=left)continue;
       const r=chh/H;gl.scissor(Math.floor(left*r),Math.floor((H-bottom)*r),Math.ceil((right-left)*r)+1,Math.ceil((bottom-top)*r)+1);
       gl.bindTexture(gl.TEXTURE_2D,layer.tex);gl.uniform2f(loc.origin,at.x,at.y);gl.uniform2f(loc.size,layer.bounds.w,layer.bounds.h);gl.uniform1f(loc.k,at.k);gl.uniform1f(loc.opacity,at.opacity);gl.uniform2f(loc.turn,at.c,at.sn);
-      gl.uniform4f(loc.funnel,fun[0],fun[1],fun[2],squeezed?fun[3]:0);
+      gl.uniform4f(loc.funnel,fun[0],fun[1]+park,fun[2],squeezed?fun[3]:0);
       gl.drawArrays(gl.TRIANGLES,0,3);
     }
     // In front of everything, neither bent nor in the mist.
     gl.uniform2f(loc.flare,0,0);gl.uniform3f(loc.mist,0,1,0);gl.uniform4f(loc.funnel,0,0,1,0);gl.uniform2f(loc.turn,1,0);
-    for(const f of fronts){const p=f.pose;if(p.o<.004||!f.tex)continue;const r=chh/H,oy=p.y+p.s*f.bounds.y,top=Math.max(0,oy),bottom=Math.min(H,p.c,oy+p.s*f.bounds.h);if(bottom<=top)continue;
+    for(const f of fronts){const p=f.pose;if(p.o<.004||!f.tex)continue;const r=chh/H,oy=park+p.y+p.s*f.bounds.y,top=Math.max(0,oy),bottom=Math.min(H,p.c+park,oy+p.s*f.bounds.h);if(bottom<=top)continue;
       gl.scissor(Math.max(0,Math.floor(p.x*r)),Math.floor((H-bottom)*r),Math.ceil(p.s*f.bounds.w*r)+2,Math.ceil((bottom-top)*r)+1);
       gl.bindTexture(gl.TEXTURE_2D,f.tex);gl.uniform2f(loc.origin,p.x,oy);gl.uniform2f(loc.size,f.bounds.w,f.bounds.h);gl.uniform1f(loc.k,p.s);gl.uniform1f(loc.opacity,p.o);gl.drawArrays(gl.TRIANGLES,0,3)}
     return true;
   }
   function layout(){
-    dpr=Math.min(devicePixelRatio||1,2);W=viewport.clientWidth;H=canvas.clientHeight||viewport.clientHeight;
+    dpr=Math.min(devicePixelRatio||1,2);W=canvas.clientWidth||viewport.clientWidth;H=canvas.clientHeight||viewport.clientHeight;if(!park&&!topAt)footAt=H;
     const w=Math.round(W*dpr),h=Math.round(H*dpr);if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}redraw=true;
     // The chapters are laid out by the width alone. A phone's toolbar changing the height
     // of the window is no reason to read them all again.
@@ -291,9 +293,13 @@ export function mountWallGL(viewport,panels,{band=.27,flare=.9,power=2.2,lean=fa
     // The mist over the foot of the wall: from y=top down over h pixels, as strong as a.
     mist(top,h,a){if(fog[0]!==top||fog[1]!==h||fog[2]!==a){fog=[top,Math.max(1,h),a];redraw=true}},
     // Where on the unbent wall the point seen at (x, y) is: for telling what a click is on.
-    unbend(x,y){const t=Math.max(0,1-y/(H*band)),f=Math.max(0,1-(H-y)/(H*band));return W/2+(x-W/2)/(1+flare*amounts[0]*t**power+flare*amounts[1]*f**power)},
+    unbend(x,y){const span=(footAt-park)*band,t=Math.max(0,1-(y+park-topAt)/span),f=Math.max(0,1-(footAt-park-y)/span);return W/2+(x-W/2)/(1+flare*amounts[0]*t**power+flare*amounts[1]*f**power)},
     get res(){return res},
-    get height(){return H},
+    get height(){return footAt-park},
+    // The canvas is larger than the window: it starts `above` pixels over the window's top.
+    // The lens then begins `over` pixels above the window (where the browser's own bar is,
+    // with the page showing through it) and ends `tall` pixels below the window's top.
+    inset(above,over,tall){if(park!==above||topAt!==above-over||footAt!==above+tall){park=above;topAt=above-over;footAt=above+tall;redraw=true}},
     get idle(){return performance.now()-moved>170},
   };
 }
