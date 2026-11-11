@@ -26,7 +26,7 @@ const panels=$$('[data-panel]'),LAST=5,HOLE=6;
 const RATIO=.34,RATE=Math.log(1/RATIO),scales=panels.map((_,i)=>RATIO**i),centres=[0],START=1.12,LEAD=.45,REL=.3,TOTAL=START+2;
 const surface=$('#wall-surface'),dock=$('#rabbit-dock'),hole6=$('.burrow-hole'),cards=$$('.burrow-card'),pages=$$('.project-page');
 let floor=0,origins=[],lastKey='',lastMark='',lastFall=-1,fit=1,segment=1100,mobile=false,lower=0,spacing=830,VH=0,wide=0;
-let up=0,warming=!reduced,roomEntering=false,roomFlight=null,reading=false,roomOpen=false,hoverLast=false,u=0;
+let up=0,RISE=0,pos=0,over=0,warming=!reduced,roomEntering=false,roomFlight=null,reading=false,roomOpen=false,hoverLast=false,u=0;
 const mark=mountMark($('#wall-rabbit'));
 const hb=mark.holeBox,bb=mark.bunBox,depth=hb.y+hb.height-bb.y;
 hole6.setAttribute('viewBox',`${hb.x} ${hb.y} ${hb.width} ${hb.height}`);
@@ -86,7 +86,13 @@ function layout(force){
   if(force!==true&&iw===wide&&Math.abs(innerHeight-VH)<160)return;
   wide=iw;VH=innerHeight;const ih=VH;mobile=iw<650;
   fit=Math.max(.3,Math.min((iw-(mobile?40:100))/(mobile?700:1100),(ih-60)/650));
-  segment=Math.max(850,ih*1.3);$('#scroll-track').style.height=(segment*TOTAL+ih)+'px';
+  // One track, scrolled by the browser alone, so one momentum carries through all of it:
+  // first RISE pixels of looking up (the page opens below them, at the first screen), then
+  // the walk. A fling back to the top runs on into the look-up, and the browser's own
+  // bounce is left at both ends.
+  const was=RISE?[up,u]:null;
+  segment=Math.max(850,ih*1.3);RISE=Math.round(ih*1.1);$('#scroll-track').style.height=(RISE+segment*TOTAL+ih)+'px';
+  if(!reading)scrollTo(0,was?(was[0]>0?RISE*(1-was[0]):RISE+was[1]*segment):RISE);pos=scrollY;
   lower=ih*.1;spacing=(mobile?1280:830)*.8*1.36;
   for(let i=1;i<=LAST;i++)centres[i]=centres[i-1]+spacing*scales[i-1];
   floor=centres[LAST]+6;
@@ -122,8 +128,8 @@ function layout(force){
   pages.forEach(p=>{p.style.setProperty('--mini-w',(miniW/pageFit).toFixed(1)+'px');p.style.setProperty('--mini-h',(miniH/pageFit).toFixed(1)+'px')});
   glw?.rest(fit);glw?.layout();lastKey='';lastMark='';
 }
-function reset(){scrollTo(0,0);leaveRoom()}
-const at=v=>v*segment;
+function reset(){scrollTo(0,reading?0:RISE);leaveRoom()}
+const at=v=>RISE+v*segment;
 function go(i){if(reading){panels[i].scrollIntoView({behavior:reduced?'instant':'smooth'});return}scrollTo({top:at(i<=LAST?START:i===HOLE?START+1:TOTAL),behavior:reduced?'instant':'smooth'})}
 $$('[data-stop]').forEach(b=>b.onclick=e=>{e.preventDefault();go(+b.dataset.stop)});
 $('#about-link').onclick=()=>$('#about-dialog').showModal();
@@ -174,17 +180,25 @@ const above=$('#above'),TILT=62*Math.PI/180;
 // Far ahead is a white point; past the last room it is the whole window, and that is the
 // next day. Scrolling back out of the first room leaves by the door.
 const inv=(a,b,v)=>clamp((v-a)/(b-a));
-const beyond={el:$('#beyond'),far:$('#beyond .beyond-far'),rooms:$$('#beyond .chamber').map(el=>({el,c:+el.dataset.c,span:+el.dataset.span||1.05,on:null})),p:0,aim:null,active:false,done:null,key:''};
+const beyond={el:$('#beyond'),far:$('#beyond .beyond-far'),rooms:$$('#beyond .chamber').map(el=>({el,c:+el.dataset.c,span:+el.dataset.span||1.05,on:null})),p:0,since:0,pull:0,active:false,done:null,key:''};
 beyond.max=beyond.rooms[beyond.rooms.length-1].c;
-beyond.enter=done=>{wake();beyond.done=done;beyond.p=-.8;beyond.aim=0;beyond.active=true;beyond.key='';beyond.el.hidden=false};
+// The rooms stay in the window (a sticky stage); under them is an empty track, and how far
+// that is scrolled is how far in we are. It is scrolled by the browser, with its momentum.
+{const stage=document.createElement('div'),track=document.createElement('div');stage.className='beyond-stage';track.className='beyond-track';stage.append(...beyond.el.childNodes);beyond.el.append(stage,track);beyond.track=track;beyond.el.tabIndex=-1}
+const roomStep=()=>Math.min(700,innerHeight*.62);
+beyond.enter=done=>{wake();beyond.done=done;beyond.active=true;beyond.key='';beyond.pull=0;beyond.since=performance.now();beyond.el.hidden=false;
+  beyond.track.style.height=(beyond.max+.75)*roomStep()+'px';beyond.el.scrollTop=0;beyond.el.focus({preventScroll:true})};
 beyond.close=()=>{wake();beyond.active=false;beyond.el.hidden=true;beyond.done?.()};
 beyond.leave=()=>{if(beyond.active){beyond.close();lastKey=''}};
-beyond.on=()=>{if(!beyond.active)return;beyond.active=false;tomorrow(()=>{beyond.close();up=0;scrollTo(0,0);lastKey='';lastMark=''})};
-beyond.step=d=>{if(!beyond.active)return;beyond.aim=null;beyond.p+=d;if(beyond.p<-.85)beyond.leave();else if(beyond.p>beyond.max+.62)beyond.on()};
-beyond.draw=dt=>{if(!beyond.active)return;
+beyond.on=()=>{if(!beyond.active)return;beyond.active=false;tomorrow(()=>{beyond.close();scrollTo(0,RISE);pos=RISE;lastKey='';lastMark=''})};
+// Pulling back at the very beginning leaves by the door.
+beyond.el.addEventListener('wheel',e=>{if(beyond.el.scrollTop<=0&&e.deltaY<0){beyond.pull-=e.deltaY;if(beyond.pull>260)beyond.leave()}else beyond.pull=0},{passive:true});
+{let from=null;beyond.el.addEventListener('touchstart',e=>{from=beyond.el.scrollTop<=0?e.touches[0].clientY:null},{passive:true});
+ beyond.el.addEventListener('touchmove',e=>{if(from!=null&&beyond.el.scrollTop<=0&&e.touches[0].clientY-from>110)beyond.leave()},{passive:true})}
+beyond.draw=now=>{if(!beyond.active)return;
   // Coming in, the first room arrives by itself.
-  if(beyond.aim!=null){beyond.p+=(beyond.aim-beyond.p)*Math.min(1,dt/260);if(Math.abs(beyond.aim-beyond.p)<.003){beyond.p=beyond.aim;beyond.aim=null}}
-  const p=beyond.p,key=p.toFixed(4)+innerWidth+innerHeight;if(key===beyond.key)return;beyond.key=key;
+  const p=beyond.el.scrollTop/roomStep()-.8*(1-ease(clamp((now-beyond.since)/900)));if(p>beyond.max+.62){beyond.on();return}
+  const key=p.toFixed(4)+innerWidth+innerHeight;if(key===beyond.key)return;beyond.key=key;
   for(const r of beyond.rooms){const d=(p-r.c)/r.span,a=Math.abs(d),on=a<1.02;      // -1 far ahead, +1 gone by
     if(on!==r.on){r.on=on;r.el.style.display=on?'':'none'}if(!on)continue;
     r.el.style.transform=`scale(${Math.pow(2,d*.95).toFixed(4)})`;r.el.style.opacity=(1-ease(inv(.15,.78,a))).toFixed(3);r.el.inert=a>.35}
@@ -198,26 +212,11 @@ function lookUp(){
   above.classList.toggle('shown',a>0);above.classList.toggle('drawable',up>=1);
   above.style.transform=up>=1?'':`perspective(${P}px) translateZ(${P}px) rotateX(${a-TILT}rad) translateZ(${-P}px)`;
 }
-function lift(d){const before=up;up=clamp(up+d,0,1);if(up!==before){lastKey='';wake()}}
-addEventListener('wheel',e=>{if(reading||roomOpen||document.querySelector('dialog[open]'))return;
-  if(beyond.active){e.preventDefault();beyond.step(e.deltaY*(e.deltaMode===1?16:1)/700);return}
-  if(up>0||(scrollY<=0&&e.deltaY<0)){e.preventDefault();lift(-e.deltaY*(e.deltaMode===1?16:1)/(innerHeight*1.4))}},{passive:false});
-let touchY=null;
-addEventListener('touchstart',e=>{touchY=e.target.closest('.above-ink')&&up>=1&&!beyond.active?null:e.touches[0].clientY},{passive:true});
-// The finger is only listened to, never stopped: a listener that may stop a touch makes a
-// phone wait for the script before every scroll. Instead the page is told beforehand when
-// it must not scroll (touch-action, set in frame()), and never bounces at its top (CSS).
-addEventListener('touchmove',e=>{if(touchY==null||reading)return;const y=e.touches[0].clientY,dy=y-touchY;touchY=y;
-  if(beyond.active){beyond.step(-dy/(innerHeight*.5));return}
-  if(up>0||(scrollY<=0&&dy>0))lift(dy/(innerHeight*1.1))},{passive:true});
-let held=false;
 // ?perf shows what a frame costs on this device.
 const hud=new URLSearchParams(location.search).has('perf')?body.appendChild(Object.assign(document.createElement('div'),{className:'perf-hud'})):null,perf={n:0,worst:0,js:0,since:0,slow:0};
-addEventListener('keydown',e=>{if(reading||roomOpen||document.querySelector('dialog[open]'))return;
-  if(beyond.active){if(e.key==='Escape'){e.preventDefault();beyond.leave()}else if(['ArrowDown','PageDown',' '].includes(e.key)){e.preventDefault();beyond.step(.34)}else if(['ArrowUp','PageUp'].includes(e.key)){e.preventDefault();beyond.step(-.34)}return}
-  if((e.key==='ArrowUp'||e.key==='PageUp')&&scrollY<=0&&up<1){e.preventDefault();lift(e.key==='PageUp'?.5:.15)}
-  else if((e.key==='ArrowDown'||e.key==='PageDown'||e.key===' ')&&up>0){e.preventDefault();lift(e.key==='ArrowDown'?-.15:-.5)}});
-$('#above-back').onclick=()=>{const from=up,t0=performance.now();const step=now=>{const k=clamp((now-t0)/900);up=from*(1-ease(k));lastKey='';wake();if(k<1)requestAnimationFrame(step)};requestAnimationFrame(step)};
+addEventListener('keydown',e=>{if(beyond.active&&e.key==='Escape'){e.preventDefault();beyond.leave()}});
+// Back down from the white screen: the browser scrolls there.
+$('#above-back').onclick=()=>scrollTo({top:RISE,behavior:reduced?'instant':'smooth'});
 
 // ---------- Lean: waking, and the pointer ----------
 if(lean){
@@ -249,7 +248,7 @@ function walk(u){
   return [fit/Math.exp(Math.log(scales[i])*(1-f)+Math.log(scales[i+1])*f),0,centres[i]+(centres[i+1]-centres[i])*f];
 }
 function camera(){
-  const from=walk(u);if(open<0||!shown)return from;
+  const from=walk(u);from[2]+=over/from[0];if(open<0||!shown)return from;
   // Stepping back to the page: the zoom runs evenly, and the view slides over as it widens.
   const to=pageCam,e=ease(shown),Z=Math.exp(Math.log(from[0])*(1-e)+Math.log(to[0])*e),w=e*to[0]/Z;
   return [Z,from[1]+(to[1]-from[1])*w,from[2]+(to[2]-from[2])*w];
@@ -259,16 +258,18 @@ if(warming){requestAnimationFrame(frame);return}
 if(now==null)now=performance.now();
 const gap=now-clock||16,dt=Math.min(64,gap),t0=hud?performance.now():0;clock=now;
 if(!reading&&!roomOpen){
-  const asked=clamp(scrollY/segment,0,TOTAL);
   // Steady: the camera closes a share of the gap to the scroll every frame.
-  if(EASE&&followed){const gap=asked-u;u=Math.abs(gap)<1e-4?asked:u+gap*(1-Math.exp(-dt/EASE));if(u!==asked)awakeUntil=now+300}else{u=asked;followed=true}
+  if(EASE&&followed){const gap=scrollY-pos;pos=Math.abs(gap)<.08?scrollY:pos+gap*(1-Math.exp(-dt/EASE));if(pos!==scrollY)awakeUntil=now+300}else{pos=scrollY;followed=true}
+  // Above RISE the walk, below it the look-up; past the end, the browser's bounce (a phone
+  // reports it), which the wall follows.
+  u=clamp((pos-RISE)/segment,0,TOTAL);up=clamp((RISE-pos)/RISE);over=Math.max(0,pos-(RISE+segment*TOTAL));
   // At a project's page, any scroll steps forward to the wall again.
   if(open>=0){if(aim===1&&Math.abs(scrollY-openedAt)>28)closeProject();
     const before=shown;shown=clamp(shown+(aim?1:-1)*dt/(reduced?1:1250));
     if(shown!==before)lastKey='';
-    if(shown===1&&before<1)pages[open].querySelector('footer [data-back]').focus({preventScroll:true});
+    if(shown===1&&before<1)pages[open].focus({preventScroll:true});
     if(shown===0&&!aim){open=-1;lastKey=''}}
-  const key=`${u}|${up}|${shown}|${open}|${wide}|${VH}`;
+  const key=`${pos}|${shown}|${open}|${wide}|${VH}`;
   const changed=key!==lastKey;
   if(changed){lastKey=key;
     const iw=wide,ih=VH,[Z,cx,cy]=camera(),half=(glw?.height||ih)/2+ih*.2,gone=u>=START+REL,e=open>=0?ease(shown):0,wall=1-ease(clamp(e*1.6));
@@ -319,15 +320,15 @@ if(!reading&&!roomOpen){
   if(!glw||glw.idle&&(!lean||editNear)){if(lean&&settle.has(edited)){edited.style.transform=settle.get(edited);settle.delete(edited)}watchEdit()}
   if(busy||beyond.active)awakeUntil=now+300;
 }else if(reading){watchEdit();panels.forEach(p=>{p.inert=false;p.removeAttribute('hidden-far')});pages.forEach(p=>p.inert=false)}
-beyond.draw(dt);if(up>0&&up<1)awakeUntil=now+300;
-{const hold=!reading&&(up>0||beyond.active);if(hold!==held){held=hold;document.documentElement.style.touchAction=hold?'none':''}}
+beyond.draw(now);
 if(hud){perf.n++;perf.worst=Math.max(perf.worst,gap);perf.js+=performance.now()-t0;if(gap>40)perf.slow++;
   if(now-perf.since>1000){const g=glw?.stats||{};hud.textContent=`${Math.round(perf.n*1000/(now-perf.since))} fps   worst ${perf.worst.toFixed(0)} ms   over 40ms: ${perf.slow}\nscript ${(perf.js/perf.n).toFixed(1)} ms/frame\ndrawn again ${g.rasters||0} (${(g.rasterMs||0).toFixed(0)} ms)   read ${g.reads||0}\n${innerWidth}x${innerHeight} @${devicePixelRatio}   drawn at ${glw?(Math.min(2,devicePixelRatio)*glw.res).toFixed(2):'-'}x${lean?'   lean':''}${steady?'   steady, ease '+EASE+' ms':''}`;
     Object.assign(perf,{n:0,worst:0,js:0,since:now,slow:0});if(glw)Object.assign(glw.stats,{rasters:0,rasterMs:0,reads:0})}}
 if(!lean||warming||now<awakeUntil)requestAnimationFrame(frame);else{running=false;if(hud)hud.textContent+='\nat rest: loop stopped'}}
+pages.forEach(p=>p.tabIndex=-1);if('scrollRestoration' in history)history.scrollRestoration='manual';
 document.fonts.ready.then(()=>{glw?.reread();layout(true);wake()});addEventListener('resize',layout);body.classList.remove('reading');body.classList.add('flat');dock.style.transformOrigin='0 0';layout(true);if(reduced)toggleReading(true);running=true;requestAnimationFrame(frame);
 // Give the page a few frames to draw every chapter before showing the far view.
 if(warming){viewport.style.opacity='.01';let n=0;const tick=()=>{if(++n<4)requestAnimationFrame(tick);else{warming=false;lastKey='';wake();requestAnimationFrame(()=>viewport.style.opacity='')}};requestAnimationFrame(tick)}
 if(location.hash){const k=named(),target=k<0&&document.querySelector(location.hash);
-  if(k>=0&&!reduced)setTimeout(()=>{scrollTo(0,at(START+1));u=START+1;openProject(k,true)},80);else if(target?.dataset?.panel)setTimeout(()=>go(+target.dataset.panel),50)}
+  if(k>=0&&!reduced)setTimeout(()=>{scrollTo(0,at(START+1));pos=at(START+1);u=START+1;openProject(k,true)},80);else if(target?.dataset?.panel)setTimeout(()=>go(+target.dataset.panel),50)}
 $('.skip-link').onclick=e=>{e.preventDefault();go(7)};
