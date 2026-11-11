@@ -91,7 +91,7 @@ function layout(force){
   // the walk. A fling back to the top runs on into the look-up, and the browser's own
   // bounce is left at both ends.
   const was=RISE?[up,u]:null;
-  segment=Math.max(850,ih*1.3);RISE=Math.round(ih*1.1);$('#scroll-track').style.height=(RISE+segment*TOTAL+ih)+'px';
+  segment=Math.max(850,ih*1.3);RISE=Math.round(ih*.72);$('#scroll-track').style.height=(RISE+segment*TOTAL+ih)+'px';
   if(!reading)scrollTo(0,was?(was[0]>0?RISE*(1-was[0]):RISE+was[1]*segment):RISE);pos=scrollY;
   lower=ih*.1;spacing=(mobile?1280:830)*.8*1.36;
   for(let i=1;i<=LAST;i++)centres[i]=centres[i-1]+spacing*scales[i-1];
@@ -180,7 +180,7 @@ const above=$('#above'),TILT=62*Math.PI/180;
 // Far ahead is a white point; past the last room it is the whole window, and that is the
 // next day. Scrolling back out of the first room leaves by the door.
 const inv=(a,b,v)=>clamp((v-a)/(b-a));
-const beyond={el:$('#beyond'),far:$('#beyond .beyond-far'),rooms:$$('#beyond .chamber').map(el=>({el,c:+el.dataset.c,span:+el.dataset.span||1.05,on:null})),p:0,since:0,pull:0,active:false,done:null,key:''};
+const beyond={el:$('#beyond'),far:$('#beyond .beyond-far'),rooms:$$('#beyond .chamber').map(el=>({el,c:+el.dataset.c,span:+el.dataset.span||1.05,on:null,at:(el.dataset.at||'0,0').split(',').map(Number),narrow:(el.dataset.narrow||el.dataset.at||'0,0').split(',').map(Number)})),p:0,since:0,pull:0,active:false,done:null,key:''};
 beyond.max=beyond.rooms[beyond.rooms.length-1].c;
 // The rooms stay in the window (a sticky stage); under them is an empty track, and how far
 // that is scrolled is how far in we are. It is scrolled by the browser, with its momentum.
@@ -201,10 +201,20 @@ beyond.draw=now=>{if(!beyond.active)return;
   const key=p.toFixed(4)+innerWidth+innerHeight;if(key===beyond.key)return;beyond.key=key;
   for(const r of beyond.rooms){const d=(p-r.c)/r.span,a=Math.abs(d),on=a<1.02;      // -1 far ahead, +1 gone by
     if(on!==r.on){r.on=on;r.el.style.display=on?'':'none'}if(!on)continue;
-    r.el.style.transform=`scale(${Math.pow(2,d*.95).toFixed(4)})`;r.el.style.opacity=(1-ease(inv(.15,.78,a))).toFixed(3);r.el.inert=a>.35}
+    // Each room has its own place off the axis of the tunnel (data-at, as shares of the
+    // window; data-narrow on a phone). It comes out of the vanishing point in the middle,
+    // is read at its place, and goes on outward past the edge: its distance from the middle
+    // grows with its size, as it does for anything passed in a tunnel. So two rooms are
+    // never in the same place, and the one being read has the next one small beside the light.
+    const size=Math.pow(2,d*1.5),[ax,ay]=innerWidth<650?r.narrow:r.at;
+    r.el.style.transform=`translate(${(ax*innerWidth*size).toFixed(1)}px,${(ay*innerHeight*size).toFixed(1)}px) scale(${size.toFixed(4)})`;
+    r.el.style.opacity=(d<0?1-ease(inv(.12,.95,a)):1-ease(inv(.3,.8,a))).toFixed(3);r.el.inert=a>.35}
   const k=clamp(p/(beyond.max+.6)),need=Math.hypot(innerWidth,innerHeight)/44;
   beyond.far.style.transform=`translate(-50%,-50%) scale(${(.18*Math.pow(need/.18,k**5)).toFixed(3)})`;beyond.far.style.opacity=(.95*inv(-.3,.05,p)).toFixed(3)};
 $('#beyond-on').onclick=beyond.on;$('#beyond-back').onclick=beyond.leave;
+// The white screen takes every touch as drawing. Its lowest strip does not: a finger there
+// scrolls the page, which is the way back down.
+above.append(Object.assign(document.createElement('div'),{className:'above-pass'}));
 const door=mountDoor(above,{reduced,onEnter:done=>beyond.enter(done)});
 function lookUp(){
   const a=TILT*ease(clamp((up-.2)/.8)),P=innerHeight*1.1;

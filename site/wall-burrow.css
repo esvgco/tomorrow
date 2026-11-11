@@ -60,6 +60,14 @@
 .beyond-far{position:absolute;z-index:2;left:50%;top:50%;width:44px;height:44px;border-radius:50%;background:#fff;mix-blend-mode:difference;pointer-events:none;will-change:transform}
 .chamber{position:absolute;inset:0;display:grid;place-items:center;will-change:transform,opacity;pointer-events:none}
 .chamber .pad{width:min(86vw,820px);text-align:center;pointer-events:auto}
+/* A room on the left wall or the right: narrower, and set toward that side. */
+@media(min-width:651px){
+ .chamber.left .pad,.chamber.right .pad{width:min(44vw,600px)}
+ .chamber.left .pad{text-align:left}.chamber.right .pad{text-align:right}
+ .chamber.left p{margin-left:0}.chamber.right p{margin-right:0}
+ .chamber.right .pair,.chamber.right .lines{text-align:left}
+ .chamber.left h2,.chamber.right h2{font-size:clamp(28px,4.2vw,58px)}
+}
 .chamber h2{font:400 clamp(30px,5.4vw,68px)/1.02 var(--sans);letter-spacing:-.055em;margin:0 0 .5em}
 .chamber h3{font:400 clamp(21px,2.4vw,28px)/1.1 var(--sans);letter-spacing:-.04em;margin:0 0 .6em}
 .chamber p{font:clamp(14px,1.5vw,18px)/1.5 var(--mono);max-width:34em;margin:0 auto 1em}
@@ -115,3 +123,7 @@
 /* 04.12 (lean): the mist is drawn in WebGL, and so is the rabbit, except while the head is
    raised (the script shows the page's own rabbit then). */
 .lean:not(.reading) .foot-mist{display:none}
+
+/* The white screen above: no arrow; its lowest strip is left for the finger to scroll by. */
+.wall-burrow .above-back{display:none}
+.above-pass{position:absolute;left:0;right:0;bottom:0;height:17%;z-index:2;touch-action:pan-y}
