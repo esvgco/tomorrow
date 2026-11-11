@@ -174,9 +174,15 @@ addEventListener('wheel',e=>{if(reading||roomOpen||document.querySelector('dialo
   if(up>0||(scrollY<=0&&e.deltaY<0)){e.preventDefault();lift(-e.deltaY*(e.deltaMode===1?16:1)/(innerHeight*1.4))}},{passive:false});
 let touchY=null;
 addEventListener('touchstart',e=>{touchY=e.target.closest('.above-ink')&&up>=1&&!beyond.active?null:e.touches[0].clientY},{passive:true});
+// The finger is only listened to, never stopped: a listener that may stop a touch makes a
+// phone wait for the script before every scroll. Instead the page is told beforehand when
+// it must not scroll (touch-action, set in frame()), and never bounces at its top (CSS).
 addEventListener('touchmove',e=>{if(touchY==null||reading)return;const y=e.touches[0].clientY,dy=y-touchY;touchY=y;
-  if(beyond.active){e.preventDefault();beyond.step(-dy/(innerHeight*.5));return}
-  if(up>0||(scrollY<=0&&dy>0)){e.preventDefault();lift(dy/(innerHeight*1.1))}},{passive:false});
+  if(beyond.active){beyond.step(-dy/(innerHeight*.5));return}
+  if(up>0||(scrollY<=0&&dy>0))lift(dy/(innerHeight*1.1))},{passive:true});
+let held=false;
+// ?perf shows what a frame costs on this device.
+const hud=new URLSearchParams(location.search).has('perf')?body.appendChild(Object.assign(document.createElement('div'),{className:'perf-hud'})):null,perf={n:0,worst:0,js:0,since:0,slow:0};
 addEventListener('keydown',e=>{if(reading||roomOpen||document.querySelector('dialog[open]'))return;
   if(beyond.active){if(e.key==='Escape'){e.preventDefault();beyond.leave()}else if(['ArrowDown','PageDown',' '].includes(e.key)){e.preventDefault();beyond.step(.34)}else if(['ArrowUp','PageUp'].includes(e.key)){e.preventDefault();beyond.step(-.34)}return}
   if((e.key==='ArrowUp'||e.key==='PageUp')&&scrollY<=0&&up<1){e.preventDefault();lift(e.key==='PageUp'?.5:.15)}
@@ -207,7 +213,7 @@ function camera(){
 }
 function frame(now){
 if(warming){requestAnimationFrame(frame);return}
-const dt=Math.min(64,now-clock||16);clock=now;
+const gap=now-clock||16,dt=Math.min(64,gap),t0=hud?performance.now():0;clock=now;
 if(!reading&&!roomOpen){
   u=clamp(scrollY/segment,0,TOTAL);
   // At a project's page, any scroll steps forward to the wall again.
@@ -254,7 +260,12 @@ if(!reading&&!roomOpen){
   // Looking for the moment of the edit reads the page; not while the wall is moving.
   if(!glw||glw.idle)watchEdit();
 }else if(reading){watchEdit();panels.forEach(p=>{p.inert=false;p.removeAttribute('hidden-far')});pages.forEach(p=>p.inert=false)}
-beyond.draw(dt);requestAnimationFrame(frame)}
+beyond.draw(dt);
+{const hold=!reading&&(up>0||beyond.active);if(hold!==held){held=hold;document.documentElement.style.touchAction=hold?'none':''}}
+if(hud){perf.n++;perf.worst=Math.max(perf.worst,gap);perf.js+=performance.now()-t0;if(gap>40)perf.slow++;
+  if(now-perf.since>1000){const g=glw?.stats||{};hud.textContent=`${Math.round(perf.n*1000/(now-perf.since))} fps   worst ${perf.worst.toFixed(0)} ms   over 40ms: ${perf.slow}\nscript ${(perf.js/perf.n).toFixed(1)} ms/frame\ndrawn again ${g.rasters||0} (${(g.rasterMs||0).toFixed(0)} ms)   read ${g.reads||0}\n${innerWidth}x${innerHeight} @${devicePixelRatio}`;
+    Object.assign(perf,{n:0,worst:0,js:0,since:now,slow:0});if(glw)Object.assign(glw.stats,{rasters:0,rasterMs:0,reads:0})}}
+requestAnimationFrame(frame)}
 document.fonts.ready.then(()=>{glw?.reread();layout(true)});addEventListener('resize',layout);body.classList.remove('reading');body.classList.add('flat');dock.style.transformOrigin='0 0';layout(true);if(reduced)toggleReading(true);requestAnimationFrame(frame);
 // Give the page a few frames to draw every chapter before showing the far view.
 if(warming){viewport.style.opacity='.01';let n=0;const tick=()=>{if(++n<4)requestAnimationFrame(tick);else{warming=false;lastKey='';requestAnimationFrame(()=>viewport.style.opacity='')}};requestAnimationFrame(tick)}

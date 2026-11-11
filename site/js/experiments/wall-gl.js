@@ -67,7 +67,8 @@ export function mountWallGL(viewport,panels,{band=.27,flare=.9,power=2.2}={}){
   // Everything is read with the chapter's own transform taken off, so the numbers are the
   // chapter's own pixels whatever the camera is doing. A chapter that is hidden for being
   // far away is read all the same.
-  function measure(layer){
+  const stats={rasters:0,rasterMs:0,reads:0};
+  function measure(layer){stats.reads++;
     const root=layer.el,p=panels[layer.panel],held=[p,...layers.filter(l=>l.sprite&&l.panel===layer.panel).map(l=>l.el)].map(el=>[el,el.style.transform]);
     for(const [el] of held)el.style.transform='none';
     const far=p.hasAttribute('hidden-far');if(far)p.removeAttribute('hidden-far');
@@ -124,7 +125,7 @@ export function mountWallGL(viewport,panels,{band=.27,flare=.9,power=2.2}={}){
   const most=layer=>maxSize/Math.max(layer.bounds.w,layer.bounds.h);
   function raster(layer,q){
     const b=layer.bounds;if(!b||!layer.items){drop(layer);return 0}
-    q=Math.min(q,most(layer));
+    const began=performance.now();q=Math.min(q,most(layer));
     const w=Math.max(1,Math.ceil(b.w*q)),h=Math.max(1,Math.ceil(b.h*q));pen.width=w;pen.height=h;
     ctx.setTransform(q,0,0,q,-b.x*q,-b.y*q);ctx.textBaseline='alphabetic';
     for(const it of layer.items){
@@ -147,7 +148,7 @@ export function mountWallGL(viewport,panels,{band=.27,flare=.9,power=2.2}={}){
     gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
     if(two){gl.generateMipmap(gl.TEXTURE_2D);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR_MIPMAP_LINEAR)}else gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);
-    layer.q=q;layer.stale=false;redraw=true;return w*h;
+    layer.q=q;layer.stale=false;redraw=true;stats.rasters++;stats.rasterMs+=performance.now()-began;return w*h;
   }
   function drop(layer){if(layer.tex){gl.deleteTexture(layer.tex);layer.tex=null}layer.q=0}
 
@@ -225,7 +226,7 @@ export function mountWallGL(viewport,panels,{band=.27,flare=.9,power=2.2}={}){
   }}).observe(viewport,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['style','class']});
   const change=()=>{redraw=true;moved=performance.now()};
   return {
-    layout,tick,canvas,reread,
+    layout,tick,canvas,reread,stats,
     // The scale a chapter is read at: what every texture is drawn for ahead of time.
     rest(k){if(k!==R){R=k;redraw=true}},
     // rest: the sprite's own scale when it is read, as a share of a chapter's.

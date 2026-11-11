@@ -75,3 +75,39 @@
 .beyond-back{position:absolute;z-index:3;white-space:nowrap;left:50%;bottom:22px;transform:translateX(-50%);font:13px var(--mono);color:#888;padding:10px 14px;mix-blend-mode:difference}
 .beyond-back:hover{color:#fff}
 @media(max-width:650px){.chamber .pair{grid-template-columns:1fr;text-align:center}.chamber .lines li{flex-direction:column;gap:4px}}
+
+/* Screens two to five go by quickly on the way in, so they are set larger than in 04.10:
+   they must be readable while they move. */
+.wall-burrow:not(.reading) .wall-panel h2{font-size:100px}
+.wall-burrow:not(.reading) .wall-panel h2.studio-line{font-size:70px}
+.wall-burrow:not(.reading) .human h2{font-size:94px}
+.wall-burrow:not(.reading) .people h2{font-size:88px}
+.wall-burrow:not(.reading) .ending h2{font-size:48px}
+.wall-burrow:not(.reading) .wall-panel .letter-fall{font-size:24px;max-width:760px}
+.wall-burrow:not(.reading) .wall-panel .panel-copy{font-size:29px;max-width:880px}
+.wall-burrow:not(.reading) .edit-line{font-size:23px}
+.wall-burrow:not(.reading) .people-grid{max-width:780px;gap:44px}
+.wall-burrow:not(.reading) .people-grid h3{font-size:32px}
+.wall-burrow:not(.reading) .people-grid p{font-size:23px}
+.wall-burrow:not(.reading) .people .field-note{width:250px}
+.wall-burrow:not(.reading) .project-lines{margin-top:30px}
+.wall-burrow:not(.reading) .project-lines strong{font-size:36px}
+.wall-burrow:not(.reading) .project-lines span{font-size:15px}
+@media(max-width:650px){
+ .wall-burrow:not(.reading) .wall-panel h2{font-size:96px}
+ .wall-burrow:not(.reading) .wall-panel h2.studio-line{font-size:56px}
+ .wall-burrow:not(.reading) .human h2,.wall-burrow:not(.reading) .people h2{font-size:92px}
+ .wall-burrow:not(.reading) .ending h2{font-size:60px}
+ .wall-burrow:not(.reading) .wall-panel .letter-fall{font-size:36px;max-width:none}
+ .wall-burrow:not(.reading) .wall-panel .panel-copy{font-size:38px;max-width:none}
+ .wall-burrow:not(.reading) .edit-line{font-size:33px}
+ .wall-burrow:not(.reading) .people-grid{max-width:none;gap:26px}
+ .wall-burrow:not(.reading) .people-grid h3{font-size:42px}
+ .wall-burrow:not(.reading) .people-grid p{font-size:32px}
+ .wall-burrow:not(.reading) .people .field-note{width:260px;bottom:-150px}
+ .wall-burrow:not(.reading) .project-lines strong{font-size:46px}
+ .wall-burrow:not(.reading) .project-lines span,.wall-burrow:not(.reading) .project-lines span:last-child{font-size:26px}
+}
+/* The page is not pulled past its top: the pull is how the head is raised (see the script). */
+html:has(.wall-burrow:not(.reading)){overscroll-behavior:none}
+.perf-hud{position:fixed;left:8px;top:8px;z-index:90;font:11px/1.35 ui-monospace,monospace;background:rgba(0,0,0,.78);color:#fff;padding:6px 8px;border-radius:6px;white-space:pre;pointer-events:none}
