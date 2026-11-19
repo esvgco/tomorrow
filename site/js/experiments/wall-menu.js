@@ -4,6 +4,7 @@ import {mountDoor} from './door-ink.js';
 import {mountWallGL} from './wall-gl.js';
 import {mountTune} from './wall-tune.js';
 import {mountCookieBar} from './cookie-bar.js';
+import {mountRain} from './letter-rain.js';
 // The wall, the rabbit keeps the hole (04.15). 04.14 in another order, with a panel to tune
 // the type and the place of every screen (wall-tune.js).
 //
@@ -69,7 +70,8 @@ arrow.addEventListener('click',e=>{e.stopPropagation();closeMenu()});
 // grow from nothing to the whole width of the window as the screen comes up to its size.
 const PROJ=3,rules=[...panels[PROJ].querySelectorAll('.grow-rule')],ruleSprite=rules.map(r=>glw?.sprite(r,PROJ));let ruleAt=[],ruleW=1100;
 const cardSprite=cards.map(c=>glw?.sprite(c,HOLE,{funnel:true})),pageSprite=pages.map(p=>glw?.sprite(p,HOLE,{rest:1.1}));
-const fallHost=$('[data-fall]'),fallLayer=glw?.paint(fallHost,1,170,{glyphs:steady}),fall=mountFall(fallHost,{center:true,paint:fallLayer?list=>fallLayer.set(list):null});
+// The second screen's paragraph falls apart into words and lands as another (letter-rain.js).
+const fallHost=$('[data-fall]'),fallLayer=glw?.paint(fallHost,1,200,{glyphs:steady}),fall=mountRain(fallHost,{paint:fallLayer?list=>fallLayer.set(list):null});
 const settle=new Map(),move=(el,t)=>{if(glw)settle.set(el,t);else el.style.transform=t};
 const place=()=>{settle.forEach((t,el)=>el.style.transform=t);settle.clear()};
 const edited=$('[data-edit]')?.closest('[data-panel]'),editedAt=panels.indexOf(edited);let editNear=false;
@@ -80,7 +82,7 @@ const put=(el,o)=>{for(const k in o)if(el.style[k]!==o[k])el.style[k]=o[k]};
 // 'hole' is what comes out of the hole; 'about', the About space.
 const names=['The Tomorrow Company','A technology venture studio','More human','Not everything fits a category','Tomorrow depends on what we make today'];
 const tune=mountTune({
-  screens:[...names.map((n,i)=>({id:String(i),name:`${String(i+1).padStart(2,'0')} — ${n}`})),{id:'hole',name:'Из норы: проекты и ссылки'},{id:'about',name:'About'}],
+  screens:[...names.map((n,i)=>({id:String(i),name:`${String(i+1).padStart(2,'0')} — ${n}`})),{id:'hole',name:'Out of the hole: projects and links'},{id:'about',name:'About'}],
   show:id=>{if(id==='about'){openMenu(true);openAbout()}else if(id==='hole'){closeAbout();openMenu()}else{closeAbout();closeMenu();showScreen(+id)}},
   onType:()=>{glw?.reread();layout(true);fall.reset?.();lastFall=-1;wake()},
   onScreen:()=>{layout(true);wake()},
@@ -312,20 +314,21 @@ if(!reading&&!roomOpen){
     const g=aE>0?1-.84*aE:Math.exp(Math.log(1/FAR)*e),P=aE>0?[iw/2,ih/2]:backAt,fade=1-aE;
     // While what the rabbit found is out, the wall steps aside: a little back, and away.
     const mf=ease(clamp((menuT-DIVE*.5)/.7)),gm=1-.14*mf,wallMenu=1-mf;
-    const H=holeScreen();let proj=null;
+    const H=holeScreen();let proj=null,k1=0;
     panels.forEach((p,j)=>{const [ox,oy,h,oyo]=origins[j];let SX,SY,k;
       if(j===HOLE)[SX,SY,k]=H;
       else{const a=tune.screen(j),kb=Z*scales[j];k=kb*a.s;SX=iw/2+Z*(ox-cx)+a.x*kb;SY=ih/2+Z*(oy+centres[j]-cy)+lower+a.y*kb;SX=iw/2+(SX-iw/2)*gm;SY=ih/2+(SY-ih/2)*gm;k*=gm}
       SX=P[0]+(SX-P[0])*g;SY=P[1]+(SY-P[1])*g;k*=g;
       const x=SX-iw/2-ox,yc=SY-ih/2,top=yc-oyo*k,bottom=yc+(h-oyo)*k;
       const far=k<.004||j===HOLE&&!shownMenu||j!==HOLE&&(bottom<-half||top>half||wall*wallMenu<.004)||fade<.004;if(far!==p.hasAttribute('hidden-far'))far?p.setAttribute('hidden-far',''):p.removeAttribute('hidden-far');
-      const alpha=(j===HOLE?1:wall*wallMenu)*fade;if(j===PROJ)proj={SX,k,far,alpha,oxo:origins[j][5]};
+      const alpha=(j===HOLE?1:wall*wallMenu)*fade;if(j===PROJ)proj={SX,k,far,alpha,oxo:origins[j][5]};if(j===1)k1=k/(fit*tune.screen(1).s);
       glw?.panel(j,x,yc-oy,k,far,alpha);if(!far)move(p,glw?`translate(${x}px,${yc-oy}px) scale(${k})`:`translate3d(${x}px,${yc-oy}px,0) scale(${k})`);if(!glw)p.style.opacity=alpha===1?'':alpha.toFixed(3);if(p.inert!==far)p.inert=far;if(j===editedAt)editNear=!far&&k>fit*.45&&k<fit*2.4});
     lookUp();
-    // The rules: nothing while the screen is far, the whole window's width once it is read,
-    // growing faster toward the end. The window's centre, in the screen's own pixels, is
+    // The rules: nothing while the screen is far, the whole window's width by the time the
+    // list is in the middle of the window (the camera comes at it along a straight line, so
+    // that is at about 40% of the size it is read at), growing faster toward the end. The window's centre, in the screen's own pixels, is
     // where they grow from.
-    if(proj){const read=fit*tune.screen(PROJ).s,q=clamp((proj.k/read-.2)/.65),w=q**3*iw/proj.k,mid=proj.oxo+(iw/2-proj.SX)/proj.k,sx=w/ruleW,o=w>.5?proj.alpha:0;
+    if(proj){const read=fit*tune.screen(PROJ).s,q=clamp((proj.k/read-.06)/.34),w=q**3*iw/proj.k,mid=proj.oxo+(iw/2-proj.SX)/proj.k,sx=w/ruleW,o=w>.5?proj.alpha:0;
       rules.forEach((r,i)=>{const y=ruleAt[i]??0;ruleSprite[i]?.set(mid-w/2,y,1,o,0,sx);if(!proj.far)move(r,`translate(${mid-w/2}px,${y}px) scaleX(${sx})`)})}
     // The rabbit: it leans toward the hole under the pointer and floats there; clicked, it goes
     // in. When the wall steps back (a page, About), the hole on the chapter takes its place.
@@ -345,7 +348,10 @@ if(!reading&&!roomOpen){
     const opened=ease(clamp(menuT/DIVE)),foot=flat*(1-opened);
     glw?.lens(flat*(1-e)*fade,foot*(1-e));
     const haze=flat*(1-opened);if(lean)glw.mist(mistAt[0],mistAt[1],haze);else mist.style.opacity=haze.toFixed(3);
-    const fa=Math.round(clamp((u/START-.15)/.4)*1000)/1000;if(fa!==lastFall){lastFall=fa;fall(fa)}
+    // The letter rain runs on the second screen's own size, as a share of the size it is read
+    // at: the words hold as the paragraph crosses the middle of the window (about a quarter),
+    // and it has landed as the other paragraph by 0.42, while there is still a long way to read it.
+    const fa=Math.round(clamp((k1-(mobile?.13:.09))/.33)*1000)/1000;if(fa!==lastFall){lastFall=fa;fall(fa)}
     // What the rabbit found comes up out of the hole: each starts inside it, small and
     // tumbling, is squeezed through the funnel over it and comes to lie where it lies.
     const [,, ,oyo6,,oxo6]=origins[HOLE],k6=H[2]*g,holeX=P[0]+(iw/2-P[0])*g,holeY=P[1]+(dy-P[1])*g;

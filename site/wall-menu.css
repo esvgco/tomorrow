@@ -64,3 +64,7 @@ html.over-rabbit,html.over-rabbit body,html.over-rabbit .under-scroller,html.ove
 .cookie-actions button[data-consent="accepted"]:hover{background:#fff;color:#000}
 .cookie-bar.gone{transform:translateY(100%)}
 @media(max-width:650px){.cookie-bar{left:12px;width:calc(100vw - 24px);font-size:11px}}
+
+/* The letter rain: the block is as tall as the paragraph it lands as (set by letter-rain.js). */
+.wall-menu:not(.reading) .letter-fall{height:var(--rain-h,330px)}
+.wall-menu.reading .letter-fall .fall-result{padding-top:0!important}

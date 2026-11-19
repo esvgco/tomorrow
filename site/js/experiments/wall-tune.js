@@ -24,7 +24,7 @@ export const FONTS={
   'grow-a':{name:'Grow A',src:F+'grow/ABCGrowTrial-A.woff2'},
   'grow-ab':{name:'Grow AB',src:F+'grow/ABCGrowTrial-AB.woff2'},
 };
-const ROLES={head:'Заголовки',text:'Текст'};
+const ROLES={head:'Headings',text:'Text'};
 // Elisey's settings of 19 Nov, as the starting point.
 const DEFAULT={
   head:{font:'pressura',w:300,mono:100,wd:100,ls:-.04},
@@ -67,24 +67,26 @@ export function mountTune({screens,show=()=>{},onType=()=>{},onScreen=()=>{}}){
   document.body.classList.add('tune');
 
   // ---------- the panel ----------
+  // The panel is hidden; ?tune in the address shows it. The settings apply either way.
   const panel=document.createElement('details');panel.className='tune-panel';panel.open=innerWidth>900;
+  panel.hidden=!new URLSearchParams(location.search).has('tune');
   const opts=Object.entries(FONTS).map(([k,f])=>`<option value="${k}">${f.name}</option>`).join('');
   const role=r=>`<fieldset data-role="${r}"><legend>${ROLES[r]}</legend>
-    <label>Шрифт<select data-k="font">${opts}</select></label>
-    <label data-only="w">Жирность <output></output><input type="range" data-k="w" step="1"></label>
+    <label>Typeface<select data-k="font">${opts}</select></label>
+    <label data-only="w">Weight <output></output><input type="range" data-k="w" step="1"></label>
     <label data-only="mono">Mono <output></output><input type="range" data-k="mono" min="0" max="100" step="1"></label>
-    <label data-only="cut" class="check"><input type="checkbox" data-k="cut"> Mono (отдельное начертание)</label>
-    <label data-only="wd">Ширина <output></output><input type="range" data-k="wd" step="1"></label>
-    <label>Межбуквенный <output></output><input type="range" data-k="ls" min="-.12" max=".2" step=".001"></label></fieldset>`;
-  panel.innerHTML=`<summary>Шрифты и экраны</summary>${role('head')}${role('text')}
-    <fieldset data-screen><legend>Экран</legend>
-    <label>Какой<select data-k="screen">${screens.map(s=>`<option value="${s.id}">${s.name}</option>`).join('')}</select></label>
-    <label>Размер <output></output><input type="range" data-k="s" min=".3" max="2.5" step=".01"></label>
-    <label>По ширине <output></output><input type="range" data-k="x" min="-800" max="800" step="1"></label>
-    <label>По высоте <output></output><input type="range" data-k="y" min="-800" max="800" step="1"></label>
-    <div class="tune-row"><button data-act="show">Показать</button><button data-act="screen-reset">Сбросить экран</button></div></fieldset>
-    <div class="tune-row"><button data-act="copy">Скопировать настройки</button><button data-act="reset">Сбросить всё</button></div>
-    <small>Настройки хранятся в этом браузере. Размер и сдвиг считаются от базовой точки экрана, в его собственных пикселях.</small>`;
+    <label data-only="cut" class="check"><input type="checkbox" data-k="cut"> Mono (separate cut)</label>
+    <label data-only="wd">Width <output></output><input type="range" data-k="wd" step="1"></label>
+    <label>Letter spacing <output></output><input type="range" data-k="ls" min="-.12" max=".2" step=".001"></label></fieldset>`;
+  panel.innerHTML=`<summary>Type and screens</summary>${role('head')}${role('text')}
+    <fieldset data-screen><legend>Screen</legend>
+    <label>Which<select data-k="screen">${screens.map(s=>`<option value="${s.id}">${s.name}</option>`).join('')}</select></label>
+    <label>Size <output></output><input type="range" data-k="s" min=".3" max="2.5" step=".01"></label>
+    <label>Across <output></output><input type="range" data-k="x" min="-800" max="800" step="1"></label>
+    <label>Up / down <output></output><input type="range" data-k="y" min="-800" max="800" step="1"></label>
+    <div class="tune-row"><button data-act="show">Show</button><button data-act="screen-reset">Reset screen</button></div></fieldset>
+    <div class="tune-row"><button data-act="copy">Copy settings</button><button data-act="reset">Reset all</button></div>
+    <small>Kept in this browser. Size and shift are measured from the screen's own base point, in its own pixels.</small>`;
   document.body.append(panel);
   // Nothing in the panel is the wall's: no scroll, click or key from it reaches the page.
   for(const t of ['wheel','touchstart','touchmove','pointerdown','click','keydown'])panel.addEventListener(t,e=>e.stopPropagation(),{passive:true});
@@ -119,7 +121,7 @@ export function mountTune({screens,show=()=>{},onType=()=>{},onScreen=()=>{}}){
     if(act==='show')show(pick.value);
     if(act==='screen-reset'){delete state.screens[pick.value];save(state);syncScreen();onScreen()}
     if(act==='reset'){state=clone(DEFAULT);save(state);Object.keys(ROLES).forEach(syncRole);syncScreen();applyType();onScreen()}
-    if(act==='copy'){const t=JSON.stringify(state,null,1);navigator.clipboard?.writeText(t).then(()=>{e.target.textContent='Скопировано';setTimeout(()=>e.target.textContent='Скопировать настройки',1400)},()=>prompt('Настройки',t))}});
+    if(act==='copy'){const t=JSON.stringify(state,null,1);navigator.clipboard?.writeText(t).then(()=>{e.target.textContent='Copied';setTimeout(()=>e.target.textContent='Copy settings',1400)},()=>prompt('Settings',t))}});
   Object.keys(ROLES).forEach(syncRole);syncScreen();applyType();
 
   return {

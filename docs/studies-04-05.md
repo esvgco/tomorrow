@@ -277,3 +277,21 @@ Publisher and Grow converted to woff2); the full trial packages stay in the repo
 - A consent bar for cookies and personal data (`js/experiments/cookie-bar.js`): on the foot of the
   window at the left, black hairline on three sides, Areal Mono. The answer is kept in
   localStorage; `?cookies` shows it again. While it is up, `--consent-h` lifts the About "Back".
+
+### 04.15, third pass (19 Nov)
+
+- The rules on "Not everything fits a category" are at full width by the time the list is in the
+  middle of the window: the camera comes at a screen along a straight line, so its heading crosses
+  the middle at about 30% of its reading size (40% on a phone), not at 100%.
+- The second screen's falling paragraph is new: `js/experiments/letter-rain.js` (the older
+  `mountFall` in shared.js, used by the other walls, is unchanged). No letter ever turns into
+  another. The letters that make five words (technologies / companies / products / stories /
+  original ip) drop out of the first paragraph, which keeps its holes; the words hold; then
+  everything falls into "New companies, meaningful products…" where the words were. Each column
+  has its own moment and pace. The few letters the second paragraph needs that the first one does
+  not have fade in; the few left over fall on and fade.
+- Strict Matrix columns (letters moving only straight down) cannot spell words: a word of ten
+  letters would need the right letters in ten adjacent columns of the paragraph. So the letters
+  drift sideways as they fall. "Experiences" became "stories": with it the paragraph is one "c" short.
+- It runs on the second screen's own size (0.09–0.42 of its reading size, 0.13–0.46 on a phone).
+- The tuning panel is hidden and in English; add `?tune` to the address to show it.
