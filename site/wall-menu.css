@@ -1,0 +1,44 @@
+/* 04.15: the rabbit keeps the hole. On top of wall-burrow.css (04.11–04.14). */
+
+/* About and Contact come out of the hole with the projects, above them, larger. */
+.wall-menu .burrow-link{font:400 64px/1 var(--sans);letter-spacing:-.04em;padding:4px 6px;color:inherit}
+.wall-menu .burrow-link:hover{text-decoration:underline;text-underline-offset:8px;text-decoration-thickness:2px}
+@media(max-width:650px){.wall-menu .burrow-link{font-size:76px}}
+.wall-menu.reading .burrow-link{display:block;text-align:center}
+
+/* The rabbit takes the pointer. */
+html.over-rabbit,html.over-rabbit body,html.over-rabbit .under-scroller,html.over-rabbit .viewport{cursor:pointer}
+
+/* About: behind the camera until it steps back. The script scales and fades the content. */
+.about-space{position:fixed;inset:0;z-index:60;display:grid;place-items:center;overflow:hidden auto;overscroll-behavior:contain;pointer-events:none;padding:clamp(70px,12vh,120px) var(--gutter)}
+.about-space[hidden]{display:none}
+.about-space.settled{pointer-events:auto}
+.about-content{width:min(100%,860px);transform-origin:50% 45%;will-change:transform,opacity;text-align:left}
+.about-content .eyebrow{font:13px/1.45 var(--mono);letter-spacing:.06em;text-transform:uppercase;margin:0 0 28px}
+.about-lead{font:400 clamp(28px,3.4vw,46px)/1.12 var(--sans);letter-spacing:-.035em;margin:0 0 clamp(36px,6vh,64px);max-width:22em}
+.wall-menu:not(.reading) .about-content .people-grid{max-width:none;gap:clamp(26px,5vw,60px)}
+.wall-menu:not(.reading) .about-content .people-grid h3{font-size:clamp(24px,2.4vw,32px);margin:0 0 12px}
+.wall-menu:not(.reading) .about-content .people-grid p{font:clamp(15px,1.4vw,19px)/1.5 var(--mono)}
+.about-content .field-note{position:static;width:220px;margin:clamp(30px,6vh,56px) 0 0;transform:none;text-align:left}
+.about-content .photo-caption{display:flex;justify-content:space-between;gap:12px;font:11px/1.4 var(--mono);margin-top:8px}
+.about-back{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);font:13px var(--mono);padding:10px 16px;border:1px solid currentColor;border-radius:99px;background:#fff;opacity:0}
+.about-back:hover{background:#000;color:#fff}
+@media(max-width:650px){.about-space{place-items:start center;padding-bottom:110px}.wall-menu:not(.reading) .about-content .people-grid{grid-template-columns:1fr}}
+
+/* The tuning panel. */
+.tune-panel{position:fixed;right:14px;top:14px;z-index:100;width:286px;max-height:calc(100svh - 28px);overflow:auto;padding:10px 14px 14px;background:#fff;border:1px solid #bbb;box-shadow:0 4px 24px #0002;font:12px/1.35 ui-monospace,SFMono-Regular,Menlo,monospace;color:#111;letter-spacing:0;font-weight:400;text-transform:none}
+.tune-panel:not([open]){width:auto;padding:8px 12px}
+.tune-panel summary{cursor:pointer;font-weight:600}
+.tune-panel fieldset{border:0;border-top:1px solid #ddd;margin:12px 0 0;padding:8px 0 0}
+.tune-panel legend{font-weight:600;padding:0 6px 0 0}
+.tune-panel label{display:block;margin-top:8px}
+.tune-panel [hidden]{display:none!important}
+.tune-panel label.check{display:flex;gap:6px;align-items:center}
+.tune-panel output{float:right;color:#666}
+.tune-panel select{display:block;width:100%;margin-top:3px;font:inherit;padding:3px}
+.tune-panel input[type=range]{display:block;width:100%;margin:3px 0 0;accent-color:#111}
+.tune-panel .tune-row{display:flex;justify-content:space-between;gap:10px;margin-top:12px}
+.tune-panel button{font:inherit;text-decoration:underline;text-underline-offset:3px;color:#111}
+.tune-panel small{display:block;margin-top:12px;font-size:10px;color:#777}
+@media(max-width:650px){.tune-panel{left:10px;right:10px;top:10px;width:auto;max-height:55svh}}
+.wall-page.reading .tune-panel{display:none}

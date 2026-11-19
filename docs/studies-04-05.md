@@ -229,3 +229,36 @@ viewport. When tilt relaxes to zero, all sections recover their ordinary scale.
 Reverse scroll reverses the same global angle. Footer exploration keeps its own
 camera pitch. `tests/wall-sheet.cjs` verifies progressively narrower sections during
 motion and recovery of normal size at rest.
+
+## 04.15 — The wall, the rabbit keeps the hole (`/wall-menu.html`)
+
+A copy of 04.14 (`wall-edge.html`) with another order and a tuning panel.
+Script: `js/experiments/wall-menu.js`; panel: `js/experiments/wall-tune.js`; styles: `wall-menu.css`.
+
+- The walk ends on "Tomorrow depends on what we make today". "Different worlds" is no longer on
+  the wall; its content (the two founders, the field note) is the About space, without its heading.
+- The rabbit and its hole stay at the foot of the window the whole way; the rabbit never goes
+  down by itself. Under the pointer it leans toward the hole and floats up and down.
+- Click the rabbit: it goes in, the wall steps a little back and away, and out of the hole come
+  the three projects, upward, squeezed through it (the funnel of 04.11, now pointing up:
+  `glw.funnel` takes a negative radius for that), and above them About and Contact.
+  Scroll, Esc or a click on the hole puts them back.
+- A project opens as before, by stepping back into its page; Esc or any scroll returns to the
+  open menu.
+- About: the camera steps back, we pass through the About content that stood behind us and it
+  settles in the window. "← Back" passes through it forward and returns to the open menu.
+
+### The tuning panel (top right)
+
+- **Заголовки** (`--sans`) and **Текст** (`--mono`): face, weight, letter spacing, and each face's
+  own axis — Areal: MONO 0–100; GT Pressura: the mono cut (a separate variable file) and width
+  100–125; Publisher Rounded Sans / Slab / Mix: width 75–100; Grow A and AB are static.
+- **Экран**: for each screen, and for what comes out of the hole, and for About: size, and a shift
+  across and up/down from its base point, in the screen's own pixels. "Показать" brings it into view.
+- Settings live in this browser (localStorage); "Скопировать настройки" copies them as JSON.
+- How it reaches WebGL: a 2D canvas takes a font only by name and weight, so every setting is a new
+  `@font-face` with the axes fixed in `font-variation-settings` descriptors. Canvas and CSS then draw
+  the same thing.
+
+Fonts for the web are copied into `site/assets/fonts/{pressura,publisher,grow}` (the variable files,
+Publisher and Grow converted to woff2); the full trial packages stay in the repository root.

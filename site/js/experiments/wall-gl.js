@@ -33,7 +33,8 @@ void main(){
   float top=max(0.,1.-(s.y-edges.x)/band),foot=max(0.,1.-(edges.y-s.y)/band);
   float m=1.+flare.x*pow(top,power)+flare.y*pow(foot,power);
   s.x=view.x*.5+(s.x-view.x*.5)/m;
-  // The funnel: under a point, rows are squeezed toward it, the tighter the nearer.
+  // The funnel: under a point, rows are squeezed toward it, the tighter the nearer
+  // (over it, when funnel.z is below zero).
   float d=(s.y-funnel.y)/funnel.z,c=mix(1.,mix(.16,1.,smoothstep(0.,1.,d)),funnel.w*step(0.,d));
   s.x=funnel.x+(s.x-funnel.x)/c;
   vec2 q=s-origin;
@@ -282,7 +283,8 @@ export function mountWallGL(viewport,panels,{band=.27,flare=.9,power=2.2,lean=fa
       return {set(next){list=next;layer.fed=performance.now();layer.fill()}}},
     panel(j,tx,ty,k,far,opacity=1){const s=states[j];if(s.tx!==tx||s.ty!==ty||s.k!==k||s.far!==far||s.opacity!==opacity){s.tx=tx;s.ty=ty;s.k=k;s.far=far;s.opacity=opacity;change()}},
     lens(top,foot){if(amounts[0]!==top||amounts[1]!==foot){amounts=[top,foot];redraw=true}},
-    funnel(x,y,r,a){if(fun[0]!==x||fun[1]!==y||fun[2]!==r||fun[3]!==a){fun=[x,y,Math.max(1,r),a];redraw=true}},
+    // r below zero: the rows above the point are squeezed instead (what comes up out of a hole).
+    funnel(x,y,r,a){if(fun[0]!==x||fun[1]!==y||fun[2]!==r||fun[3]!==a){fun=[x,y,r<0?Math.min(-1,r):Math.max(1,r),a];redraw=true}},
     touch(){redraw=true},
     // A layer in front of the wall, placed on the window itself: draw(ctx) paints it in a box
     // w by h. set(x,y,s,o) places it; again() says its picture has changed.

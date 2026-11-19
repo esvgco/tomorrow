@@ -47,6 +47,8 @@ python3 -m http.server 8000 --directory site
   burrows, letter interior, text rearrangement, undoable editing and tomorrow loop.
 - `/ahead.html` — **A little ahead**: an editorial homepage with entrances in the
   punctuation, project holes, photographic reveals and interventions in the copy.
+- `/wall-menu.html` — **04.15, the rabbit keeps the hole**: 04.14 reordered, the menu comes up out
+  of the hole, About behind the camera, and a panel to tune fonts and screens.
 - `/studies.html` — comparison index, including all previous studies.
 
 Behavior, coverage and prototype limits: [studies-04-05.md](docs/studies-04-05.md).
