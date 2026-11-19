@@ -17,7 +17,12 @@ export function mountDoorTail(layer,{onEnter=()=>{},reduced=false}={}){
   const canvas=layer.querySelector('canvas'),ctx=canvas.getContext('2d');
   const rub=document.createElement('canvas'),rubCtx=rub.getContext('2d'),tail=document.createElement('canvas'),tailCtx=tail.getContext('2d');
   const video=rev=>{const v=document.createElement('video');v.muted=true;v.playsInline=true;v.preload='auto';v.setAttribute('aria-hidden','true');v.className='above-tail-src';
-    v.innerHTML=`<source src="${SRC}${rev?'reverse':'forward'}.webm" type="video/webm"><source src="${SRC}${rev?'reverse':'forward'}.mp4" type="video/mp4">`;layer.append(v);return v};
+    // Fetched whole and played from memory: the host does not answer range requests, and
+    // without them a browser cannot jump to the mirrored moment. The page's own sources are
+    // the fallback if fetching fails.
+    const ext=v.canPlayType('video/webm; codecs="vp9"')?'webm':'mp4',url=`${SRC}${rev?'reverse':'forward'}.${ext}`;
+    fetch(url).then(r=>{if(!r.ok)throw 0;return r.blob()}).then(b=>{v.src=URL.createObjectURL(b);v.load()}).catch(()=>{v.src=url});
+    layer.append(v);return v};
   const fwd=video(false),back=video(true);
   let w=0,h=0,dpr=1,door=null,box=null,brush=34,drawing=null,ready=false,opening=false,over=false,active=fwd,dirty=true,running=false;
 
