@@ -167,10 +167,10 @@ export function mountWallGL(viewport,panels,{band=.27,flare=.9,power=2.2,lean=fa
   const styled=el=>{const m=/translate(?:3d)?\(\s*(-?[\d.e+-]+)px\s*,\s*(-?[\d.e+-]+)px/.exec(el.style.transform);return {x:m?+m[1]:0,y:m?+m[2]:0,s:1,r:0,o:el.style.opacity===''?1:+el.style.opacity}};
   const pose=layer=>layer.sprite?layer.pose||styled(layer.el):null;
   function place(layer){
-    const s=states[layer.panel],b=base[layer.panel],B=layer.bounds,p=pose(layer);let lx=B.x,ly=B.y,k=s.k,opacity=s.opacity,c=1,sn=0;
+    const s=states[layer.panel],b=base[layer.panel],B=layer.bounds,p=pose(layer);let lx=B.x,ly=B.y,k=s.k,opacity=s.opacity,c=1,sn=0,sx=1;
     // A sprite fades by itself, not with its chapter. It turns about its own top left corner.
-    if(p){c=Math.cos(p.r||0);sn=Math.sin(p.r||0);lx=layer.bx+p.x+(B.x*c-B.y*sn)*p.s;ly=layer.by+p.y+(B.x*sn+B.y*c)*p.s;k*=p.s;opacity=p.o}
-    return {x:b.x+b.ox+s.tx+s.k*(lx-b.ox),y:b.y+b.oy+s.ty+s.k*(ly-b.oy),k,opacity,c,sn};
+    if(p){c=Math.cos(p.r||0);sn=Math.sin(p.r||0);sx=p.sx??1;lx=layer.bx+p.x+(B.x*sx*c-B.y*sn)*p.s;ly=layer.by+p.y+(B.x*sx*sn+B.y*c)*p.s;k*=p.s;opacity=p.o}
+    return {x:b.x+b.ox+s.tx+s.k*(lx-b.ox),y:b.y+b.oy+s.ty+s.k*(ly-b.oy),k,opacity,c,sn,sx};
   }
 
   // ---------- 3. every frame ----------
@@ -231,13 +231,13 @@ export function mountWallGL(viewport,panels,{band=.27,flare=.9,power=2.2,lean=fa
       if(states[layer.panel].far||!layer.tex||!layer.bounds)continue;
       const at=place(layer);if(at.opacity<.004||at.k<=0)continue;at.y+=park;
       // The box the layer covers on screen, turned or not.
-      const bw=at.k*layer.bounds.w,bh=at.k*layer.bounds.h,cx=[0,bw*at.c,-bh*at.sn,bw*at.c-bh*at.sn],cy=[0,bw*at.sn,bh*at.c,bw*at.sn+bh*at.c];
+      const bw=at.k*layer.bounds.w*at.sx,bh=at.k*layer.bounds.h,cx=[0,bw*at.c,-bh*at.sn,bw*at.c-bh*at.sn],cy=[0,bw*at.sn,bh*at.c,bw*at.sn+bh*at.c];
       const x0=at.x+Math.min(...cx),x1=at.x+Math.max(...cx),top=Math.max(0,at.y+Math.min(...cy)),bottom=Math.min(H,at.y+Math.max(...cy));if(bottom<=top)continue;
       // Only the part of the window the layer can reach is filled: its rows, and its
       // columns pushed out from the centre line as far as the lens can push them.
       const squeezed=layer.funnel&&fun[3]>0,out=x=>[x,W/2+(x-W/2)*(1+flare)],xs=[...out(x0),...out(x1)],left=squeezed?0:Math.max(0,Math.min(...xs)),right=squeezed?W:Math.min(W,Math.max(...xs));if(right<=left)continue;
       const r=chh/H;gl.scissor(Math.floor(left*r),Math.floor((H-bottom)*r),Math.ceil((right-left)*r)+1,Math.ceil((bottom-top)*r)+1);
-      gl.bindTexture(gl.TEXTURE_2D,layer.tex);gl.uniform2f(loc.origin,at.x,at.y);gl.uniform2f(loc.size,layer.bounds.w,layer.bounds.h);gl.uniform1f(loc.k,at.k);gl.uniform1f(loc.opacity,at.opacity);gl.uniform2f(loc.turn,at.c,at.sn);
+      gl.bindTexture(gl.TEXTURE_2D,layer.tex);gl.uniform2f(loc.origin,at.x,at.y);gl.uniform2f(loc.size,layer.bounds.w*at.sx,layer.bounds.h);gl.uniform1f(loc.k,at.k);gl.uniform1f(loc.opacity,at.opacity);gl.uniform2f(loc.turn,at.c,at.sn);
       gl.uniform4f(loc.funnel,fun[0],fun[1]+park,fun[2],squeezed?fun[3]:0);
       gl.drawArrays(gl.TRIANGLES,0,3);
     }
@@ -271,7 +271,8 @@ export function mountWallGL(viewport,panels,{band=.27,flare=.9,power=2.2,lean=fa
     rest(k){if(k!==R){R=k;redraw=true}},
     // rest: the sprite's own scale when it is read, as a share of a chapter's.
     sprite(el,panel,{rest=1,funnel=false}={}){const layer={el,panel,sprite:true,rest,funnel,bx:0,by:0,dirty:true,tex:null,q:0};layers.push(layer);
-      return {set(x,y,s=1,o=1,r=0){const p=layer.pose||(layer.pose={});if(p.x!==x||p.y!==y||p.s!==s||p.o!==o||p.r!==r){p.x=x;p.y=y;p.s=s;p.o=o;p.r=r;change()}},
+      // sx: stretched across by that much (a rule growing to its width).
+      return {set(x,y,s=1,o=1,r=0,sx=1){const p=layer.pose||(layer.pose={});if(p.x!==x||p.y!==y||p.s!==s||p.o!==o||p.r!==r||p.sx!==sx){p.x=x;p.y=y;p.s=s;p.o=o;p.r=r;p.sx=sx;change()}},
         // Draw it now for this scale, before the camera gets there.
         sharpen(k){layer.sharp=k*dpr*1.1}}},
     // A layer whose text is handed over: list of {x,y,ch,a} in the element's own pixels,

@@ -3,6 +3,7 @@ import {mountMark} from '../mark.js';
 import {mountDoor} from './door-ink.js';
 import {mountWallGL} from './wall-gl.js';
 import {mountTune} from './wall-tune.js';
+import {mountCookieBar} from './cookie-bar.js';
 // The wall, the rabbit keeps the hole (04.15). 04.14 in another order, with a panel to tune
 // the type and the place of every screen (wall-tune.js).
 //
@@ -52,11 +53,21 @@ if(!glw){body.classList.remove('wall-gl','lean');lean=false;
 const hareState={sc:1,sink:0,color:'#000'},bunPaths=[...mark.svg.querySelectorAll('#tc-bun path')].map(p=>new Path2D(p.getAttribute('d'))),holePath=new Path2D(mark.svg.querySelector('#tc-holeshape').getAttribute('d'));
 const steady=lean&&body.classList.contains('steady'),EASE=steady?Math.max(0,parseFloat(new URLSearchParams(location.search).get('ease')??70)||0):0;
 const inMark=(ctx,draw)=>{ctx.save();ctx.scale(hareState.sc,hareState.sc);ctx.translate(-882,-264);ctx.fillStyle=hareState.color;draw();ctx.restore()};
-const holeFront=steady?glw.front(ctx=>inMark(ctx,()=>ctx.fill(holePath)),10,10):null,headFront=steady?glw.front(ctx=>inMark(ctx,()=>{for(const p of bunPaths)ctx.fill(p)}),10,10):null;
+// Where the head is over the hole it is drawn white: black on black would be lost, and this is
+// what Exclusion would give (the canvas is clear, so a blend mode would have nothing under it).
+// Head-local, the hole is depth*sink higher than at rest.
+const overHole=(ctx,lift)=>{ctx.save();ctx.translate(0,lift);ctx.clip(holePath);ctx.translate(0,-lift);ctx.fillStyle='#fff';for(const p of bunPaths)ctx.fill(p);ctx.restore()};
+const holeFront=steady?glw.front(ctx=>inMark(ctx,()=>ctx.fill(holePath)),10,10):null,headFront=steady?glw.front(ctx=>inMark(ctx,()=>{for(const p of bunPaths)ctx.fill(p);overHole(ctx,-depth*hareState.sink)}),10,10):null;
 const hare=lean&&!steady?glw.front(ctx=>{const {sc,sink}=hareState,dy=-depth*sink;ctx.save();ctx.scale(sc,sc);ctx.translate(-882,-264);ctx.fillStyle=hareState.color;
   ctx.save();ctx.translate(0,dy);ctx.fill(holePath);ctx.restore();
-  ctx.beginPath();ctx.rect(bb.x-bb.width,bb.y-bb.width+dy,bb.width*3,hb.y+hb.height/2-bb.y+bb.width);ctx.clip();for(const p of bunPaths)ctx.fill(p);ctx.restore()},10,10):null;
+  ctx.beginPath();ctx.rect(bb.x-bb.width,bb.y-bb.width+dy,bb.width*3,hb.y+hb.height/2-bb.y+bb.width);ctx.clip();for(const p of bunPaths)ctx.fill(p);overHole(ctx,dy);ctx.restore()},10,10):null;
 // Sprites: the projects, About and Contact (all .burrow-card), and the projects' pages.
+// The arrow over the hole, once everything is out: the way back in.
+const arrow=$('.hole-arrow'),arrowSprite=glw?.sprite(arrow,HOLE);let arrowAt=[0,0];
+arrow.addEventListener('click',e=>{e.stopPropagation();closeMenu()});
+// The rules between the projects on the fourth screen: drawn apart from it, so that they can
+// grow from nothing to the whole width of the window as the screen comes up to its size.
+const PROJ=3,rules=[...panels[PROJ].querySelectorAll('.grow-rule')],ruleSprite=rules.map(r=>glw?.sprite(r,PROJ));let ruleAt=[],ruleW=1100;
 const cardSprite=cards.map(c=>glw?.sprite(c,HOLE,{funnel:true})),pageSprite=pages.map(p=>glw?.sprite(p,HOLE,{rest:1.1}));
 const fallHost=$('[data-fall]'),fallLayer=glw?.paint(fallHost,1,170,{glyphs:steady}),fall=mountFall(fallHost,{center:true,paint:fallLayer?list=>fallLayer.set(list):null});
 const settle=new Map(),move=(el,t)=>{if(glw)settle.set(el,t);else el.style.transform=t};
@@ -108,6 +119,10 @@ function layout(force){
   const [ox,oy,PH,oyo,PW,oxo]=origins[HOLE],W6=wH/fit,H6=W6*hb.height/hb.width,hy=PH*.9;
   put(hole6,{width:W6+'px',height:H6+'px',left:PW/2-W6/2+'px',top:hy-H6/2+'px'});
   holeAt=[PW/2,hy];holeWide=W6;
+  arrowAt=[PW/2-arrow.offsetWidth/2,hy-H6/2-(mobile?30:22)-arrow.offsetHeight];
+  {const p=panels[PROJ],bs=[...p.querySelectorAll('.project-lines button')];ruleW=p.offsetWidth;
+    ruleAt=bs.map(b=>b.offsetTop);const l=bs[bs.length-1];if(l)ruleAt.push(l.offsetTop+l.offsetHeight-1);
+    rules.forEach(r=>r.style.width=ruleW+'px')}
   // What comes out lies above the hole, up to just under the top of the window. Each is
   // [across, as a share of the chapter's width; up, as a share of the room above the hole;
   // turn, degrees; size]. Three projects, then About and Contact, highest.
@@ -156,7 +171,7 @@ let menuT=0,menuAim=0,menuAt=0,hovering=false,hover=0;
 const inRabbit=(x,y)=>{const r=rabbit.rect;return x>=r[0]&&x<=r[2]&&y>=r[1]&&y<=r[3]};
 function openMenu(instant=false){if(reading||roomOpen)return;if(!menuAim){menuAim=1;menuAt=here();lastKey=''}if(instant)menuT=MENU;wake()}
 function closeMenu(instant=false){if(open>=0||about.aim)return;if(menuAim){menuAim=0;lastKey=''}if(instant)menuT=0;wake()}
-const quiet=e=>e.target.closest?.('.tune-panel,dialog,.about-space,.beyond,.room');
+const quiet=e=>e.target.closest?.('.tune-panel,.cookie-bar,dialog,.about-space,.beyond,.room');
 addEventListener('pointermove',e=>{if(e.pointerType!=='mouse')return;const on=!reading&&!menuAim&&!roomOpen&&!quiet(e)&&up===0&&inRabbit(e.clientX,e.clientY);
   if(on!==hovering){hovering=on;document.documentElement.classList.toggle('over-rabbit',on);wake()}},{passive:true});
 addEventListener('click',e=>{if(reading||roomOpen||quiet(e)||!e.isTrusted||up>0)return;if(!inRabbit(e.clientX,e.clientY))return;
@@ -297,16 +312,21 @@ if(!reading&&!roomOpen){
     const g=aE>0?1-.84*aE:Math.exp(Math.log(1/FAR)*e),P=aE>0?[iw/2,ih/2]:backAt,fade=1-aE;
     // While what the rabbit found is out, the wall steps aside: a little back, and away.
     const mf=ease(clamp((menuT-DIVE*.5)/.7)),gm=1-.14*mf,wallMenu=1-mf;
-    const H=holeScreen();
+    const H=holeScreen();let proj=null;
     panels.forEach((p,j)=>{const [ox,oy,h,oyo]=origins[j];let SX,SY,k;
       if(j===HOLE)[SX,SY,k]=H;
       else{const a=tune.screen(j),kb=Z*scales[j];k=kb*a.s;SX=iw/2+Z*(ox-cx)+a.x*kb;SY=ih/2+Z*(oy+centres[j]-cy)+lower+a.y*kb;SX=iw/2+(SX-iw/2)*gm;SY=ih/2+(SY-ih/2)*gm;k*=gm}
       SX=P[0]+(SX-P[0])*g;SY=P[1]+(SY-P[1])*g;k*=g;
       const x=SX-iw/2-ox,yc=SY-ih/2,top=yc-oyo*k,bottom=yc+(h-oyo)*k;
       const far=k<.004||j===HOLE&&!shownMenu||j!==HOLE&&(bottom<-half||top>half||wall*wallMenu<.004)||fade<.004;if(far!==p.hasAttribute('hidden-far'))far?p.setAttribute('hidden-far',''):p.removeAttribute('hidden-far');
-      const alpha=(j===HOLE?1:wall*wallMenu)*fade;
+      const alpha=(j===HOLE?1:wall*wallMenu)*fade;if(j===PROJ)proj={SX,k,far,alpha,oxo:origins[j][5]};
       glw?.panel(j,x,yc-oy,k,far,alpha);if(!far)move(p,glw?`translate(${x}px,${yc-oy}px) scale(${k})`:`translate3d(${x}px,${yc-oy}px,0) scale(${k})`);if(!glw)p.style.opacity=alpha===1?'':alpha.toFixed(3);if(p.inert!==far)p.inert=far;if(j===editedAt)editNear=!far&&k>fit*.45&&k<fit*2.4});
     lookUp();
+    // The rules: nothing while the screen is far, the whole window's width once it is read,
+    // growing faster toward the end. The window's centre, in the screen's own pixels, is
+    // where they grow from.
+    if(proj){const read=fit*tune.screen(PROJ).s,q=clamp((proj.k/read-.2)/.65),w=q**3*iw/proj.k,mid=proj.oxo+(iw/2-proj.SX)/proj.k,sx=w/ruleW,o=w>.5?proj.alpha:0;
+      rules.forEach((r,i)=>{const y=ruleAt[i]??0;ruleSprite[i]?.set(mid-w/2,y,1,o,0,sx);if(!proj.far)move(r,`translate(${mid-w/2}px,${y}px) scaleX(${sx})`)})}
     // The rabbit: it leans toward the hole under the pointer and floats there; clicked, it goes
     // in. When the wall steps back (a page, About), the hole on the chapter takes its place.
     const dive=ease(clamp(menuT/DIVE)),float=hover>0?ease(hover)*(.17+.05*Math.sin(now/1000*Math.PI*2/1.6)):0;
@@ -314,6 +334,7 @@ if(!reading&&!roomOpen){
     const dy=rabbit.y0,x=iw/2-rabbit.hx,drawn=lean&&up===0,m=`${sink.toFixed(4)}|${drawn}|${stepping}|${x}|${dy}`;
     if(m!==lastMark){lastMark=m;const y=dy-(rabbit.hy-rabbit.sink*sink);
       if(drawn&&hare){if(hareState.sink!==sink){hareState.sink=sink;hare.again()}}
+      else if(drawn&&headFront&&hareState.sink!==sink){hareState.sink=sink;headFront.again()}
       else if(!drawn){mark.set(sink,0,1);dock.style.transform=`translate(${x}px,${y}px)`}}
     if(lean){const on=drawn&&!stepping?1:0;
       hare?.set(x,dy-(rabbit.hy-rabbit.sink*sink),1,on);
@@ -332,6 +353,7 @@ if(!reading&&!roomOpen){
       const sy=holeAt[1]-r.h*.3*r.size*.55,mx=holeAt[0]+(r.cx-holeAt[0])*l,my=sy+(r.cy-sy)*l,co=Math.cos(turn),si=Math.sin(turn),hw=r.w*s/2,hh=r.h*s/2;
       const px=mx-(hw*co-hh*si),py=my-(hw*si+hh*co),o=clamp(l*5)*(open>=0?wall:1);
       cardSprite[k]?.set(px,py,s,o,turn);move(c,`translate(${px}px,${py}px) rotate(${turn}rad) scale(${s})`);if(!glw)c.style.opacity=o.toFixed(3);c.inert=l<.9||open>=0});
+    {const o=ease(clamp((tt-.85)/.3))*(open>=0?wall:1)*(menuAim?1:ease(clamp(menuT/MENU)));arrowSprite?.set(arrowAt[0],arrowAt[1],1,o);move(arrow,`translate(${arrowAt[0]}px,${arrowAt[1]}px)`);if(!glw)arrow.style.opacity=o.toFixed(3);arrow.inert=o<.5}
     pages.forEach((p,k)=>{const o=open===k?ease(clamp((e-.3)/.6)):0;pageSprite[k]?.set(pagePose[0],pagePose[1],pagePose[2],o);
       move(p,`translate(${pagePose[0]}px,${pagePose[1]}px) scale(${pagePose[2]})`);if(!glw)p.style.opacity=o.toFixed(3);p.inert=!(open===k&&shown>.9)});
     if(glw){const r0=rest[0];glw.funnel(holeX,holeY,-k6*Math.max(40,holeAt[1]-(r0.cy+r0.h*r0.size/2))*.92,ease(clamp(tt/.2))*(1-ease(clamp((tt-.75)/.3)))*(1-e)*fade);glw.touch()}
@@ -351,3 +373,4 @@ document.fonts.ready.then(()=>{glw?.reread();layout(true);wake()});addEventListe
 if(warming){viewport.style.opacity='.01';let n=0;const tick=()=>{if(++n<4)requestAnimationFrame(tick);else{warming=false;lastKey='';wake();requestAnimationFrame(()=>viewport.style.opacity='')}};requestAnimationFrame(tick)}
 if(location.hash){const k=named(),target=k<0&&document.querySelector(location.hash);
   if(k>=0&&!reduced)setTimeout(()=>{openMenu(true);openProject(k,true)},80);else if(location.hash==='#about')setTimeout(openAbout,80);else if(target?.dataset?.panel)setTimeout(()=>showScreen(+target.dataset.panel),50)}
+mountCookieBar();

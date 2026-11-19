@@ -21,7 +21,7 @@ html.over-rabbit,html.over-rabbit body,html.over-rabbit .under-scroller,html.ove
 .wall-menu:not(.reading) .about-content .people-grid p{font:clamp(15px,1.4vw,19px)/1.5 var(--mono)}
 .about-content .field-note{position:static;width:220px;margin:clamp(30px,6vh,56px) 0 0;transform:none;text-align:left}
 .about-content .photo-caption{display:flex;justify-content:space-between;gap:12px;font:11px/1.4 var(--mono);margin-top:8px}
-.about-back{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);font:13px var(--mono);padding:10px 16px;border:1px solid currentColor;border-radius:99px;background:#fff;opacity:0}
+.about-back{position:fixed;left:50%;bottom:calc(26px + var(--consent-h,0px));transform:translateX(-50%);font:13px var(--mono);padding:10px 16px;border:1px solid currentColor;border-radius:99px;background:#fff;opacity:0}
 .about-back:hover{background:#000;color:#fff}
 @media(max-width:650px){.about-space{place-items:start center;padding-bottom:110px}.wall-menu:not(.reading) .about-content .people-grid{grid-template-columns:1fr}}
 
@@ -42,3 +42,25 @@ html.over-rabbit,html.over-rabbit body,html.over-rabbit .under-scroller,html.ove
 .tune-panel small{display:block;margin-top:12px;font-size:10px;color:#777}
 @media(max-width:650px){.tune-panel{left:10px;right:10px;top:10px;width:auto;max-height:55svh}}
 .wall-page.reading .tune-panel{display:none}
+
+/* The arrow over the hole once everything is out of it: the way back in. */
+.hole-arrow{position:absolute;left:0;top:0;transform-origin:0 0;font:300 40px/1 'ABC Areal',Arial,sans-serif;color:#000;padding:4px 10px;opacity:0;cursor:pointer}
+@media(max-width:650px){.hole-arrow{font-size:54px}}
+.wall-menu.reading .hole-arrow{display:none}
+
+/* The rules between the projects grow with the screen (the script stretches them). */
+.wall-menu:not(.reading) .project-lines button{border-color:transparent}
+.grow-rule{position:absolute;left:0;top:0;width:1100px;height:1px;background:#aaa;transform-origin:0 0;pointer-events:none}
+.wall-menu.reading .grow-rule{display:none}
+
+/* Consent for cookies and personal data: on the foot of the window, at the left; a black
+   hairline on three sides, open at the bottom where it meets the window's edge. */
+.cookie-bar{position:fixed;left:24px;bottom:0;z-index:95;width:min(440px,calc(100vw - 48px));padding:16px 18px calc(16px + env(safe-area-inset-bottom));background:#fff;color:#000;border:1px solid #000;border-bottom:0;font:12px/1.5 'ABC Areal Mono',ui-monospace,monospace;letter-spacing:0;transition:transform .4s cubic-bezier(.4,0,.2,1)}
+.cookie-bar p{margin:0;font:inherit;line-height:1.5}
+.cookie-actions{display:flex;gap:10px;margin-top:14px}
+.cookie-actions button{font:inherit;padding:7px 14px;border:1px solid #000;color:#000;background:#fff}
+.cookie-actions button[data-consent="accepted"]{background:#000;color:#fff}
+.cookie-actions button:hover{background:#000;color:#fff}
+.cookie-actions button[data-consent="accepted"]:hover{background:#fff;color:#000}
+.cookie-bar.gone{transform:translateY(100%)}
+@media(max-width:650px){.cookie-bar{left:12px;width:calc(100vw - 24px);font-size:11px}}

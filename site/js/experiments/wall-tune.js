@@ -25,10 +25,11 @@ export const FONTS={
   'grow-ab':{name:'Grow AB',src:F+'grow/ABCGrowTrial-AB.woff2'},
 };
 const ROLES={head:'Заголовки',text:'Текст'};
+// Elisey's settings of 19 Nov, as the starting point.
 const DEFAULT={
-  head:{font:'areal',w:400,mono:0,wd:100,ls:-.04},
+  head:{font:'pressura',w:300,mono:100,wd:100,ls:-.04},
   text:{font:'areal',w:400,mono:100,wd:100,ls:0},
-  screens:{},
+  screens:{0:{s:1.75,x:0,y:-372},1:{s:1.55,x:0,y:0},2:{s:1.55,x:0,y:0},3:{s:1,x:0,y:0},4:{s:1,x:0,y:-162}},
 };
 const clone=o=>JSON.parse(JSON.stringify(o));
 const load=()=>{try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&s.head&&s.text)return {...clone(DEFAULT),...s,screens:s.screens||{}}}catch{}return clone(DEFAULT)};
@@ -57,8 +58,8 @@ export function mountTune({screens,show=()=>{},onType=()=>{},onScreen=()=>{}}){
     const n=++serial,fam={head:`tune-head-${n}`,text:`tune-text-${n}`},{head,text}=state;
     style.textContent=face('head',head,fam.head)+face('text',text,fam.text)+`
 .wall-page.tune{--sans:'${fam.head}',${fallback.head};--mono:'${fam.text}',${fallback.text}}
-.wall-page.tune ${TEXT}:not(.tune-panel *){font-weight:${weightOf(text)};letter-spacing:${text.ls}em}
-.wall-page.tune ${HEAD}:not(.tune-panel *){font-family:var(--sans)!important;font-weight:${weightOf(head)}!important;letter-spacing:${head.ls}em!important}
+.wall-page.tune ${TEXT}:not(.tune-panel *,.cookie-bar *){font-weight:${weightOf(text)};letter-spacing:${text.ls}em}
+.wall-page.tune ${HEAD}:not(.tune-panel *,.cookie-bar *){font-family:var(--sans)!important;font-weight:${weightOf(head)}!important;letter-spacing:${head.ls}em!important}
 .wall-page.tune h2 em{font-family:var(--sans)}`;
     try{await Promise.all([document.fonts.load(`${weightOf(head)} 40px '${fam.head}'`,'Tomorrow'),document.fonts.load(`${weightOf(text)} 20px '${fam.text}'`,'Tomorrow')])}catch{}
     if(n===serial)onType();

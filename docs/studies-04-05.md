@@ -262,3 +262,18 @@ Script: `js/experiments/wall-menu.js`; panel: `js/experiments/wall-tune.js`; sty
 
 Fonts for the web are copied into `site/assets/fonts/{pressura,publisher,grow}` (the variable files,
 Publisher and Grow converted to woff2); the full trial packages stay in the repository root.
+
+### 04.15, second pass (19 Nov)
+
+- Elisey's tuning is the default: headings GT Pressura Mono 300, −0.04 em; text Areal Mono;
+  screens 1 and 2–3 larger (1.75×, 1.55×), the first and last raised.
+- Over the hole the rabbit is drawn white wherever it covers the black, so the muzzle is not lost
+  while it floats. The look of Exclusion with a white rabbit; done by drawing, because the WebGL
+  canvas is clear and a blend mode would have nothing under it to blend with.
+- With the menu open, a small arrow over the hole points back in (a click on it, or the hole, closes).
+- "Not everything fits a category": the rules between the projects are drawn apart from the screen
+  and grow from nothing to the whole window's width as the screen comes up, faster toward the end
+  (cube of the progress). `glw.sprite().set()` takes a sixth argument, `sx`, for that.
+- A consent bar for cookies and personal data (`js/experiments/cookie-bar.js`): on the foot of the
+  window at the left, black hairline on three sides, Areal Mono. The answer is kept in
+  localStorage; `?cookies` shows it again. While it is up, `--consent-h` lifts the About "Back".
