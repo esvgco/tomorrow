@@ -1,0 +1,76 @@
+/* The wall, fast. Same composition; what made it slow is gone or only runs when seen.
+   - Reading the wall is a flat 2D zoom: every chapter is its own GPU layer, moved and
+     scaled directly, rastered near 1:1 instead of through a 3D camera across 60x of scale.
+   - The 3D camera only takes over at the foot of the wall (step back, turn, walk round).
+   - The photograph loses the SVG posterize filter, the backdrop blur, the blend-mode
+     scanlines and the endless mobile pulse; it is a plain greyscale that warms on reveal. */
+.wall-fast .camera,.wall-fast .world{will-change:auto}
+.wall-fast.flat .camera,.wall-fast.flat .world{transform:none!important}
+.wall-fast .wall-panel{will-change:transform;contain:layout style}
+.wall-fast .wall-panel[hidden-far]{visibility:hidden}
+.wall-fast.flat .viewport{perspective:none!important}
+.wall-fast.flat .wall-surface{background:none}
+.wall-fast .photo-study{animation:none!important}
+.wall-fast .photo-study:before,.wall-fast .photo-study:after{display:none}
+.wall-fast .photo-study img:not(.photo-reveal){filter:grayscale(1) contrast(1.5);opacity:.9}
+.wall-fast .photo-study .photo-reveal{filter:none;transition:clip-path 2.4s .2s,opacity .8s .2s}
+.wall-fast .progress-line i{width:100%;transform-origin:0 0;transform:scaleX(var(--p,0))}
+.wall-fast.flat .space-hole,.wall-fast.flat .back-inscription{visibility:hidden}
+
+/* Only the wall: no header, no footer, no captions or numbering. */
+.wall-fast .site-header,.wall-fast .page-tools{display:none}
+.wall-fast .wall-panel .eyebrow,.wall-fast .edge-note,.wall-fast .margin-note,.wall-fast .project-note,.wall-fast .door-note{visibility:hidden}
+.wall-fast .project-lines button>span:first-child{display:none}
+.wall-fast .project-lines button{grid-template-columns:1fr 180px}
+@media(max-width:650px){.wall-fast .project-lines button{grid-template-columns:1fr}.wall-fast .project-lines span:last-child{grid-column:1}}
+.wall-fast .teaser{display:none}
+
+/* wall-zoom: every text centred. */
+.wall-zoom .wall-panel{text-align:center}
+.wall-zoom .wall-panel .panel-copy,.wall-zoom .wall-panel .letter-fall,.wall-zoom .people-grid,.wall-zoom .project-lines{margin-left:auto;margin-right:auto}
+.wall-zoom .letter-fall .accessible-copy,.wall-zoom .letter-fall .fall-result{max-width:none;text-align:center}
+.wall-zoom .hero-bottom{flex-direction:column;justify-content:center;gap:34px;padding-right:0}
+.wall-zoom .hero-rabbit{margin:0 auto}
+.wall-zoom .project-lines button,.wall-zoom .project-lines button{grid-template-columns:1fr;justify-items:center;text-align:center;gap:6px}
+.wall-zoom .project-lines span:last-child{text-align:center;grid-column:1}
+.wall-zoom .field-note{left:50%;right:auto;transform:translateX(-50%);text-align:center}
+.wall-zoom .photo-caption{justify-content:center}
+/* "Different worlds" keeps its original layout: names left, photograph bottom right. */
+.wall-zoom .wall-panel.people{text-align:left}
+.wall-zoom .people .people-grid{margin-left:0;margin-right:0}
+.wall-zoom .people .field-note{left:auto;right:0;transform:none;text-align:left}
+.wall-zoom .people .photo-caption{justify-content:space-between}
+/* wall-zoom: the studio line is the second screen's heading; it is longer, so smaller. */
+.wall-zoom .wall-panel h2.studio-line{font-size:60px;line-height:1.05;margin-bottom:34px}
+@media(max-width:650px){.wall-zoom .wall-panel h2.studio-line{font-size:46px}}
+
+/* wall-zoom: the rabbit waits at the foot of the window, then its hole becomes a screen. */
+.rabbit-dock{position:fixed;left:0;top:0;z-index:5;pointer-events:none;will-change:transform}
+.rabbit-dock .rabbit-mark{display:block;width:100%;height:100%}
+
+.burrow-hole{position:absolute;left:0;top:0;overflow:visible;fill:#000}
+.burrow-cards{position:absolute;left:0;top:0;width:100%}
+.burrow-card{position:absolute;left:50%;display:flex;flex-direction:column;align-items:center;gap:8px;white-space:nowrap;will-change:transform,opacity;opacity:0}
+.burrow-card strong{font-weight:400;font-size:30px;letter-spacing:-.03em}
+.burrow-card span{font-size:13px}
+.burrow-card:hover strong{text-decoration:underline;text-underline-offset:6px;text-decoration-thickness:1px}
+.links-panel{display:grid;grid-template-columns:1fr 1fr;align-items:center;justify-items:center}
+.big-link{font:400 64px/1 var(--sans);letter-spacing:-.04em;border-bottom:2px solid transparent}
+.big-link:hover{border-color:currentColor}
+.wall-zoom.reading .burrow-card{position:relative;left:auto;opacity:1;transform:none!important;margin:18px auto}
+.wall-zoom.reading .burrow-hole{position:relative;display:block;margin:0 auto 30px;transform:none!important}
+.wall-zoom.reading .burrow-cards{position:relative}
+.wall-zoom.reading .links-panel{min-height:300px}
+@media(max-width:650px){.burrow-card strong{font-size:44px}.burrow-card span{font-size:22px}.big-link{font-size:80px}}
+.wall-zoom .little-door{visibility:hidden}
+
+/* wall-zoom, looking up: a screen above the wall, with "possible" and a hidden door. */
+.above{position:fixed;inset:0;z-index:4;visibility:hidden;background:#fff;will-change:transform}
+.above.shown{visibility:visible}
+.above-ink{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:crosshair}
+.above-word{position:absolute;z-index:0;left:50%;top:50%;transform:translate(-50%,-50%);margin:0;font:400 26px/1 var(--sans);letter-spacing:-.02em;pointer-events:none;color:#000}
+.above-ink{z-index:1}
+.above-back{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);font:14px var(--mono);padding:10px 14px;opacity:0;transition:opacity .4s;mix-blend-mode:difference;color:#fff}
+.above.drawable .above-back{opacity:1}
+.door-leaf{position:absolute;transform-origin:0 50%;pointer-events:none;backface-visibility:visible;background:#fff}
+.rabbit-top .rabbit-dock .mk-hole,.rabbit-top .rabbit-dock .mk-sunk{visibility:hidden}

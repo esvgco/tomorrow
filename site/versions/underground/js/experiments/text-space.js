@@ -1,0 +1,20 @@
+import {typeFlight} from './type-flight.js';
+import {reduced,getDay,setDay} from './shared.js';
+const main=document.querySelector('main');
+let flying=false,down=null,selectionFrame=0,selectionTimer=0,selecting=false;
+function textNodes(root){const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);const nodes=[];let n;while(n=walker.nextNode())if(n.textContent.trim()&&!n.parentElement.closest('svg,script,style'))nodes.push(n);return nodes}
+// Measure native text rather than adding spans/buttons. Selection and line wrapping stay native.
+function gapAt(x,y){for(const node of textNodes(main)){const parent=node.parentElement;if(parent.getClientRects().length===0)continue;const range=document.createRange();for(const m of node.textContent.matchAll(/\s+/g)){range.setStart(node,m.index);range.setEnd(node,m.index+m[0].length);for(const r of range.getClientRects())if(r.width>0&&x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom)return {node,range}}}return null}
+function capture(){const words=[];for(const node of textNodes(main)){const style=getComputedStyle(node.parentElement);if(style.visibility==='hidden'||style.display==='none')continue;const range=document.createRange();for(const m of node.textContent.matchAll(/\S+/g)){range.setStart(node,m.index);range.setEnd(node,m.index+m[0].length);const r=range.getBoundingClientRect();if(!r.width||r.bottom<0||r.top>innerHeight)continue;const glyphs=[];let offset=m.index;for(const char of m[0]){range.setStart(node,offset);range.setEnd(node,offset+char.length);const gr=range.getBoundingClientRect();glyphs.push({text:char,x:gr.left});offset+=char.length}words.push({glyphs,text:m[0],x:r.left,y:r.top,w:r.width,h:r.height,size:parseFloat(style.fontSize),font:style.fontFamily,weight:style.fontWeight,italic:style.fontStyle,color:style.color,spacing:style.letterSpacing})}}words.art=[...main.querySelectorAll('img,.rabbit-mark>svg')].map(el=>({el,r:el.getBoundingClientRect()})).filter(({r})=>r.width&&r.bottom>0&&r.top<innerHeight);return words}
+async function fly(x,y){if(flying)return;if(reduced){setDay(getDay()+1);return}flying=true;try{const completed=await typeFlight(capture(),x,y);if(completed)setDay(getDay()+1)}catch(error){console.error('Text flight unavailable',error)}finally{flying=false}}
+main.addEventListener('pointerdown',e=>down={x:e.clientX,y:e.clientY});
+main.addEventListener('click',e=>{if(!down||Math.hypot(e.clientX-down.x,e.clientY-down.y)>5||!getSelection().isCollapsed||e.detail>1)return;const hit=gapAt(e.clientX,e.clientY);if(!hit)return;e.preventDefault();e.stopImmediatePropagation();fly(e.clientX,e.clientY)},true);
+function selectionZoom(){cancelAnimationFrame(selectionFrame);selectionFrame=requestAnimationFrame(()=>{if(flying)return;const sel=getSelection();if(!sel.rangeCount||sel.isCollapsed||!main.contains(sel.anchorNode)||!main.contains(sel.focusNode)){main.style.transform='';main.dataset.selectionZoom='';return}const range=sel.getRangeAt(0),r=range.getBoundingClientRect();if(!r.width||!r.height)return;const scale=main.dataset.selectionZoom==='active'?1.15:1;const box=main.getBoundingClientRect();main.style.transformOrigin=`${(r.left+r.width/2-box.left)/scale}px ${(r.top+r.height/2-box.top)/scale}px`;main.style.transform='scale(1.15)';main.dataset.selectionZoom='active'})}
+function scheduleSelectionZoom(){clearTimeout(selectionTimer);cancelAnimationFrame(selectionFrame);const sel=getSelection();if(sel.isCollapsed){main.style.transform='';main.dataset.selectionZoom='';return}if(!selecting)selectionTimer=setTimeout(selectionZoom,350)}
+document.addEventListener('pointerdown',()=>{selecting=true;clearTimeout(selectionTimer);cancelAnimationFrame(selectionFrame)},true);
+document.addEventListener('pointerup',()=>{selecting=false;scheduleSelectionZoom()},true);
+document.addEventListener('pointercancel',()=>{selecting=false;scheduleSelectionZoom()},true);
+addEventListener('blur',()=>{selecting=false;clearTimeout(selectionTimer)});
+document.addEventListener('selectionchange',scheduleSelectionZoom);
+
+addEventListener('flight-preview-start',()=>{if(!flying)fly(innerWidth/2,innerHeight/2)});

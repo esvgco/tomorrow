@@ -1,0 +1,201 @@
+/* The Tomorrow Company — homepage concept.
+   Same system as the study page (styles.css): true white, black type, Geist + Geist Mono,
+   mono labels in small caps, one-pixel rules, an underline for whatever is "on". */
+:root {
+  --paper: #ffffff;
+  --ink: #000000;
+  --muted: rgba(0, 0, 0, 0.5);
+  --hair: rgba(0, 0, 0, 0.12);
+  --accent: #ff3d00;
+  --sans: 'Geist', ui-sans-serif, system-ui, -apple-system, 'Helvetica Neue', Arial, sans-serif;
+  --mono: 'Geist Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  --gutter: clamp(16px, 3.2vw, 48px);
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+html, body { margin: 0; background: var(--paper); color: var(--ink); }
+body {
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  padding: 0 var(--gutter);
+}
+a { color: inherit; text-decoration: none; }
+canvas.view { display: block; width: 100%; height: 100%; }
+
+/* the small-caps mono label used for everything that is not running text */
+.label-mono, .top, .screen-head, .nav, .hero-down, .again, .hole i, .hole::before, .foot {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* header: the name on the left, navigation in grey on the right — as on the study page */
+.top {
+  position: fixed; left: 0; right: 0; top: 0; z-index: 10;
+  display: flex; justify-content: space-between; align-items: baseline; gap: 16px;
+  padding: 22px var(--gutter);
+  background: linear-gradient(var(--paper) 70%, rgba(255, 255, 255, 0));
+}
+.nav { display: flex; gap: 2px; margin-right: -6px; }
+.nav a { color: var(--muted); padding: 4px 6px; white-space: nowrap; }
+.nav a:hover { color: var(--ink); }
+.nav a.on { color: var(--ink); box-shadow: inset 0 -1px 0 var(--ink); }
+
+/* a screen is the height of the window; it opens with the study's row head: a rule, an index, a label, a hint */
+.screen {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100svh;
+  padding: 96px 0 72px;
+}
+.screen-head {
+  display: flex; gap: 18px; align-items: baseline;
+  border-top: 1px solid var(--ink);
+  padding: 10px 0 18px;
+  letter-spacing: 0.06em;
+}
+.screen-head .idx { min-width: 14px; }
+.screen-head .hint { margin-left: auto; color: var(--muted); }
+h1, h2 {
+  font-weight: 400;
+  font-size: clamp(30px, 4.4vw, 56px);
+  line-height: 1.04;
+  letter-spacing: -0.025em;
+  margin: 0;
+}
+p { margin: 0; }
+
+/* 1 · the field */
+.hero-title { max-width: 14em; margin-top: 9vh; }
+.hero-lede { max-width: 560px; margin-top: 22px; color: rgba(0, 0, 0, 0.72); }
+.field {
+  position: absolute;
+  right: clamp(2vw, 8vw, 140px);
+  bottom: clamp(48px, 12vh, 140px);
+  width: clamp(240px, 24vw, 360px);
+  aspect-ratio: 4 / 3;
+  pointer-events: none;
+}
+.hero-down {
+  position: absolute; left: 0; bottom: 28px;
+  display: inline-flex; gap: 10px; align-items: baseline;
+  color: var(--muted); padding: 4px 0;
+  box-shadow: inset 0 -1px 0 var(--hair);
+}
+.hero-down:hover { color: var(--ink); box-shadow: inset 0 -1px 0 var(--ink); }
+.hero-down .idx { color: var(--ink); }
+
+/* 2 · what we do */
+.what h2 { max-width: 14em; margin-top: 2vh; }
+.kinds {
+  list-style: none; margin: 7vh 0 0; padding: 0;
+  max-width: 720px;
+}
+.kinds li {
+  display: grid; grid-template-columns: minmax(110px, 150px) 1fr; gap: 20px;
+  padding: 14px 0;
+  border-top: 1px solid var(--hair);
+  opacity: 0; transform: translateY(6px);
+  transition: opacity 0.9s ease, transform 0.9s ease;
+}
+.kinds li:last-child { border-bottom: 1px solid var(--hair); }
+.what.revealed .kinds li { opacity: 1; transform: none; }
+.what.revealed .kinds li:nth-child(2) { transition-delay: 0.15s; }
+.what.revealed .kinds li:nth-child(3) { transition-delay: 0.3s; }
+.kinds .k { font-family: var(--sans); font-size: 14px; font-weight: 500; }
+.kinds .d { color: rgba(0, 0, 0, 0.72); }
+.aside, .note { margin-top: 18px; font-size: 13px; color: rgba(0, 0, 0, 0.62); max-width: 52ch; }
+.track {
+  position: absolute; left: calc(-1 * var(--gutter)); right: calc(-1 * var(--gutter)); bottom: 0;
+  height: clamp(150px, 24vh, 240px);
+  pointer-events: none;
+}
+.track .again {
+  position: absolute; right: var(--gutter); bottom: 22px; pointer-events: auto;
+  background: none; border: 0; padding: 4px 6px; margin-right: -6px;
+  color: var(--muted); cursor: pointer; border-radius: 0;
+  box-shadow: inset 0 -1px 0 var(--hair);
+}
+.track .again:hover { color: var(--ink); box-shadow: inset 0 -1px 0 var(--ink); }
+
+/* 3 · projects: holes on the field */
+.projects { display: flex; flex-direction: column; }
+.holes { position: relative; flex: 1; min-height: 56vh; }
+.hole {
+  position: absolute; left: var(--x); top: var(--y); z-index: 2; /* its label stays above the rabbit's canvas */
+  transform: translate(-50%, -50%);
+  appearance: none; background: none; border: 0; padding: 28px; margin: 0;
+  cursor: pointer; color: inherit; font: inherit; text-align: left; border-radius: 0;
+}
+.hole .dot {
+  display: block; width: 46px; height: 9px; border-radius: 50%; background: var(--ink);
+  transition: transform 0.4s ease;
+}
+.hole:hover .dot, .hole:focus-visible .dot, .hole.on .dot { transform: scaleX(1.08); }
+.hole:focus-visible { outline: 1px solid var(--ink); outline-offset: -20px; }
+.hole::before {
+  content: attr(data-n);
+  position: absolute; left: 50%; top: 8px; transform: translateX(-50%);
+  color: var(--muted); letter-spacing: 0.04em;
+}
+.hole .label {
+  position: absolute; left: calc(100% - 4px); top: 50%; transform: translateY(-50%);
+  display: grid; gap: 3px; width: max-content; max-width: min(30vw, 380px);
+  padding-left: 12px;
+  opacity: 0; transition: opacity 0.5s ease 0.1s;
+}
+.hole.on .label { opacity: 1; }
+.hole .label b { font-family: var(--sans); font-size: 14px; font-weight: 500; }
+.hole .label i { font-style: normal; color: var(--muted); letter-spacing: 0.04em; }
+.peek {
+  position: absolute; width: 300px; height: 225px; left: 0; top: 0; z-index: 1;
+  pointer-events: none; opacity: 0; transition: opacity 0.35s ease;
+}
+.peek.on { opacity: 1; }
+
+/* 4 · contact */
+.contact { min-height: 70vh; min-height: 70svh; display: flex; flex-direction: column; }
+.mail {
+  font-size: clamp(22px, 3.6vw, 48px); letter-spacing: -0.025em; line-height: 1.1;
+  align-self: flex-start; margin-top: 2vh;
+  box-shadow: inset 0 -1px 0 var(--ink); padding-bottom: 4px;
+}
+.mail:hover { box-shadow: inset 0 -1px 0 var(--hair); }
+.foot {
+  margin-top: auto;
+  display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+  padding: 22px 0 28px;
+  border-top: 1px solid var(--hair);
+  color: var(--muted);
+  letter-spacing: 0.04em;
+}
+
+@media (max-width: 760px) {
+  .top { padding: 18px var(--gutter); }
+  .nav { gap: 0; margin-right: -4px; }
+  .nav a { padding: 4px 4px; letter-spacing: 0.04em; }
+  .nav a[data-for='top'] { display: none; }
+  .screen-head .hint { display: none; }
+  .screen { padding-top: 80px; }
+  .hero-title { margin-top: 4vh; }
+  .field { right: 0; bottom: 84px; width: 56vw; }
+  .kinds li { grid-template-columns: 1fr; gap: 4px; }
+  .track { height: 140px; }
+  .hole .label { left: 50%; top: calc(100% - 8px); transform: none; max-width: 70vw; padding-left: 0; }
+  .peek { width: 220px; height: 165px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .kinds li { transition: none; opacity: 1; transform: none; }
+}
+
+/* One shared field, with deliberately reversed object scale. */
+.holes .peek{inset:0;width:100%;height:100%;opacity:1;transition:none}
+.hole .dot{transition:none}.hole:hover .dot,.hole:focus-visible .dot,.hole.on .dot{transform:none}
+.hole.rendered .dot{visibility:hidden}
+@media(max-width:760px){.holes{min-height:62vh}.hole .label{max-width:55vw}.hole:nth-child(even) .label{left:auto;right:0;text-align:right}}

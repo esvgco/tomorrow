@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head><style>html,body{background:#000}</style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>Our mission — The Tomorrow Company</title>
+<meta name="description" content="We bring technology, entrepreneurship and storytelling together to create companies, products and original worlds.">
+<link rel="stylesheet" href="areal.css">
+<style>
+:root{--mono:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;--gutter:clamp(24px,6vw,96px)}
+*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}body{margin:0;background:#000;color:#fff;font-family:var(--mono);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+main{padding:clamp(100px,22svh,240px) var(--gutter) clamp(80px,16svh,180px);text-align:center}
+.label{font-size:13.2px;letter-spacing:.18em;margin:0 0 clamp(28px,5vh,56px);font-weight:400}
+h1{max-width:18em;margin:0 auto;font-size:clamp(22.8px,3.36vw,42px);font-weight:400;line-height:1.3;text-wrap:balance}
+.intro{width:100%;max-width:46ch;margin:clamp(80px,20vh,180px) auto 0;font-size:clamp(16.8px,1.44vw,20.4px)}
+.intro p{margin:0;font-size:clamp(20.4px,1.86vw,26.4px);line-height:1.45}
+.intro .detail{margin:clamp(140px,34vh,300px) 0 0;font-size:inherit;line-height:1.55}
+.mission-back{position:absolute;top:28px;left:32px;padding:12px 18px;background:#f5f5f5;color:#171717;border-radius:2px;text-decoration:none;font:16px/1.3 'ABC Areal',Arial,sans-serif}.mission-back:hover{background:#ddd}.mission-back:focus-visible{outline:1px solid #fff;outline-offset:5px}
+@media(max-width:600px){.mission-back{top:20px;left:20px}}
+
+.mission-tunnel{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:2;mask-image:linear-gradient(to right,#000,rgba(0,0,0,.45) 40%,rgba(0,0,0,.45) 60%,#000)}
+.mission-tunnel i{position:absolute;top:0;left:0;width:1px;transform-origin:top center;background:linear-gradient(transparent,#fff 25%,#fff 75%,transparent)}
+body.flight main{position:fixed;inset:0;padding:0;overflow:hidden}
+body.flight .intro{display:contents}
+body.flight main .flight-block{position:absolute;top:0;left:50%;width:calc(100% - 2 * var(--gutter));max-width:46ch;margin:0;text-align:center;transform-origin:50% 30%;will-change:transform,opacity}
+body.flight main .mission-title{max-width:800px}
+body.flight .mission-back{position:fixed;z-index:3}
+</style>
+</head>
+<body>
+<a class="mission-back" href="easter-letters.html">← Back to Tomorrow</a>
+
+<main>
+<div class="mission-title"><p class="label">OUR MISSION</p>
+<h1>Make room for what comes next.</h1></div>
+<div class="intro">
+<p>We bring technology, entrepreneurship and storytelling together to create companies, products and original worlds.</p>
+<p class="detail">Our work explores AI, physical computing and new ways for people to interact with technology. Sometimes it becomes a product. Sometimes a company. Sometimes something that doesn’t fit an existing category.</p>
+<p class="detail">Each idea deserves its own form. What connects them is the curiosity to explore what’s possible — and the willingness to build it.</p>
+</div>
+
+</main>
+<script>
+if(!matchMedia('(prefers-reduced-motion: reduce)').matches){
+  const blocks=[document.querySelector('.mission-title'),...document.querySelectorAll('.intro p')];
+  const tunnel=document.createElement('div');tunnel.className='mission-tunnel';tunnel.setAttribute('aria-hidden','true');
+  const lines=Array.from({length:24},()=>{const line=document.createElement('i');tunnel.append(line);return line});document.body.append(tunnel);
+  document.body.classList.add('flight');blocks.forEach(block=>block.classList.add('flight-block'));
+  const clamp=v=>Math.max(0,Math.min(1,v)),ease=v=>v*v*(3-2*v);
+  let segment=1000,travel=0,speed=170,lastTime=performance.now(),lastScroll=scrollY;
+  function draw(now){
+    const dt=Math.min(.05,(now-lastTime)/1000);
+    const velocity=Math.abs(scrollY-lastScroll)/Math.max(.001,dt);
+    speed+=(170+Math.min(1800,velocity*.75)-speed)*(1-Math.exp(-dt*8));
+    travel+=speed*dt;
+    const stretch=Math.pow(clamp((speed-170)/1500),.8);
+    blocks.forEach((block,i)=>{
+      const progress=(scrollY/segment+.45-i*1.25)/1.2;
+      const active=progress>=0&&progress<=1;
+      block.style.visibility=active?'visible':'hidden';
+      if(!active)return;
+      const y=innerHeight*.94-progress*(innerHeight*.94+block.offsetHeight*1.35);
+      const scale=progress<.55?.45+.55*(progress/.55):1+.18*((progress-.55)/.45);
+      block.style.transform=`translate(-50%,${y}px) scale(${scale})`;
+      block.style.opacity=ease(clamp(progress/.28))*(1-.3*ease(clamp((progress-.65)/.35)));
+    });
+    lines.forEach((line,i)=>{
+      const angle=(i%12+.5)/12*Math.PI,laneX=.5-Math.cos(angle)*.47;
+      const depthFactor=.35+.65*Math.abs(Math.cos(angle)),slope=(laneX-.5)*.16,span=innerHeight*1.45;
+      const y=((i*173-travel*(.45+depthFactor*.9))%span+span)%span-innerHeight*.18;
+      const depth=clamp((y+innerHeight*.18)/span);
+      line.style.height=(45+depth*180*depthFactor+stretch*innerHeight*.95*(.6+depthFactor*.4))+'px';
+      line.style.opacity=.08+depth*.28*depthFactor;
+      line.style.transform=`translate(${innerWidth*laneX+slope*(y-innerHeight*.5)}px,${y}px) rotate(${-Math.atan(slope)}rad)`;
+    });
+    lastTime=now;lastScroll=scrollY;requestAnimationFrame(draw);
+  }
+  function layout(){segment=Math.max(850,innerHeight*1.3);document.body.style.height=(((blocks.length-1)*1.25+.3)*segment+innerHeight)+'px'}
+  addEventListener('resize',layout);document.fonts.ready.then(layout);layout();requestAnimationFrame(draw);
+}
+</script>
+</body>
+</html>

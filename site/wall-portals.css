@@ -1,0 +1,125 @@
+/* The title keeps 04.6's typesetting. Only its three counters become entrances. */
+.letter-entry{display:inline;padding:0;margin:0;border:0;background:none;color:inherit;font:inherit;letter-spacing:inherit;line-height:inherit;position:relative;cursor:default}
+.letter-entry:focus-visible{outline:1px dotted #888;outline-offset:4px}
+.letter-entry[data-entry="0"].rippling{filter:url(#letter-wave-0)}
+.letter-entry[data-entry="1"].rippling{filter:url(#letter-wave-1)}
+.letter-entry[data-entry="2"].rippling{filter:url(#letter-wave-2)}
+.wave-filters{position:absolute;pointer-events:none}
+.letter-gallery{position:fixed;inset:0;width:100%;height:100%;max-width:none;max-height:none;margin:0;padding:0;border:0;background:#f5f5f5;color:#181818;overflow:hidden;overscroll-behavior:contain;font-family:var(--sans)}
+.letter-gallery::backdrop{background:#fff}
+.gallery-canvas{position:absolute;inset:0;touch-action:none;cursor:grab}
+.gallery-canvas:active{cursor:grabbing}
+.gallery-canvas canvas{display:block;width:100%;height:100%}
+.gallery-back{position:absolute;z-index:3;white-space:nowrap;left:50%;bottom:22px;transform:translateX(-50%);font:13px var(--mono);color:#888;padding:10px 14px;background:none;border:0}
+.gallery-back:hover{color:#181818}
+
+.gallery-footer{position:absolute;bottom:30px;left:24px;right:24px;display:flex;flex-direction:column;align-items:center;gap:12px;pointer-events:none;text-align:center}
+
+.gallery-controls{display:flex;gap:18px;pointer-events:auto}
+.gallery-controls button{font:11px var(--mono);min-width:44px;min-height:44px;border:1px solid #c4c4c4;border-radius:50%;background:#f5f5f5c9}
+.gallery-controls button[aria-pressed=true]{color:white;background:#222;border-color:#222}
+
+
+.letter-flight{display:none;position:fixed;inset:0;z-index:1000;background:#fff;pointer-events:none;transform-origin:0 0}
+.letter-flight.active{display:block}
+.letter-flight .flight-title{position:absolute;margin:0;white-space:nowrap;font-family:var(--sans);line-height:.92;letter-spacing:-.04em;text-align:center;color:#000}
+
+@media(max-width:600px){.gallery-footer{bottom:22px;gap:8px}}
+@media(prefers-reduced-motion:reduce){.letter-entry{transition:none}}
+
+.approach-easel:focus-visible{position:absolute;width:auto;height:auto;clip:auto;clip-path:none;top:28px;right:28px;padding:12px;background:white;z-index:3}
+
+.letter-counter{position:absolute;left:0;top:50%;transform:translateY(-50%);pointer-events:none;opacity:0;transition:opacity .25s ease-in-out;color:#000;overflow:visible}
+.letter-entry:hover .letter-counter,.letter-entry:focus-visible .letter-counter{opacity:1}
+@media(prefers-reduced-motion:reduce){.letter-counter{transition:none}}
+
+.letter-flight .flight-entry .letter-counter{opacity:1;transition:none}
+/* Keep Tomorrow on one line even though its o glyphs are separate buttons. */
+#opening h1{white-space:nowrap}
+
+/* Touch screens hint at the entrance through motion, without a sticky hover fill. */
+@media (hover:none), (pointer:coarse), (max-width:600px){
+ .letter-entry:hover .letter-counter,.letter-entry:focus-visible .letter-counter{opacity:0}
+ .letter-flight .flight-entry .letter-counter{opacity:1}
+}
+
+.letter-entry[data-entry="3"].rippling{filter:url(#letter-wave-3)}
+
+
+
+.gallery-back:focus,.gallery-back:focus-visible{outline:none;box-shadow:none}
+
+#last-heading[data-letter-portals]{cursor:default}
+.letter-entry[data-entry="4"].rippling{filter:url(#letter-wave-4)}
+.letter-entry[data-entry="5"].rippling{filter:url(#letter-wave-5)}
+.letter-entry[data-entry="6"].rippling{filter:url(#letter-wave-6)}
+.letter-entry[data-entry="7"].rippling{filter:url(#letter-wave-7)}
+.letter-entry[data-entry="8"].rippling{filter:url(#letter-wave-8)}
+
+
+#last-heading[data-letter-portals] .letter-entry{display:inline-block;overflow:visible}
+
+/* The canvas reads this state; native :hover alone does not redraw a texture. */
+.letter-entry.portal-hover .letter-counter{opacity:1}
+.letter-entry{cursor:pointer}
+
+/* Headings are display text; portals retain their hover and click behavior. */
+.wall-page :is(h1,h2,h3),
+.wall-page :is(h1,h2,h3) *{cursor:default;user-select:none;-webkit-user-select:none;caret-color:transparent}
+
+.spoon-heading{position:relative;text-align:center}
+.spoon-reference{position:absolute;visibility:hidden;pointer-events:none;white-space:nowrap;left:0;top:0}
+.spoon-copy{display:block;width:100%;text-align:center}
+.spoon-copy span{display:inline-block}
+.spoon-trigger{display:block;position:absolute;left:calc(50% + var(--spoon-text-width, 700px)/2 + 16px);bottom:-20px;margin:0;width:80px;height:70px;padding:0;border:0;background:none;color:#141414;cursor:pointer;z-index:3}
+.spoon-trigger svg{position:absolute;left:0;bottom:0;width:220px;height:70px;overflow:visible;transform-origin:40px 35px}
+.spoon-handle{transform:scaleX(0);transform-origin:50px 35px;transition:transform .45s cubic-bezier(.2,.8,.2,1)}
+.spoon-trigger:hover .spoon-handle,.spoon-trigger:focus-visible .spoon-handle,.spoon-revealed .spoon-handle{transform:scaleX(1)}
+.spoon-open .spoon-trigger .spoon-handle{transform:scaleX(0)}
+.spoon-trigger ellipse{transform-origin:40px 35px;transition:transform .45s ease}
+.spoon-trigger:hover ellipse,.spoon-trigger:focus-visible ellipse,.spoon-revealed .spoon-trigger ellipse{transform:scaleY(1.85)}
+.spoon-open .spoon-trigger ellipse{transform:scaleY(1)}
+.spoon-story[hidden]{display:none}
+@media(prefers-reduced-motion:reduce){.spoon-handle{transition:none}}
+
+.spoon-hover-locked .spoon-trigger .spoon-handle{transform:scaleX(0)}
+.spoon-hover-locked .spoon-trigger ellipse{transform:scaleY(1)}
+
+/* Hanging punctuation keeps the words optically centered. */
+.spoon-copy .spoon-period{width:0;overflow:visible;text-align:left}
+
+.spoon-trigger.portal-hover .spoon-handle{transform:scaleX(1)}
+.spoon-trigger.portal-hover ellipse{transform:scaleY(1.85)}
+.spoon-hover-locked .spoon-trigger.portal-hover .spoon-handle{transform:scaleX(0)}
+.spoon-hover-locked .spoon-trigger.portal-hover ellipse{transform:scaleY(1)}
+
+@media(min-width:651px){
+ .edge-lens:not(.reading) #opening h1{font-size:234px;width:max-content;min-width:100%;position:relative;left:50%;transform:translateX(-50%);text-align:center}
+ .wall-page.reading #opening h1{font-size:310px}
+}
+
+.above-word{text-align:center;top:calc(50% - 20px)}
+@media(max-width:649px){#above .above-word{font-size:22px;-webkit-text-size-adjust:none;text-size-adjust:none}}
+
+/* Keep the rabbit and hole above the tilting white wall on the way to the door. */
+#rabbit-dock{z-index:6;isolation:isolate}
+
+/* This is a camera viewport, not a scroll container. Focus/anchors must not move its canvas. */
+#viewport{overflow:clip}
+
+/* Fly through a sharp aperture into the already rendered room. */
+.letter-flight{background:transparent}
+.letter-flight-rim{position:absolute;background:#111;border-radius:50%}
+.letter-gallery.entering::backdrop{background:transparent}
+.letter-gallery.entering .gallery-back,.letter-gallery.entering .approach-easel,.letter-gallery.entering .back-portal-access{visibility:hidden}
+.letter-gallery.entering .gallery-canvas{transform-origin:50% 50%;pointer-events:none}
+
+/* Canvas hover follows the glyph bounds, not the button's line-height box. */
+.wall-gl:not(.reading) .letter-entry:not(.portal-hover):not(:focus-visible) .letter-counter{opacity:0}
+
+@media(max-width:650px){
+ .edge-lens:not(.reading) #opening h1{font-size:var(--mobile-hero-size,196px);width:max-content;min-width:100%;margin-left:0;margin-right:0;position:relative;left:50%;transform:translateX(-50%);text-align:center}
+ .wall-page.reading #opening h1{font-size:calc(clamp(42px,13vw,80px) + 4px)}
+}
+
+@media(max-width:649px){.edge-lens:not(.reading) #more{display:flex;justify-content:center;align-items:center;gap:var(--links-gap,100px)}.edge-lens:not(.reading) #more .big-link{flex:none}}

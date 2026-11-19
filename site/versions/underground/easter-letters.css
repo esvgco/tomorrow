@@ -1,0 +1,134 @@
+/* The title keeps 04.6's typesetting. Only its three counters become entrances. */
+.letter-entry{display:inline;padding:0;margin:0;border:0;background:none;color:inherit;font:inherit;letter-spacing:inherit;line-height:inherit;position:relative;cursor:default}
+.letter-entry:focus-visible{outline:1px dotted #888;outline-offset:4px}
+.letter-entry[data-entry="0"].rippling{filter:url(#letter-wave-0)}
+.letter-entry[data-entry="1"].rippling{filter:url(#letter-wave-1)}
+.letter-entry[data-entry="2"].rippling{filter:url(#letter-wave-2)}
+.wave-filters{position:absolute;pointer-events:none}
+.letter-gallery{position:fixed;inset:0;width:100%;height:100%;max-width:none;max-height:none;margin:0;padding:0;border:0;background:#f5f5f5;color:#181818;overflow:hidden;overscroll-behavior:contain;font-family:var(--sans)}
+.letter-gallery::backdrop{background:#fff}
+.gallery-canvas{position:absolute;inset:0;touch-action:none;cursor:grab}
+.gallery-canvas:active{cursor:grabbing}
+.gallery-canvas canvas{display:block;width:100%;height:100%}
+.gallery-back{position:absolute;top:28px;left:32px;z-index:2;padding:12px;font:12px var(--mono);background:#f5f5f5d9;border-radius:2px}
+
+.gallery-footer{position:absolute;bottom:30px;left:24px;right:24px;display:flex;flex-direction:column;align-items:center;gap:12px;pointer-events:none;text-align:center}
+
+.gallery-controls{display:flex;gap:18px;pointer-events:auto}
+.gallery-controls button{font:11px var(--mono);min-width:44px;min-height:44px;border:1px solid #c4c4c4;border-radius:50%;background:#f5f5f5c9}
+.gallery-controls button[aria-pressed=true]{color:white;background:#222;border-color:#222}
+
+
+.letter-flight{display:none;position:fixed;inset:0;z-index:1000;background:#fff;pointer-events:none;transform-origin:0 0}
+.letter-flight.active{display:block}
+.letter-flight .flight-title{position:absolute;margin:0;white-space:nowrap;font-family:var(--sans);line-height:.92;letter-spacing:-.04em;text-align:center;color:#000}
+
+@media(max-width:600px){.gallery-back{top:14px;left:12px}.gallery-footer{bottom:22px;gap:8px}}
+@media(prefers-reduced-motion:reduce){.letter-entry{transition:none}}
+
+.back-portal-access:focus-visible,.approach-easel:focus-visible{position:absolute;width:auto;height:auto;clip:auto;clip-path:none;top:28px;right:28px;padding:12px;background:white;z-index:3}
+
+.letter-counter{position:absolute;left:0;top:50%;transform:translateY(-50%);pointer-events:none;opacity:0;transition:opacity .28s;color:#000;overflow:visible}
+.letter-entry:hover .letter-counter,.letter-entry:focus-visible .letter-counter{opacity:1}
+@media(prefers-reduced-motion:reduce){.letter-counter{transition:none}}
+
+.letter-flight .flight-entry .letter-counter{opacity:1;transition:none}
+/* Keep Tomorrow on one line even though its o glyphs are separate buttons. */
+#opening h1{white-space:nowrap}
+
+/* Touch screens hint at the entrance through motion, without a sticky hover fill. */
+@media (hover:none), (pointer:coarse), (max-width:600px){
+ .letter-entry:hover .letter-counter,.letter-entry:focus-visible .letter-counter{opacity:0}
+ .letter-flight .flight-entry .letter-counter{opacity:1}
+}
+
+.letter-entry[data-entry="3"].rippling{filter:url(#letter-wave-3)}
+
+
+
+.gallery-back:focus,.gallery-back:focus-visible{outline:none;box-shadow:none}
+
+#last-heading[data-letter-portals]{cursor:default}
+.letter-entry[data-entry="4"].rippling{filter:url(#letter-wave-4)}
+.letter-entry[data-entry="5"].rippling{filter:url(#letter-wave-5)}
+.letter-entry[data-entry="6"].rippling{filter:url(#letter-wave-6)}
+.letter-entry[data-entry="7"].rippling{filter:url(#letter-wave-7)}
+.letter-entry[data-entry="8"].rippling{filter:url(#letter-wave-8)}
+
+.burrow-flip-screen{position:fixed;inset:0;transform:rotate(0deg);transform-origin:50% 50%;transition:transform 312ms cubic-bezier(.76,0,.24,1)}
+.burrow-flip-screen.flipped{transform:rotate(180deg)}
+@media(prefers-reduced-motion:reduce){.burrow-flip-screen{transition:none}}
+
+#last-heading[data-letter-portals] .letter-entry{display:inline-block;overflow:visible}
+
+/* Keep the hole during the dive, then remove it from the flipped scene. */
+.burrow-flip-screen.flipped #rabbit-dock{visibility:hidden!important}
+
+body[data-burrow-flip]{background:#fff}
+.burrow-flip-screen{isolation:isolate}
+.burrow-flip-screen::before{content:"";position:absolute;left:50%;top:50%;width:100%;height:100%;transform:translate(-50%,-50%);z-index:-1;pointer-events:none;transition:width 360ms cubic-bezier(.76,0,.24,1),height 360ms cubic-bezier(.76,0,.24,1)}
+.inside-burrow .burrow-flip-screen::before{background:#000;width:142vmax;height:142vmax}
+.inside-burrow #viewport{filter:invert(1)}
+.burrow-tunnel{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:6;opacity:0;transition:opacity 312ms ease;mask-image:linear-gradient(to right,#000,rgba(0,0,0,.45) 40%,rgba(0,0,0,.45) 60%,#000)}
+.inside-burrow .burrow-tunnel{opacity:1}
+.burrow-tunnel i{position:absolute;top:0;width:1px;background:linear-gradient(transparent,#fff 25%,#fff 75%,transparent);will-change:transform}
+@media(prefers-reduced-motion:reduce){.burrow-tunnel{display:none}.burrow-flip-screen::before{transition:none}}
+
+body[data-burrow-flip]:not(.reading) .burrow-cards{visibility:hidden}
+.project-flight{position:fixed;inset:0;z-index:7;pointer-events:none;color:#fff;overflow:hidden}
+.project-flight[hidden],.project-flyby[hidden]{display:none}
+.project-flyby{position:absolute;top:0;width:min(680px,90vw);display:grid;grid-template-columns:211.2px minmax(0,1fr);gap:40px;align-items:center;text-align:left;pointer-events:auto;transform-origin:50% 30%;will-change:transform,opacity}
+.project-index{display:block;font:11px/1.4 var(--mono);letter-spacing:.1em;color:#888;margin-bottom:30px}
+.project-flyby img{display:block;width:211.2px;height:211.2px;object-fit:contain;object-position:center;margin:0}
+.project-flyby h2{font-size:clamp(36px,4.3vw,68px);line-height:1.05;letter-spacing:-.045em;font-weight:400;margin:0 0 20px}
+.project-flyby p{font-size:clamp(17px,1.6vw,24px);line-height:1.4;max-width:30ch;margin:0 0 28px;color:#bbb}
+.project-flyby a{font:18.72px/1.5 var(--mono);color:#fff;text-decoration:none}
+.project-flyby a:hover{text-decoration:underline;text-underline-offset:5px}
+@media(max-width:650px){.project-index{margin-bottom:18px}.project-flyby{grid-template-columns:151.8px minmax(0,1fr);gap:20px}.project-flyby img{width:151.8px;height:151.8px;margin:0}.project-flyby h2{font-size:30px}.project-flyby p{font-size:15px;margin-bottom:20px}}
+
+/* The final rabbit shares the links panel’s scroll flight. */
+.links-panel{grid-template-columns:1fr auto 1fr}
+.final-rabbit{display:block;width:120px;height:auto;pointer-events:none}
+@media(max-width:650px){.final-rabbit{width:100px}}
+
+.final-return-hole{position:fixed;left:50%;transform:translateX(-50%);z-index:102;padding:0;border:0;background:none;color:white;cursor:pointer}
+.final-return-hole[hidden]{display:none}
+.final-return-hole svg{display:block;width:100%;height:100%}
+
+.flip-centred-title{position:absolute;left:50%;top:50%;width:min(1000px,90vw);text-align:center;color:white;z-index:8;pointer-events:none}
+.flip-centred-title[hidden]{display:none}
+.flip-centred-title .letter-entry{color:inherit}
+.inside-burrow #contact{visibility:hidden}
+
+@media(max-width:650px){
+  .links-panel{grid-template-columns:1fr;grid-template-rows:auto auto auto;row-gap:40px;align-content:center}
+  .links-panel #about-link{grid-column:1;grid-row:1;margin-bottom:20px}
+  .links-panel a.big-link{grid-column:1;grid-row:2}
+  .links-panel .final-rabbit{grid-column:1;grid-row:3;justify-self:center;margin-top:40px}
+}
+
+.project-flyby img[src*="/vultron.svg"]{transform:scale(.6666667)}
+
+@media(max-width:650px){#opening h1{font-size:174px;width:max-content;min-width:100%;position:relative;left:50%;transform:translateX(-50%);text-align:center}}
+
+
+.spoon-heading{position:relative;text-align:center}
+.spoon-reference{position:absolute;visibility:hidden;pointer-events:none;white-space:nowrap;left:0;top:0}
+.spoon-copy{display:block;width:100%;text-align:center}
+.spoon-copy span{display:inline-block}
+.spoon-trigger{display:block;position:absolute;left:calc(50% + var(--spoon-text-width, 700px)/2 + 16px);bottom:-20px;margin:0;width:80px;height:70px;padding:0;border:0;background:none;color:#141414;cursor:pointer;z-index:3}
+.spoon-trigger svg{position:absolute;left:0;bottom:0;width:220px;height:70px;overflow:visible;transform-origin:40px 35px}
+.spoon-handle{transform:scaleX(0);transform-origin:50px 35px;transition:transform .45s cubic-bezier(.2,.8,.2,1)}
+.spoon-trigger:hover .spoon-handle,.spoon-trigger:focus-visible .spoon-handle,.spoon-revealed .spoon-handle{transform:scaleX(1)}
+.spoon-open .spoon-trigger .spoon-handle{transform:scaleX(0)}
+.spoon-trigger ellipse{transform-origin:40px 35px;transition:transform .45s ease}
+.spoon-trigger:hover ellipse,.spoon-trigger:focus-visible ellipse,.spoon-revealed .spoon-trigger ellipse{transform:scaleY(1.85)}
+.spoon-open .spoon-trigger ellipse{transform:scaleY(1)}
+.spoon-story[hidden]{display:none}
+@media(prefers-reduced-motion:reduce){.spoon-handle{transition:none}}
+
+.spoon-hover-locked .spoon-trigger .spoon-handle{transform:scaleX(0)}
+.spoon-hover-locked .spoon-trigger ellipse{transform:scaleY(1)}
+
+/* Hanging punctuation keeps the words optically centered. */
+.spoon-copy .spoon-period{width:0;overflow:visible;text-align:left}

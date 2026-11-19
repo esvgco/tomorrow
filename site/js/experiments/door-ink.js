@@ -2,7 +2,7 @@
 // take ink: hatch over the centre and the frame appears, white, out of what you drew.
 // Once enough of the door and its surroundings is inked, the handle can be pressed: the
 // inked leaf swings open on a black inside and we fly through.
-export function mountDoor(layer,{onEnter=()=>{},reduced=false}={}){
+export function mountDoor(layer,{onEnter=()=>{},reduced=false,brushScale=1,mobileBrushScale=brushScale}={}){
   const canvas=layer.querySelector('canvas'),ctx=canvas.getContext('2d');
   let w=0,h=0,dpr=1,door=null,drawing=null,ready=false,opening=false,brush=18;
   function layout(){
@@ -10,7 +10,7 @@ export function mountDoor(layer,{onEnter=()=>{},reduced=false}={}){
     canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);
     const dw=Math.min(w*.34,230),dh=Math.min(h*.56,dw*2.15),t=Math.max(10,dw*.065);
     door={x:w/2-dw/2,y:h/2-dh/2,w:dw,h:dh,t,hx:w/2+dw/2-t-dw*.16,hy:h/2+dh*.04,hr:Math.max(7,dw*.045)};
-    brush=w<650?14:18;ready=false;layer.classList.remove('door-ready');
+    brush=w<650?14*mobileBrushScale:18*brushScale;ready=false;layer.classList.remove('door-ready');
   }
   // The parts that never take ink: the frame (an outline) and the handle.
   function mask(c){const d=door;c.beginPath();c.rect(d.x,d.y,d.w,d.h);c.rect(d.x+d.t,d.y+d.t,d.w-2*d.t,d.h-d.t);c.fill('evenodd');c.beginPath();c.arc(d.hx,d.hy,d.hr,0,Math.PI*2);c.fill()}
