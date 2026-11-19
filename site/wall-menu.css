@@ -68,3 +68,9 @@ html.over-rabbit,html.over-rabbit body,html.over-rabbit .under-scroller,html.ove
 /* The letter rain: the block is as tall as the paragraph it lands as (set by letter-rain.js). */
 .wall-menu:not(.reading) .letter-fall{height:var(--rain-h,330px)}
 .wall-menu.reading .letter-fall .fall-result{padding-top:0!important}
+
+/* Above the wall: the rabbit's tail instead of "possible". The canvas stops short of the
+   lowest 17% of the window, where a touch scrolls the page instead of rubbing. */
+.wall-menu .above-tail-src{position:absolute;left:0;top:0;width:2px;height:2px;opacity:0;pointer-events:none}
+.wall-menu .above-ink{height:83%;clip-path:none!important}
+.wall-menu .above.drawable .above-ink{pointer-events:auto}

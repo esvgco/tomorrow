@@ -295,3 +295,17 @@ Publisher and Grow converted to woff2); the full trial packages stay in the repo
   drift sideways as they fall. "Experiences" became "stories": with it the paragraph is one "c" short.
 - It runs on the second screen's own size (0.09–0.42 of its reading size, 0.13–0.46 on a phone).
 - The tuning panel is hidden and in English; add `?tune` to the address to show it.
+
+### 04.15, the tail above the wall (19 Nov)
+
+- Scrolling up from the start no longer shows the word "possible": the rabbit's tail is there,
+  a video (`assets/video/rabbit-tail.webm`, Elisey's source). Under the pointer it plays; when the
+  pointer leaves, it plays back to the start from where it was. Browsers do not play backwards,
+  so a reversed copy is taken up at the mirrored moment: `rabbit-tail-forward.*` and
+  `rabbit-tail-reverse.*` (WebM VP9 and MP4 H.264, a keyframe every 6 frames so the jump is
+  instant; made with ffmpeg from the source). On a touch screen it plays while the finger is down.
+- The tail is rubbed out, not drawn on: under it is a door, a black frame and a handle. Once more
+  than half of the door is uncovered, the handle opens it, as before (`js/experiments/door-tail.js`;
+  the older `door-ink.js` is unchanged for the other walls).
+- The video's square background never shows: each frame is cut to the round of the tail.
+- The lowest 17% of the window still scrolls on a phone instead of rubbing.

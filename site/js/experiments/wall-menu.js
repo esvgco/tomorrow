@@ -1,6 +1,6 @@
 import {clamp,ease,reduced,tomorrow,setDay,mountFall,mountGaps,watchEdit} from './shared.js';
 import {mountMark} from '../mark.js';
-import {mountDoor} from './door-ink.js';
+import {mountDoorTail} from './door-tail.js';
 import {mountWallGL} from './wall-gl.js';
 import {mountTune} from './wall-tune.js';
 import {mountCookieBar} from './cookie-bar.js';
@@ -250,7 +250,8 @@ beyond.draw=now=>{if(!beyond.active)return;
   const k=clamp(p/(beyond.max+.6)),need=Math.hypot(innerWidth,innerHeight)/44;
   beyond.far.style.transform=`translate(-50%,-50%) scale(${(.18*Math.pow(need/.18,k**5)).toFixed(3)})`;beyond.far.style.opacity=(.95*inv(-.3,.05,p)).toFixed(3)};
 $('#beyond-on').onclick=beyond.on;$('#beyond-back').onclick=beyond.leave;
-const door=mountDoor(above,{reduced,onEnter:done=>beyond.enter(done)});
+// The white screen above: the rabbit's tail, to rub out and find the door (door-tail.js).
+const door=mountDoorTail(above,{reduced,onEnter:done=>beyond.enter(done)});
 function lookUp(){
   const a=TILT*ease(clamp((up-.2)/.8)),P=innerHeight*1.1;
   scene.style.transform=a?`perspective(${P}px) translateZ(${P}px) rotateX(${a}rad) translateZ(${-P}px)`:'';
